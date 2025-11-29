@@ -11,9 +11,11 @@
     <main class="flex-1 p-4 transition-all">
       <router-view />
     </main>
-
+    <!-- WEBSOCKET ECHO COMPONENT -->
+    <WebsocketEcho />
     <!-- FOOTER -->
     <Footer />
+
 
   </div>
 </template>
@@ -24,6 +26,8 @@ import Navbar from "@/components/layout/Navbar.vue";
 import Sidebar from "@/components/layout/Sidebar.vue";
 import Footer from "@/components/layout/Footer.vue";
 import { useAuthStore } from "./stores/authStore";
+import WebsocketEcho from './components/WebsocketEcho.vue';
+
 
 const sidebarOpen = ref(false);
 
@@ -32,5 +36,7 @@ const authStore = useAuthStore();
 onMounted(async ()=> {
   await authStore.initAuth();
 })
+
+
 
 </script>
