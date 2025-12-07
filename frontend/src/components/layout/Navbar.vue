@@ -3,7 +3,6 @@
 
     <div class="flex items-center gap-4">
       <button
-        v-if="auth.user"
         @click="$emit('toggleSidebar')"
         class="text-white text-2xl hover:text-green-200 cursor-pointer"
       >

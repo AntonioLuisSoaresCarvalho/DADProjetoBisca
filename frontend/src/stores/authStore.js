@@ -1,13 +1,9 @@
 import { defineStore } from "pinia";
-import authApi from '../api/auth';
-import axios from "axios";
-
-const api_url = 'http://localhost:8000/api';
+import { useApiStore } from "./api";
 
 export const useAuthStore = defineStore("auth",{
     state:() => ({
         user:null,
-        token:localStorage.getItem("token") || null,
         isAutenticated : false,
     }), 
 
@@ -17,28 +13,29 @@ export const useAuthStore = defineStore("auth",{
     },
 
     actions : {
+        
         async initAuth(){
-            const token = localStorage.getItem('token');
-            if(token){
-                this.token = token;
-                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-                try {
-                    await this.fetchProfile();
-                } catch (error) {
-                    this.clearAuth();
-                }
+            const apiStore = useApiStore(); 
+
+            if (!apiStore.token) return;
+
+            try {
+                const res = await apiStore.fetchProfile();
+                this.user = res.data.user;
+                this.isAutenticated = true;
+            } catch (e) {
+                console.error('Erro ao inicializar autenticação:', e);
+                this.clearAuth();
             }
+
         },
 
         async login(data){
             try {
-                const res = await axios.post(`${api_url}/login`,data);
-                this.token = res.data.token;
+                const apiStore = useApiStore();
+                const res = await apiStore.login(data);
                 this.user = res.data.user;
                 this.isAutenticated = true;
-
-                localStorage.setItem('token',this.token);
-                axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
 
                 return { success : true, message : res.data.message};
             } catch (error) {
@@ -52,23 +49,10 @@ export const useAuthStore = defineStore("auth",{
 
         async register(data){
             try {
-                const form_data = new FormData();
-                Object.keys(data).forEach(key => {
-                    if(data[key] !== null && data[key] !== undefined && data[key] !== '') {
-                        form_data.append(key,data[key]);
-                    }
-                })
-                
-                const res = await axios.post(`${api_url}/register`,form_data,{
-                    headers: {'Content-Type' : 'multipart/form-data'}
-                })
-
-                this.token = res.data.token;
+                const apiStore = useApiStore();
+                const res = await apiStore.register(data);
                 this.user = res.data.user;
                 this.isAutenticated = true;
-
-                localStorage.setItem("token",this.token);
-                axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
 
                 return {success : true, message : res.data.message};
 
@@ -79,14 +63,16 @@ export const useAuthStore = defineStore("auth",{
                     errors : error.response?.data?.errors || {}
                 }                
             }
-            //return authApi.register(data);
         },
 
         async fetchProfile() {
             try {
-                const res = await axios.get(`${api_url}/me`);
+                const apiStore = useApiStore();
+                const res = await apiStore.fetchProfile();
+
                 this.user = res.data.user;
                 this.isAutenticated = true;
+
             } catch (error) {
                 this.clearAuth();
                 throw error;
@@ -95,16 +81,8 @@ export const useAuthStore = defineStore("auth",{
 
         async updateProfile(data) {
             try {
-                const form_data = new FormData();
-                Object.keys(data).forEach(key => {
-                    if(data[key] !== null && data[key] !== undefined && data[key] !== '') {
-                        form_data.append(key,data[key]);
-                    }
-                });
-
-                const res = await axios.post(`${api_url}/profile`,form_data,{
-                    headers: {'Content-Type' : 'multipart/form-data','X-HTTP-Method-Override': 'PUT'}
-                })
+                const apiStore = useApiStore();
+                const res = await apiStore.updateProfile(data);
                 this.user = res.data.user;
                 return { success : true , message : res.data.message}
             } catch (error) {
@@ -115,38 +93,33 @@ export const useAuthStore = defineStore("auth",{
         },
 
         async logout() {
-            try {
-            await axios.post(`${api_url}/logout`);
+            try {          
+                const apiStore = useApiStore();
+                await apiStore.logout();
             } catch(error) {
                 console.error('Erro ao fazer logout:', error);
-            } finally {
                 this.clearAuth();
             }
         },
 
         async deleteAccount(confirmation){
             try {
-                //await authApi.deleteAccount(confirmation);~
-                await axios.delete(`${api_url}/profile`,{data : {confirmation}});
-                //console.log("Sucesso ao eliminar");
-
-                this.clearAuth()
-                return {sucess : true , message : res.data.message}
+               const apiStore = useApiStore();
+               const res = await apiStore.deleteAccount(confirmation);
+               return {sucess : true , message : res.data.message}
             } catch (error) {
                 return {
                     success : false,
                     message : error.response?.data?.message || 'deletion failed',
-                    //errors : error.response?.data?.errors || {}
                 } 
             }
         },
 
         clearAuth(){
+            const apiStore = useApiStore();
+            apiStore.clearAuth();
             this.user = null;
-            this.token = null;
-            this.isAutenticated = false;
-            localStorage.removeItem("token");
-            delete axios.defaults.headers.common['Authorization'];
+            this.isAutenticated = false;            
         }
 }
 

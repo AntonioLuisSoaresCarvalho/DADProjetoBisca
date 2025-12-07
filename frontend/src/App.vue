@@ -12,7 +12,7 @@
       <router-view />
     </main>
     <!-- WEBSOCKET ECHO COMPONENT -->
-    <WebsocketEcho />
+    <!-- <WebsocketEcho /> -->
     <!-- FOOTER -->
     <Footer />
 

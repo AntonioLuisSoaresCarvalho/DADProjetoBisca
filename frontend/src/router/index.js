@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useApiStore } from '@/stores/api'
 
 import HomeView from '@/views/HomeView.vue'
 
@@ -30,12 +31,13 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   const auth = useAuthStore();
+  const api = useApiStore()
 
-  if (auth.token && !auth.user) {
+  if (api.token && !auth.user) {
     await auth.fetchProfile();
   }
 
-  if (to.meta.requiresAuth && !auth.token) {
+  if (to.meta.requiresAuth && !api.token) {
     return "/login";
   }
 });

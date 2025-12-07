@@ -39,113 +39,50 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="ws-section">
-    <div class="ws-container">
-      <h2 class="ws-title">Comunicação em Tempo Real</h2>
-      <p class="ws-text">
+  <section class="bg-green-700 text-white text-center py-16 px-4">
+    <div class="max-w-[700px] mx-auto">
+      <h2 class="text-3xl font-semibold mb-2">Comunicação em Tempo Real</h2>
+      <p class="mb-8 opacity-90">
         Esta secção demonstra o canal de WebSockets usado pela plataforma Bisca
         para trocar mensagens em tempo real entre os jogadores.
       </p>
 
-      <div class="ws-card">
-        <p class="ws-status">
+      <div class="bg-white text-gray-900 rounded-lg p-6 shadow-lg text-left">
+        <p class="mb-4">
           Estado:
-          <strong :class="status === 'Connected' ? 'ws-ok' : 'ws-bad'">
+          <strong
+            :class="status === 'Connected' ? 'text-green-600' : 'text-red-600'"
+          >
             {{ status }}
           </strong>
         </p>
 
-        <label class="ws-label">
+        <label class="block text-sm mb-2">
           Mensagem de teste
           <input
             v-model="messageToSend"
             placeholder="Escreve uma mensagem"
-            class="ws-input"
+            class="w-full mt-1 px-3 py-2 rounded-md border border-gray-300 focus:border-green-600 focus:ring focus:ring-green-400/40 outline-none"
           />
         </label>
 
-        <button @click="sendMessage" class="ws-button">
+        <button
+          @click="sendMessage"
+          class="mt-3 px-4 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white font-semibold"
+        >
           Enviar
         </button>
 
-        <ul class="ws-messages">
-          <li v-for="(m, i) in messages" :key="i">{{ m }}</li>
+        <ul class="mt-4 list-none p-0 text-sm">
+          <li
+            v-for="(m, i) in messages"
+            :key="i"
+            class="border-b last:border-none py-1 border-gray-200"
+          >
+            {{ m }}
+          </li>
         </ul>
       </div>
     </div>
   </section>
 </template>
-
-<style scoped>
-.ws-section {
-  background: #037b2b;
-  padding: 4rem 1rem;
-  color: #ffffff;
-  text-align: center;
-}
-.ws-container {
-  max-width: 700px;
-  margin: 0 auto;
-}
-.ws-title {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-}
-.ws-text {
-  margin-bottom: 2rem;
-  opacity: 0.9;
-}
-.ws-card {
-  background: #ffffff;
-  color: #111827;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  text-align: left;
-}
-.ws-status {
-  margin-bottom: 1rem;
-}
-.ws-ok {
-  color: #16a34a;
-}
-.ws-bad {
-  color: #dc2626;
-}
-.ws-label {
-  display: block;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-}
-.ws-input {
-  width: 100%;
-  margin-top: 0.25rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  outline: none;
-}
-.ws-input:focus {
-  border-color: #16a34a;
-  box-shadow: 0 0 0 1px #16a34a33;
-}
-.ws-button {
-  margin-top: 0.8rem;
-  padding: 0.6rem 1.2rem;
-  border-radius: 6px;
-  background: #16a34a;
-  color: white;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-}
-.ws-button:hover {
-  background: #15803d;
-}
-.ws-messages {
-  margin-top: 1rem;
-  list-style: none;
-  padding: 0;
-  font-size: 0.9rem;
-}
-</style>

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { getTransactions, getPurchases, purchaseCoins } from '@/api/coins'
+import { useApiStore } from './api'
 import { useAuthStore } from './authStore'
 
 export const useCoinStore = defineStore('coinStore', {
@@ -26,10 +26,11 @@ export const useCoinStore = defineStore('coinStore', {
      * 📜 Obtém o histórico de transações
      */
     async fetchTransactions(page = 1) {
+      const api = useApiStore()
       this.loading = true
       this.error = null
       try {
-        const data = await getTransactions(page)
+        const data = await api.getTransactions(page)
         this.transactions = data.data || []
         this.currentPage = data.meta?.current_page || 1
         this.lastPage = data.meta?.last_page || 1
@@ -44,10 +45,11 @@ export const useCoinStore = defineStore('coinStore', {
      * 💰 Obtém as compras de moedas
      */
     async fetchPurchases(page = 1) {
+      const api = useApiStore()
       this.loading = true
       this.error = null
       try {
-        const data = await getPurchases(page)
+        const data = await api.getPurchases(page)
         this.purchases = data.data || []
       } catch (err) {
         this.error = err.response?.data?.message || 'Erro ao carregar compras.'
@@ -63,9 +65,10 @@ export const useCoinStore = defineStore('coinStore', {
       this.loading = true
       this.error = null
       this.successMessage = null
+      const api = useApiStore()
 
       try {
-        const purchase = await purchaseCoins(formData)
+        const purchase = await api.purchaseCoins(formData)
 
         // Atualiza a lista local de compras e transações
         this.purchases.unshift(purchase.data)
