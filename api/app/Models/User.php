@@ -28,7 +28,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
-        'deleted_at',
+        //'deleted_at',
     ];
 
     
@@ -48,6 +48,21 @@ class User extends Authenticatable
     public function purchases()
     {
         return $this->hasMany(CoinPurchase::class, 'user_id');
+    }
+
+    public function games()
+    {
+        return $this->hasMany(Game::class, 'player1_user_id')
+                    ->orWhere('player2_user_id', $this->id);
+    }
+
+    /**
+     * Relação: partidas (matches) em que participou
+     */
+    public function matches()
+    {
+        return $this->hasMany(GameMatch::class, 'player1_user_id')
+                    ->orWhere('player2_user_id', $this->id);
     }
 
     

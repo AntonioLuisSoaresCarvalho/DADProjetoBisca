@@ -39,6 +39,15 @@
           🪙 Purchase Coins
         </router-link>
 
+        <router-link
+          to="/admin"
+          v-if="auth.isAdmin"
+          @click="$emit('close')"
+          class="px-2 py-2 rounded hover:bg-green-600"
+        >
+         🛡️ Admin Panel
+        </router-link>
+
       </nav>
     </aside>
   </transition>

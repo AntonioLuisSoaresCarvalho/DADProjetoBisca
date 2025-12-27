@@ -43,4 +43,15 @@ class CoinTransaction extends Model
     {
         return $this->hasOne(CoinPurchase::class, 'coin_transaction_id');
     }
+
+    public function game()
+    {
+        return $this->belongsTo(Game::class);
+    }
+
+    
+    public function match()
+    {
+        return $this->belongsTo(GameMatch::class);
+    }
 }

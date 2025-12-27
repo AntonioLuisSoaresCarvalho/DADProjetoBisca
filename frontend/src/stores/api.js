@@ -124,6 +124,59 @@ export const useApiStore = defineStore("api", () => {
         return response.data
     }
 
+    const getUsers = async (filters = {}) => {
+        const response = await axios.get(`${API_BASE_URL}/admin/users`, { params: filters })
+        return response.data
+    }
+
+    const blockUser = async (id) => {
+        const response = await axios.post(`${API_BASE_URL}/admin/users/${id}/block`)
+        return response.data
+    }
+
+    const unblockUser = async (id) => {
+        const response = await axios.post(`${API_BASE_URL}/admin/users/${id}/unblock`)
+        return response.data
+    }
+
+    const createAdmin = async (data) => {
+        const formData = new FormData()
+        Object.keys(data).forEach(key => {
+          if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key])
+          }
+        })
+        const response = await axios.post(`${API_BASE_URL}/admin/users`, data, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        return response.data
+    }
+
+    const deleteUser = async (id) => {
+        const response = await axios.delete(`${API_BASE_URL}/admin/users/${id}`)
+        return response.data
+    }
+
+    const restoreUser = async (id) => {
+        const response = await axios.post(`${API_BASE_URL}/admin/users/${id}/restore`)
+        return response.data
+    }
+
+    const fetchTransactions = async (filters = {}) => {
+        const response = await axios.get(`${API_BASE_URL}/admin/transactions`, { params: filters })
+        return response.data
+    }
+
+    const fetchGames = async (filters = {}) => {
+        const response = await axios.get(`${API_BASE_URL}/admin/games`, { params: filters })
+        return response.data
+    }
+
+    const fetchStatistics = async () => {
+        const response = await axios.get(`${API_BASE_URL}/admin/statistics`)
+        return response.data
+    }
+
     return {
         token,
         initAuth,
@@ -138,6 +191,15 @@ export const useApiStore = defineStore("api", () => {
         getTransactionById,
         createTransaction,
         getPurchases,
-        purchaseCoins
+        purchaseCoins,
+        getUsers,
+        blockUser,
+        restoreUser,
+        unblockUser,
+        createAdmin,
+        deleteUser,
+        fetchTransactions,
+        fetchGames,
+        fetchStatistics
     }
 })

@@ -13,6 +13,8 @@ import CoinsView from '@/views/coins/CoinsView.vue'
 import BuyCoinsView from '@/views/coins/BuyCoinsView.vue'
 import CoinHistoryView from '@/views/coins/CoinHistoryView.vue'
 
+import AdminView from "@/views/admin/AdminView.vue";
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,6 +28,12 @@ const router = createRouter({
     { path: "/coins", component: CoinsView, meta: { requiresAuth: true, requirePlayer:true } },
     { path: "/coins/buy", component: BuyCoinsView, meta: { requiresAuth: true, requirePlayer:true } },
     { path: "/coins/history", component: CoinHistoryView, meta: { requiresAuth: true, requirePlayer:true } },
+    {
+    path: '/admin',
+    name: 'Admin',
+    component: AdminView,
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
   ],
 });
 
