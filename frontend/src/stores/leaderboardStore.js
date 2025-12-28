@@ -1,7 +1,5 @@
 import { defineStore } from "pinia";
-import axios from "axios";
-
-const API_URL = 'http://localhost:8000/api'
+import { useApiStore } from "./api";
 
 export const useLeaderboardStore = defineStore("leaderboards", {
   state: () => ({
@@ -41,14 +39,15 @@ export const useLeaderboardStore = defineStore("leaderboards", {
     },
 
     async loadPersonalStats() {
+      const api = useApiStore()
       this.loadingPersonal = true;
 
       try {
         const params = {};
         if (this.variantFilter) params.type = this.variantFilter;
 
-        const response = await axios.get(`${API_URL}/leaderboards/personal`, { params });
-        this.personalStats = response.data;
+        const response = await api.getPersonalStats(params)
+        this.personalStats = response;
 
       } catch (error) {
         console.error("Error loading personal stats:", error);
@@ -58,21 +57,15 @@ export const useLeaderboardStore = defineStore("leaderboards", {
     },
 
     async loadGlobalLeaderboard() {
+      const api = useApiStore()
       this.loading = true;
 
       try {
         const params = {};
         if (this.variantFilter) params.type = this.variantFilter;
 
-        const endpoints = {
-          games: `${API_URL}/leaderboards/global/games`,
-          matches: `${API_URL}/leaderboards/global/matches`,
-          capotes: `${API_URL}/leaderboards/global/capotes`,
-          bandeiras: `${API_URL}/leaderboards/global/bandeiras`,
-        };
-
-        const response = await axios.get(endpoints[this.activeTab], { params });
-        this.leaders = response.data;
+        const response = await api.getGlobalLeaderboard(this.activeTab, params)
+        this.leaders = response;
 
       } catch (error) {
         console.error("Error loading leaderboard:", error);

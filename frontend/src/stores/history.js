@@ -1,7 +1,5 @@
 import { defineStore } from "pinia";
-import axios from "axios";
-
-const API_URL = 'http://localhost:8000/api'
+import { useApiStore } from "./api";
 
 export const useHistoryStore = defineStore("history",{
     state: () => ({
@@ -29,7 +27,7 @@ export const useHistoryStore = defineStore("history",{
 
     // Check if user has played any games
     hasGames: (state) => state.games.length > 0,
-    
+
     // Check if user has played any matches
     hasMatches: (state) => state.matches.length > 0
   },
@@ -39,11 +37,12 @@ export const useHistoryStore = defineStore("history",{
     // GAMES HISTORY
     // ==========================================
     async fetchUserGames(params = {}) {
+      const api = useApiStore()
       this.gamesLoading = true
       this.gamesError = null
 
       try {
-        const response = await axios.get(`${API_URL}/history/games`, { params })
+        const response = await api.getUserGames(params)
         this.games = response.data.data
         this.gamesPagination = {
           current_page: response.data.current_page,
@@ -61,11 +60,12 @@ export const useHistoryStore = defineStore("history",{
     },
 
     async fetchGameDetails(gameId) {
+      const api = useApiStore()
       this.gamesLoading = true
       this.gamesError = null
 
       try {
-        const response = await axios.get(`${API_URL}/history/games/${gameId}`)
+        const response = await api.getGameDetails(gameId)
         this.currentGame = response.data.game
         return response.data.game
       } catch (error) {
@@ -79,11 +79,12 @@ export const useHistoryStore = defineStore("history",{
 
     // Admin - fetch any player's games
     async fetchPlayerGames(userId, params = {}) {
+      const api = useApiStore()
       this.gamesLoading = true
       this.gamesError = null
 
       try {
-        const response = await axios.get(`${API_URL}/admin/history/games/${userId}`, { params })
+        const response = await api.getPlayerGames(userId, params)
         this.games = response.data.data
         this.gamesPagination = {
           current_page: response.data.current_page,
@@ -104,11 +105,12 @@ export const useHistoryStore = defineStore("history",{
     // MATCHES HISTORY
     // ==========================================
     async fetchUserMatches(params = {}) {
+      const api = useApiStore()
       this.matchesLoading = true
       this.matchesError = null
 
       try {
-        const response = await axios.get(`${API_URL}/history/matches`, { params })
+        const response = await api.getUserMatches(params)
         this.matches = response.data.data
         this.matchesPagination = {
           current_page: response.data.current_page,
@@ -126,11 +128,12 @@ export const useHistoryStore = defineStore("history",{
     },
 
     async fetchMatchDetails(matchId) {
+      const api = useApiStore()
       this.matchesLoading = true
       this.matchesError = null
 
       try {
-        const response = await apiClient.get(`${API_URL}/history/matches/${matchId}`)
+        const response = await api.getMatchDetails(matchId)
         this.currentMatch = response.data.match
         return response.data.match
       } catch (error) {
@@ -144,11 +147,12 @@ export const useHistoryStore = defineStore("history",{
 
     // Admin - fetch any player's matches
     async fetchPlayerMatches(userId, params = {}) {
+      const api = useApiStore()
       this.matchesLoading = true
       this.matchesError = null
 
       try {
-        const response = await apiClient.get(`${API_URL}/admin/history/matches/${userId}`, { params })
+        const response = await api.getPlayerMatches(userId, params)
         this.matches = response.data.data
         this.matchesPagination = {
           current_page: response.data.current_page,
@@ -185,9 +189,5 @@ export const useHistoryStore = defineStore("history",{
       this.clearMatches()
     }
   }
-
-
-
-
 
 })
