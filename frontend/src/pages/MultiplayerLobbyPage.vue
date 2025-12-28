@@ -15,7 +15,7 @@
               </Button>
             </div>
           </div>
-          <Button @click="createNewGame" class="w-full">Create Game</Button>
+          <Button @click="createNewGame" class="w-full" :disabled="hasWaitingGame">{{ hasWaitingGame ? 'Waiting for opponent...' : 'Create Game' }}</Button>
         </CardContent>
       </Card>
 
@@ -81,7 +81,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'  
+import { ref, onMounted, computed } from 'vue'  
 import { useGameStore } from '@/stores/gameStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useSocketStore } from '@/stores/socketStore'
@@ -96,14 +96,21 @@ const socketStore = useSocketStore()
 
 const selectedType = ref(3)
 
+const hasWaitingGame = computed(() => {
+  return gameStore.myGames.length > 0
+})
+
 const createNewGame = () => {
   console.log('[Lobby] Create game clicked!')
   console.log('[Lobby] Selected type:', selectedType.value)
   console.log('[Lobby] GameStore:', gameStore)
+  if (hasWaitingGame.value) return
   gameStore.createGame(selectedType.value)
 }
 
-const refreshGamesList = () => { }
+const refreshGamesList = () => {
+  socketStore.emitGetGames()
+}
 
 const joinGame = (game) => {
   socketStore.emitJoinGame(game)
@@ -114,8 +121,12 @@ const startGame = (game) => {
   router.push({ name: 'multiplayer' })
 }
 
-const cancelGame = (game) => { }
+const cancelGame = (game) => { 
+    socketStore.cancelMatchMaking(authStore.currentUser)
+}
+
 onMounted(() => {
   socketStore.emitGetGames()
 })
+
 </script>

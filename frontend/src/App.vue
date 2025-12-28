@@ -18,14 +18,15 @@ import Navbar from "@/components/layout/Navbar.vue";
 import Sidebar from "@/components/layout/Sidebar.vue";
 import Footer from "@/components/layout/Footer.vue";
 import GameModeSelector from "@/components/GameModeSelector.vue"
-import { useAuthStore } from "./stores/authStore.js";
+import { useAuthStore } from "./stores/authStore.js"
 import { useSocketStore } from "./stores/socketStore"
+import { useGameStore } from "./stores/gameStore.js";
 
-//const socket = inject('socket')
 const sidebarOpen = ref(false)
 
 const authStore = useAuthStore()
 const socketStore = useSocketStore()
+const gameStore = useGameStore()
 
 //socketStore.setSocket(socket)
 
@@ -36,6 +37,10 @@ onMounted(async ()=> {
   console.log('[App] Current user:', authStore.currentUser)
   socketStore.handleConnection()
   console.log('[App] Socket connected:', socketStore.joined)
+
+  socketStore.handleGameEvents()
+
+  console.log(gameStore.games)
 })
 
 const logout = () => {

@@ -1,10 +1,11 @@
 import { defineStore } from 'pinia'
 import { inject, ref } from 'vue'
 import { useAuthStore } from './authStore'
+import { useGameStore } from './gameStore'
 export const useSocketStore = defineStore('socket', () => {
   const socket = inject('socket')
-  //let socket = null
   const authStore = useAuthStore()
+  const gameStore = useGameStore()
   const joined = ref(false)
 
   const emitJoin = (user) => {
@@ -13,11 +14,13 @@ export const useSocketStore = defineStore('socket', () => {
     socket.emit('join', user)
     joined.value = true
   }
+
   const emitLeave = () => {
     socket.emit('leave')
     console.log(`[Socket] Leaving Server`)
     joined.value = false
   }
+
   const handleConnection = () => {
 
     if (socket.connected) {
@@ -45,6 +48,10 @@ export const useSocketStore = defineStore('socket', () => {
     socket.emit('get-games')
   }
 
+  const cancelMatchMaking = (user) => {
+    socket.emit('cancel-game', user)
+  }
+
   const handleGameEvents = () => {
     socket.on('games', (games) => {
       console.log(`[Socket] server emited games | game count ${games.length}`)
@@ -67,6 +74,8 @@ export const useSocketStore = defineStore('socket', () => {
     handleConnection,
     emitGetGames,
     handleGameEvents,
+    cancelMatchMaking,
+    emitJoinGame,
     joined,
   }
 })

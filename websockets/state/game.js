@@ -3,6 +3,26 @@
 const games = new Map()
 let currentGameID = 0
 
+const SUITS = [
+    { key: 'hearts', name: 'Copas', symbol: '♥' },
+    { key: 'diamonds', name: 'Ouros', symbol: '♦' },
+    { key: 'clubs', name: 'Paus', symbol: '♣' },
+    { key: 'spades', name: 'Espadas', symbol: '♠' }
+]
+
+const RANKS = [
+    { rank: 'A', name: 'Ás', points: 11 },
+    { rank: '7', name: '7', points: 10 },
+    { rank: 'K', name: 'Rei', points: 4 },
+    { rank: 'J', name: 'Valete', points: 3 },
+    { rank: 'Q', name: 'Rainha', points: 2 },
+    { rank: '6', name: '6', points: 0 },
+    { rank: '5', name: '5', points: 0 },
+    { rank: '4', name: '4', points: 0 },
+    { rank: '3', name: '3', points: 0 },
+    { rank: '2', name: '2', points: 0 }
+]
+
 export const createGame = (game_type, user) => {
     currentGameID++
 
@@ -45,28 +65,24 @@ export const createGame = (game_type, user) => {
 }
 
 export const getGames = () => {
-    return games.values().toArray()
+    return Array.from(games.values())
 }
 
-const SUITS = [
-    { key: 'hearts', name: 'Copas', symbol: '♥' },
-    { key: 'diamonds', name: 'Ouros', symbol: '♦' },
-    { key: 'clubs', name: 'Paus', symbol: '♣' },
-    { key: 'spades', name: 'Espadas', symbol: '♠' }
-]
+export const joinGame = (gameID, player2) => {
+    games.get(gameID).player2 = player2
+}
 
-const RANKS = [
-    { rank: 'A', name: 'Ás', points: 11 },
-    { rank: '7', name: '7', points: 10 },
-    { rank: 'K', name: 'Rei', points: 4 },
-    { rank: 'J', name: 'Valete', points: 3 },
-    { rank: 'Q', name: 'Rainha', points: 2 },
-    { rank: '6', name: '6', points: 0 },
-    { rank: '5', name: '5', points: 0 },
-    { rank: '4', name: '4', points: 0 },
-    { rank: '3', name: '3', points: 0 },
-    { rank: '2', name: '2', points: 0 }
-]
+export const cancelGamesByUser = (userId) => {
+    let removedCount = 0
+    for (const [gameId, game] of games.entries()) {
+        if (game.creator === userId && !game.started) {
+            games.delete(gameId)
+            removedCount++
+            console.log(`[Game] Canceled game ${gameId} by user ${userId}`)
+        }
+    }
+    return removedCount
+}
 
 function generateDeck() {
     const newDeck = []
@@ -144,7 +160,7 @@ function determineTrickWinner(card1, card2) {
     return round_starter.value
 }
 
-export function playCard(card, player) {
+function playCard(card, player) {
     if (game_over.value) return false
     if (turn_player.value !== player) return false
 
@@ -291,10 +307,5 @@ function getGameResult() {
     }
 }
 
-//
-
-export const joinGame = (gameID, player2) => {
-    games.get(gameID).player2 = player2
-}
 
 
