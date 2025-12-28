@@ -1,0 +1,383 @@
+import { defineStore } from 'pinia'
+import { ref, inject, computed } from 'vue'
+import { useAuthStore } from './authStore'
+
+export const useGameStore = defineStore('game', () => {
+  const hand_player1 = ref([])
+  const hand_player2 = ref([])
+  const deck = ref([])
+  const deck_index = ref(0)
+  const card_played_player1 = ref(null)
+  const card_played_player2 = ref(null)
+  const turn_player = ref(null)
+  const trump_suit = ref(null)
+  const trump_card = ref(null)
+  const game_over = ref(false)
+  const points_player1 = ref(0)
+  const points_player2 = ref(0)
+  const winner = ref(null)
+  const current_round = ref(0)
+  const total_rounds = ref(20)
+  const round_starter = ref(null)
+
+  const game_type = ref(9) // 3 ou 9
+  const game_mode = ref('game') // 'game' ou 'match'
+  const player1_id = ref(null)
+  const player2_id = ref(null)
+
+  const authStore = useAuthStore()
+  const socket = inject('socket')
+
+  const SUITS = [
+    { key: 'hearts', name: 'Copas', symbol: '♥' },
+    { key: 'diamonds', name: 'Ouros', symbol: '♦' },
+    { key: 'clubs', name: 'Paus', symbol: '♣' },
+    { key: 'spades', name: 'Espadas', symbol: '♠' }
+  ]
+
+  const RANKS = [
+    { rank: 'A', name: 'Ás', points: 11 },
+    { rank: '7', name: '7', points: 10 },
+    { rank: 'K', name: 'Rei', points: 4 },
+    { rank: 'J', name: 'Valete', points: 3 },
+    { rank: 'Q', name: 'Rainha', points: 2 },
+    { rank: '6', name: '6', points: 0 },
+    { rank: '5', name: '5', points: 0 },
+    { rank: '4', name: '4', points: 0 },
+    { rank: '3', name: '3', points: 0 },
+    { rank: '2', name: '2', points: 0 }
+  ]
+
+  function generateDeck() {
+    const newDeck = []
+    for (const suit of SUITS) {
+      for (let i = 0; i < RANKS.length; i++) {
+        const rank = RANKS[i]
+        newDeck.push({
+          id: `${rank.rank}_of_${suit.key}`,
+          suit: suit.key,
+          suitSymbol: suit.symbol,
+          rank: rank.rank,
+          name: `${rank.name} de ${suit.name}`,
+          points: rank.points,
+          order: i
+        })
+      }
+    }
+    return newDeck
+  }
+
+  function shuffle(array) {
+    const a = array.slice()
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+        ;[a[i], a[j]] = [a[j], a[i]]
+    }
+    return a
+  }
+
+  function startGame(type = 3, mode = 'game') {
+    const newDeck = shuffle(generateDeck())
+    deck.value = newDeck
+
+    // Guarda o tipo e modo do jogo
+    game_type.value = type
+    game_mode.value = mode
+
+    // Set trump card (last card in deck)
+    trump_card.value = deck.value[deck.value.length - 1]
+    trump_suit.value = trump_card.value.suit
+
+    // Deal 3 cards to each player
+    hand_player1.value = deck.value.slice(0, type)
+    hand_player2.value = deck.value.slice(type, type * 2)
+    deck_index.value = type * 2 // Next card to draw
+
+    // Random first player
+    turn_player.value = Math.random() < 0.5 ? 1 : 2
+    round_starter.value = turn_player.value
+
+    // Reset game state
+    current_round.value = 0
+    points_player1.value = 0
+    points_player2.value = 0
+    card_played_player1.value = null
+    card_played_player2.value = null
+    game_over.value = false
+    winner.value = null
+
+    console.log(`Game started! Bisca de ${type} | Mode: ${mode}`)
+    console.log(`Game started! Player ${turn_player.value} goes first`)
+    console.log(`Trump card: ${trump_card.value.name}`)
+  }
+
+  function determineTrickWinner(card1, card2) {
+    // Same suit: higher rank wins (lower order = higher rank)
+    if (card1.suit === card2.suit) {
+      return card1.order < card2.order ? 1 : 2
+    }
+    // Player 1's card is trump
+    if (card1.suit === trump_suit.value) return 1
+    // Player 2's card is trump
+    if (card2.suit === trump_suit.value) return 2
+    // No trump: first player wins
+    return round_starter.value
+  }
+
+  function playCard(card, player) {
+    if (game_over.value) return false
+    if (turn_player.value !== player) return false
+
+    const hand = player === 1 ? hand_player1.value : hand_player2.value
+    const idx = hand.findIndex(c => c.id === card.id)
+    if (idx === -1) return false
+
+    // Remove card from hand
+    hand.splice(idx, 1)
+
+    // Place card on table
+    if (player === 1) {
+      card_played_player1.value = card
+      console.log(`Player 1 played: ${card.name}`)
+    } else {
+      card_played_player2.value = card
+      console.log(`Player 2 (Bot) played: ${card.name}`)
+    }
+
+    // Check if round is complete
+    if (card_played_player1.value && card_played_player2.value) {
+      resolveRound()
+    } else {
+      // Switch turn to other player
+      turn_player.value = player === 1 ? 2 : 1
+      console.log(`Turn switched to Player ${turn_player.value}`)
+    }
+
+    return true
+  }
+
+  function resolveRound() {
+    const c1 = card_played_player1.value
+    const c2 = card_played_player2.value
+    if (!c1 || !c2) return
+
+    console.log(`Resolving round ${current_round.value + 1}...`)
+
+    const winnerPlayer = determineTrickWinner(c1, c2)
+    const totalPoints = (c1.points || 0) + (c2.points || 0)
+
+    if (winnerPlayer === 1) {
+      points_player1.value += totalPoints
+    } else {
+      points_player2.value += totalPoints
+    }
+
+    console.log(`Player ${winnerPlayer} wins the round! (+${totalPoints} points)`)
+    console.log(`Score: P1=${points_player1.value} P2=${points_player2.value}`)
+
+    current_round.value++
+
+    // Wait before drawing cards and starting next round
+    setTimeout(() => {
+      drawCards(winnerPlayer)
+      startNextRound(winnerPlayer)
+    }, 2000)
+  }
+
+  function drawCards(winnerPlayer) {
+    // Check if there are cards left to draw
+    if (deck_index.value >= deck.value.length) {
+      console.log('No more cards to draw')
+      return
+    }
+
+    // Winner draws first
+    if (winnerPlayer === 1) {
+      if (deck_index.value < deck.value.length) {
+        hand_player1.value.push(deck.value[deck_index.value])
+        console.log(`Player 1 draws: ${deck.value[deck_index.value].name}`)
+        deck_index.value++
+      }
+      if (deck_index.value < deck.value.length) {
+        hand_player2.value.push(deck.value[deck_index.value])
+        console.log(`Player 2 draws: ${deck.value[deck_index.value].name}`)
+        deck_index.value++
+      }
+    } else {
+      if (deck_index.value < deck.value.length) {
+        hand_player2.value.push(deck.value[deck_index.value])
+        console.log(`Player 2 draws: ${deck.value[deck_index.value].name}`)
+        deck_index.value++
+      }
+      if (deck_index.value < deck.value.length) {
+        hand_player1.value.push(deck.value[deck_index.value])
+        console.log(`Player 1 draws: ${deck.value[deck_index.value].name}`)
+        deck_index.value++
+      }
+    }
+  }
+
+  function startNextRound(lastWinner) {
+    // Check if game is over (no cards left in both hands)
+    if (hand_player1.value.length === 0 && hand_player2.value.length === 0) {
+      endGame()
+      return
+    }
+
+    // Clear table
+    card_played_player1.value = null
+    card_played_player2.value = null
+
+    // Winner of last round starts next round
+    turn_player.value = lastWinner
+    round_starter.value = lastWinner
+
+    console.log(`Starting round ${current_round.value + 1}`)
+    console.log(`Player ${turn_player.value} starts this round`)
+    console.log(`Cards in deck: ${deck.value.length - deck_index.value}`)
+
+    // If bot starts, trigger bot play
+    if (turn_player.value === 2) {
+      setTimeout(() => botPlay(), 800)
+    }
+  }
+
+  function botPlay() {
+    if (game_over.value || turn_player.value !== 2) {
+      console.log(`Bot cannot play: game_over=${game_over.value}, turn=${turn_player.value}`)
+      return
+    }
+
+    const hand = hand_player2.value
+    if (!hand.length) {
+      console.log('Bot has no cards!')
+      return
+    }
+
+    let chosen = null
+
+    if (card_played_player1.value === null) {
+      // Bot is starting: play lowest non-trump card
+      const nonTrump = hand.filter(c => c.suit !== trump_suit.value)
+      const pool = nonTrump.length ? nonTrump : hand
+      chosen = pool.sort((a, b) => a.points - b.points)[0]
+      console.log('Bot is starting the round')
+    } else {
+      // Bot is responding: try to win if possible
+      const c1 = card_played_player1.value
+      const canWin = hand.filter(c => determineTrickWinner(c1, c) === 2)
+
+      if (canWin.length > 0) {
+        // Play weakest winning card
+        chosen = canWin.sort((a, b) => b.order - a.order)[0]
+        console.log('Bot trying to win the trick')
+      } else {
+        // Can't win: play lowest point card
+        chosen = hand.sort((a, b) => a.points - b.points)[0]
+        console.log('Bot cannot win, playing lowest card')
+      }
+    }
+
+    if (chosen) {
+      playCard(chosen, 2)
+    }
+  }
+
+  function endGame() {
+    game_over.value = true
+
+    if (points_player1.value > points_player2.value) {
+      winner.value = 1
+    } else if (points_player2.value > points_player1.value) {
+      winner.value = 2
+    } else {
+      winner.value = 'draw'
+    }
+
+    console.log('Game Over!')
+    console.log(`Final Score: P1=${points_player1.value} P2=${points_player2.value}`)
+    console.log(`Winner: ${winner.value}`)
+  }
+
+  function getGameResult() {
+    return {
+      winner: winner.value === 'draw' ? null : winner.value,
+      points_player1: points_player1.value,
+      points_player2: points_player2.value,
+      is_draw: winner.value === 'draw'
+    }
+  }
+
+  // ----- ---------------------------- -----------
+  // ----- Added for multiplayer games: -----------
+  // ----- ---------------------------- -----------
+
+  const games = ref([])
+
+  const createGame = (gameType = '3') => {
+    if (!useAuthStore.currentUser) {
+      toast.error('You must be logged in to create a game')
+      return
+    }
+
+    if (!socket || !socket.connected) {
+      toast.error('Not connected to server. Please refresh the page.')
+      return
+    }
+
+    socket.emit('create-game', gameType)
+  }
+
+  const setGames = (newGames) => {
+    games.value = newGames
+    console.log(`[Game] Games changed | game count ${games.value.length}`)
+  }
+
+  const myGames = computed(() => {
+    return games.value.filter((game) => game.creator == authStore.currentUser.id)
+  })
+
+  const availableGames = computed(() => {
+    return games.value.filter((game) => game.creator != authStore.currentUser.id)
+  })
+
+  const multiplayerGame = ref({})
+
+  const setMultiplayerGame = (game) => {
+    multiplayerGame.value = game
+    console.log(`[Game] Multiplayer Game changed | game moves ${game.moves}`)
+  }
+
+  return {
+    hand_player1,
+    hand_player2,
+    card_played_player1,
+    card_played_player2,
+    trump_suit,
+    trump_card,
+    turn_player,
+    game_over,
+    points_player1,
+    points_player2,
+    winner,
+    current_round,
+    deck_index,
+    deck,
+    startGame,
+    playCard,
+    botPlay,
+    getGameResult,
+
+    // ----- ---------------------------- -----------
+    // ----- Added for multiplayer games: -----------
+    // ----- ---------------------------- -----------
+
+    games,
+    createGame,
+    setGames,
+    myGames,
+    availableGames,
+    multiplayerGame,
+    setMultiplayerGame,
+  }
+})

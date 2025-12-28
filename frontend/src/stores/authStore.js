@@ -4,12 +4,14 @@ import { useApiStore } from "./api";
 export const useAuthStore = defineStore("auth",{
     state:() => ({
         user:null,
-        isAutenticated : false,
+        isAuthenticated : false,
     }), 
 
     getters:{
         isAdmin: (state) => state.user?.type === 'A',
         isPlayer: (state) => state.user?.type === 'P',
+        isLoggedIn: (state) => state.isAuthenticated,
+        currentUser: (state) => state.user, 
     },
 
     actions : {
@@ -17,12 +19,19 @@ export const useAuthStore = defineStore("auth",{
         async initAuth(){
             const apiStore = useApiStore(); 
 
-            if (!apiStore.token) return;
+            // Initialize the apiStore first to load the token
+            await apiStore.initAuth();
+            
+            // Now check if there's a token
+            if (!apiStore.token) {
+                console.log('[AuthStore] No token found');
+                return;
+            }
 
             try {
                 const res = await apiStore.fetchProfile();
                 this.user = res.data.user;
-                this.isAutenticated = true;
+                this.isAuthenticated = true;
             } catch (e) {
                 console.error('Erro ao inicializar autenticação:', e);
                 this.clearAuth();
@@ -52,7 +61,7 @@ export const useAuthStore = defineStore("auth",{
                 const apiStore = useApiStore();
                 const res = await apiStore.register(data);
                 this.user = res.data.user;
-                this.isAutenticated = true;
+                this.isAuthenticated = true;
 
                 return {success : true, message : res.data.message};
 
@@ -71,7 +80,7 @@ export const useAuthStore = defineStore("auth",{
                 const res = await apiStore.fetchProfile();
 
                 this.user = res.data.user;
-                this.isAutenticated = true;
+                this.isAuthenticated = true;
 
             } catch (error) {
                 this.clearAuth();
@@ -96,6 +105,7 @@ export const useAuthStore = defineStore("auth",{
             try {          
                 const apiStore = useApiStore();
                 await apiStore.logout();
+                this.clearAuth();
             } catch(error) {
                 console.error('Erro ao fazer logout:', error);
                 this.clearAuth();
@@ -119,7 +129,7 @@ export const useAuthStore = defineStore("auth",{
             const apiStore = useApiStore();
             apiStore.clearAuth();
             this.user = null;
-            this.isAutenticated = false;            
+            this.isAuthenticated = false;            
         }
 }
 

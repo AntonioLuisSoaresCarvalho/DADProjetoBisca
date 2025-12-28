@@ -1,0 +1,67 @@
+import { defineStore } from 'pinia'
+import { inject, ref } from 'vue'
+import { useAuthStore } from './authStore'
+export const useSocketStore = defineStore('socket', () => {
+  const socket = inject('socket')
+  //let socket = null
+  const authStore = useAuthStore()
+  const joined = ref(false)
+
+  const emitGetGames = () => {
+    socket.emit('get-games')
+  }
+
+  const handleGameEvents = () => {
+
+    socket.on('games', (games) => {
+      console.log(`[Socket] server emited games | game count ${games.length}`)
+      gameStore.setGames(games)
+    })
+    socket.on('game-change', (game) => {
+        gameStore.setMultiplayerGame(game)
+    })
+  }
+
+  const emitJoin = (user) => {
+    if (joined.value) return
+    console.log(`[Socket] Joining Server`)
+    socket.emit('join', user)
+    joined.value = true
+  }
+  const emitLeave = () => {
+    socket.emit('leave')
+    console.log(`[Socket] Leaving Server`)
+    joined.value = false
+  }
+  const handleConnection = () => {
+
+    if (socket.connected) {
+      console.log('[Socket] Already connected on mount')
+      if (authStore.isLoggedIn && !joined.value) {
+        emitJoin(authStore.currentUser)
+      }
+    }
+
+    socket.on('connect', () => {
+      console.log(`[Socket] Connected -- ${socket.id}`)
+      if (authStore.isLoggedIn && !joined.value) {
+        emitJoin(authStore.currentUser)
+      }
+    })
+
+    socket.on('disconnect', () => {
+      joined.value = false
+      console.log(`[Socket] Disconnected -- ${socket.id}`)
+    })
+    
+  }
+  return {
+    socket,
+    emitJoin,
+    emitLeave,
+    handleConnection,
+    emitGetGames,
+    handleGameEvents,
+    joined,
+  }
+})
