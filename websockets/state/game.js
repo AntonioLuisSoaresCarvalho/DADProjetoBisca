@@ -1,4 +1,4 @@
-import { triggerPlayCardDelay } from "../events/game.js"
+//import { triggerPlayCardDelay } from "../events/game.js"
 
 const games = new Map()
 let currentGameID = 0
@@ -18,18 +18,18 @@ export const createGame = (game_type, user) => {
         //
         hand_player1: [],
         hand_player2: [],
-        deck_index = null,
-        card_played_player1 = null,
-        card_played_player2 = null,
-        turn_player = null,
-        trump_suit = null,
-        game_over = null,
-        points_player1 = 0,
-        points_player2 = 0,
-        winner = null,
-        current_round = 0,
-        round_starter = null,
-        game_mode = 'game'
+        deck_index: null,
+        card_played_player1: null,
+        card_played_player2: null,
+        turn_player: null,
+        trump_suit: null,
+        game_over: null,
+        points_player1: 0,
+        points_player2: 0,
+        winner: null,
+        current_round: 0,
+        round_starter: null,
+        game_mode: 'game',
         //
         playedCards: [],
         started: false,
@@ -144,7 +144,7 @@ function determineTrickWinner(card1, card2) {
     return round_starter.value
 }
 
-function playCard(card, player) {
+export function playCard(card, player) {
     if (game_over.value) return false
     if (turn_player.value !== player) return false
 

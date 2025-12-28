@@ -7,21 +7,6 @@ export const useSocketStore = defineStore('socket', () => {
   const authStore = useAuthStore()
   const joined = ref(false)
 
-  const emitGetGames = () => {
-    socket.emit('get-games')
-  }
-
-  const handleGameEvents = () => {
-
-    socket.on('games', (games) => {
-      console.log(`[Socket] server emited games | game count ${games.length}`)
-      gameStore.setGames(games)
-    })
-    socket.on('game-change', (game) => {
-        gameStore.setMultiplayerGame(game)
-    })
-  }
-
   const emitJoin = (user) => {
     if (joined.value) return
     console.log(`[Socket] Joining Server`)
@@ -54,6 +39,26 @@ export const useSocketStore = defineStore('socket', () => {
       console.log(`[Socket] Disconnected -- ${socket.id}`)
     })
     
+  }
+
+  const emitGetGames = () => {
+    socket.emit('get-games')
+  }
+
+  const handleGameEvents = () => {
+    socket.on('games', (games) => {
+      console.log(`[Socket] server emited games | game count ${games.length}`)
+      gameStore.setGames(games) // Import and instantiate the game store
+    })
+
+    socket.on('game-change', (game) => {
+        gameStore.setMultiplayerGame(game)
+    })
+  }
+
+  const emitJoinGame = (game) => {
+    console.log(`[Socket] Joining Game ${game.id}`)
+    socket.emit('join-game', game.id, authStore.currentUser.id)
   }
   return {
     socket,

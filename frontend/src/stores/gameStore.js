@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, inject, computed } from 'vue'
 import { useAuthStore } from './authStore'
+import { toast } from 'vue-sonner'
 
 export const useGameStore = defineStore('game', () => {
   const hand_player1 = ref([])
@@ -24,6 +25,9 @@ export const useGameStore = defineStore('game', () => {
   const game_mode = ref('game') // 'game' ou 'match'
   const player1_id = ref(null)
   const player2_id = ref(null)
+
+  const types_of_games = [3, 9]
+  const types_of_matches = ['game', 'match']
 
   const authStore = useAuthStore()
   const socket = inject('socket')
@@ -315,7 +319,7 @@ export const useGameStore = defineStore('game', () => {
   const games = ref([])
 
   const createGame = (gameType = '3') => {
-    if (!useAuthStore.currentUser) {
+    if (!authStore.currentUser) {
       toast.error('You must be logged in to create a game')
       return
     }
@@ -367,6 +371,8 @@ export const useGameStore = defineStore('game', () => {
     playCard,
     botPlay,
     getGameResult,
+    types_of_games,
+    types_of_matches,
 
     // ----- ---------------------------- -----------
     // ----- Added for multiplayer games: -----------

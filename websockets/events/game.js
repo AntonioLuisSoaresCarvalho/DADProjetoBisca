@@ -4,7 +4,13 @@ import { createGame, getGames, joinGame, playCard} from "../state/game.js"
 
 export const handleGameEvents = (io, socket) => {
     socket.on("create-game", (game_type) => {
-        const user ? getUser(socket.id)
+        const user = getUser(socket.id)
+
+        if (!user) {
+            console.error('[Game] User not found for socket:', socket.id)
+            return
+        }
+
         const game = createGame(game_type, user)
         socket.join(`game-${game.id}`)
         console.log(`[Game] ${user.name} created a new game - ID: ${game.id}`)
