@@ -225,7 +225,8 @@ const formatDuration = (seconds) => {
 }
 
 const getAvatarUrl = (filename) => {
-  if (!filename) return '/default-avatar.png'
-  return `/storage/avatars/${filename}`
-}
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+  if (!filename) return `${apiBaseUrl}/storage/photos_avatars//anonymous.png`;
+  return `${apiBaseUrl}/storage/photos_avatars/${filename}`;
+};
 </script>

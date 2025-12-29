@@ -13,6 +13,12 @@ import SinglePlayerView from "@/views/game/SinglePlayerPage.vue"
 import MultiplayerLobbyPage from "@/pages/MultiplayerLobbyPage.vue"
 import MultiplayerGamePage from "@/pages/MultiplayerGamePage.vue"
 
+import LeaderboardView from "@/views/leaderboard/LeaderboardView.vue";
+import GameHistoryView from "@/views/history/games/GameHistoryView.vue";
+import MatchHistoryView from "@/views/history/matches/MatchHistoryView.vue";
+import GameDetailsView from "@/views/history/games/GameDetailsView.vue";
+import MatchDetailsView from "@/views/history/matches/MatchDetailsView.vue";
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -47,6 +53,46 @@ const router = createRouter({
       component: MultiplayerGamePage,
       meta: { requiresAuth: true }
     },
+
+    {
+      path: '/leaderboard',
+      component: LeaderboardView,
+    },
+
+    {
+    path: '/history/games',
+    name: 'GameHistory',
+    component: GameHistoryView,
+    meta: { requiresAuth: true, requirePlayer: true }
+  },
+
+  {
+    path: '/history/matches',
+    name: 'MatchHistory',
+    component: MatchHistoryView,
+    meta: { requiresAuth: true, requirePlayer: true }
+  },
+
+  {
+    path: '/history/games/:id',  // ← Changed to :id
+    name: 'GameDetails',  // ← Added name
+    component: GameDetailsView,
+    meta: { requiresAuth: true, requirePlayer: true, title: 'Game Details' }
+  },
+
+  {
+    path: '/history/matches/:id',  // ← Changed to :id
+    name: 'MatchDetails',  // ← Added name
+    component: MatchDetailsView,  // ← Changed from GameDetailsView
+    meta: { requiresAuth: true, requirePlayer: true, title: 'Match Details' }
+  },
+
+    {
+      path: '/admin',
+      name: 'Admin',
+      component: AdminView,
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
   ],
 })
 
@@ -58,17 +104,17 @@ router.beforeEach(async (to) => {
   if (api.token && !auth.user) {
     await auth.fetchProfile()
   }
-  
+
   // Check if route requires authentication
   if (to.meta.requiresAuth && !api.token) {
     return "/login"
   }
-  
+
   // Check if route requires player type
   if (to.meta.requirePlayer && auth.user?.type !== 'P') {
     return "/"
   }
-  
+
   // Check if route requires admin type
   if (to.meta.requiresAdmin && auth.user?.type !== 'A') {
     return "/"

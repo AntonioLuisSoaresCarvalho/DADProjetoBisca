@@ -125,7 +125,7 @@
                     :key="g.id"
                     class="flex justify-between items-center bg-green-50 border border-green-200 p-3 rounded-xl"
                   >
-                    <span class="font-semibold text-green-900">Game #{{ g.game_number }}</span>
+                    <span class="font-semibold text-green-900">Game #{{ g.id }}</span>
 
                     <router-link
                       :to="{ name: 'GameDetails', params: { id: g.id } }"
@@ -205,16 +205,18 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useHistoryStore } from '@/stores/history'
+import { useAuthStore } from '@/stores/authStore'
 
 const route = useRoute()
 const router = useRouter()
 const historyStore = useHistoryStore()
+const authStore = useAuthStore()
 
 const match = ref(null)
 const currentUser = ref(null)
 
 onMounted(() => {
-  currentUser.value = JSON.parse(localStorage.getItem('user') || '{}')
+  currentUser.value = authStore.currentUser
   loadMatch()
 })
 
@@ -257,7 +259,8 @@ const formatDuration = (seconds) => {
 }
 
 const getAvatarUrl = (filename) => {
-  if (!filename) return '/default-avatar.png'
-  return `/storage/avatars/${filename}`
-}
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+  if (!filename) return `${apiBaseUrl}/storage/photos_avatars//anonymous.png`;
+  return `${apiBaseUrl}/storage/photos_avatars/${filename}`;
+};
 </script>

@@ -43,12 +43,12 @@ export const useHistoryStore = defineStore("history",{
 
       try {
         const response = await api.getUserGames(params)
-        this.games = response.data.data
+        this.games = response.data
         this.gamesPagination = {
-          current_page: response.data.current_page,
-          last_page: response.data.last_page,
-          per_page: response.data.per_page,
-          total: response.data.total
+          current_page: response.current_page,
+          last_page: response.last_page,
+          per_page: response.per_page,
+          total: response.total
         }
       } catch (error) {
         this.gamesError = error.response?.data?.message || 'Failed to load games'
@@ -66,8 +66,8 @@ export const useHistoryStore = defineStore("history",{
 
       try {
         const response = await api.getGameDetails(gameId)
-        this.currentGame = response.data.game
-        return response.data.game
+        this.currentGame = response.game
+        return response.game
       } catch (error) {
         this.gamesError = error.response?.data?.message || 'Failed to load game details'
         console.error('Error fetching game details:', error)
@@ -111,12 +111,12 @@ export const useHistoryStore = defineStore("history",{
 
       try {
         const response = await api.getUserMatches(params)
-        this.matches = response.data.data
+        this.matches = response.data
         this.matchesPagination = {
-          current_page: response.data.current_page,
-          last_page: response.data.last_page,
-          per_page: response.data.per_page,
-          total: response.data.total
+          current_page: response.current_page,
+          last_page: response.last_page,
+          per_page: response.per_page,
+          total: response.total
         }
       } catch (error) {
         this.matchesError = error.response?.data?.message || 'Failed to load matches'
@@ -134,8 +134,8 @@ export const useHistoryStore = defineStore("history",{
 
       try {
         const response = await api.getMatchDetails(matchId)
-        this.currentMatch = response.data.match
-        return response.data.match
+        this.currentMatch = response.match
+        return response.match
       } catch (error) {
         this.matchesError = error.response?.data?.message || 'Failed to load match details'
         console.error('Error fetching match details:', error)

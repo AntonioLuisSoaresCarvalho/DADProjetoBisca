@@ -3,7 +3,7 @@
 
     <!-- TABS -->
     <div class="flex gap-2 mb-6 border-b border-green-500 pb-2">
-      <button 
+      <button
         v-if="auth.user"
         class="px-4 py-2 font-semibold rounded-t-md border-b-4 transition
           text-white bg-green-700 border-green-700
@@ -14,7 +14,7 @@
         My Stats
       </button>
 
-      <button 
+      <button
         v-for="tab in [
           { key:'games', label:'Top Games'},
           { key:'matches', label:'Top Matches'},
@@ -36,7 +36,7 @@
     <div class="flex items-center gap-3 mb-6">
       <label class="font-semibold text-white">Variant:</label>
 
-      <select 
+      <select
         v-model="board.variantFilter"
         @change="board.loadData(!!auth.user)"
         class="bg-white text-green-800 border border-green-400 rounded-lg p-2"
@@ -152,8 +152,8 @@
 
           <tbody class="bg-green-900">
 
-            <tr 
-              v-for="leader in board.leaders" 
+            <tr
+              v-for="leader in board.leaders"
               :key="leader.rank"
               class="border-b border-green-700 hover:bg-green-800 transition"
             >
@@ -162,9 +162,9 @@
               </td>
 
               <td class="p-4 flex items-center gap-3">
-                <img 
-                  v-if="leader.photo" 
-                  :src="`/storage/photos/${leader.photo}`" 
+                <img
+                  v-if="leader.photo"
+                  :src="leader.photo"
                   class="w-10 h-10 rounded-full border border-green-400 object-cover"
                 >
                 <div v-else class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-lg font-bold">

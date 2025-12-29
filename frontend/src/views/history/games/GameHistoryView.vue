@@ -106,13 +106,22 @@
           <div class="grid md:grid-cols-3 gap-4">
 
             <!-- OPPONENT -->
-            <div class="flex items-center gap-3">
+            <div v-if="game.opponent" class="flex items-center gap-3">
               <img
                 :src="getAvatarUrl(game.opponent.photo_avatar_filename)"
                 class="w-12 h-12 rounded-full border border-green-300 object-cover"
               />
               <div>
                 <p class="font-bold">{{ game.opponent.nickname }}</p>
+                <p class="text-sm opacity-70">Oponente</p>
+              </div>
+            </div>
+            <div v-else class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-full border border-green-300 bg-gray-400 flex items-center justify-center">
+                <span class="text-white font-bold">?</span>
+              </div>
+              <div>
+                <p class="font-bold text-gray-500">Utilizador Desconhecido</p>
                 <p class="text-sm opacity-70">Oponente</p>
               </div>
             </div>
@@ -228,7 +237,8 @@ const formatDuration = (seconds) => {
 };
 
 const getAvatarUrl = (filename) => {
-  if (!filename) return "/default-avatar.png";
-  return `/storage/avatars/${filename}`;
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+  if (!filename) return `${apiBaseUrl}/storage/photos_avatars//anonymous.png`;
+  return `${apiBaseUrl}/storage/photos_avatars/${filename}`;
 };
 </script>

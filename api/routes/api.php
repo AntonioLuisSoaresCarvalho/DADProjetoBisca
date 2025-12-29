@@ -6,6 +6,9 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CoinController;
 use App\Http\Controllers\CoinPurchaseController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\LeaderboardController;
+//Game History controla a history de games e matches
+use App\Http\Controllers\GameHistoryController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -35,5 +38,31 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/transactions', [AdminController::class, 'getAllTransactions']);
     Route::get('/admin/games', [AdminController::class, 'getAllGames']);
     Route::get('/admin/statistics', [AdminController::class, 'getStatistics']);
+
+    Route::prefix('history')->group(function () {
+        // History dos games do user
+        Route::get('/games', [GameHistoryController::class, 'getUserGames']);
+        Route::get('/games/{id}', [GameHistoryController::class, 'getGameDetails']);
+
+        // History dos matches do user
+        Route::get('/matches', [GameHistoryController::class, 'getUserMatches']);
+        Route::get('/matches/{id}', [GameHistoryController::class, 'getMatchDetails']);
+    });
+
+        // Game/Match History só do admin
+        Route::get('/admin/history/games/{userId}', [GameHistoryController::class, 'getPlayerGames']);
+        Route::get('/admin/history/matches/{userId}', [GameHistoryController::class, 'getPlayerMatches']);
+
+        // Detailed Game/Match History, o admin tem acesso a todos
+        Route::get('/admin/games/{id}', [GameHistoryController::class, 'getGameDetails']);
+        Route::get('/admin/matches/{id}', [GameHistoryController::class, 'getMatchDetails']);
+
+    Route::get('/leaderboards/personal', [LeaderboardController::class, 'personal']);
+    Route::get('/admin/users/{user}/leaderboards', [LeaderboardController::class, 'userStats']);
+
+    Route::get('/leaderboards/global/games', [LeaderboardController::class, 'globalGames']);
+    Route::get('/leaderboards/global/matches', [LeaderboardController::class, 'globalMatches']);
+    Route::get('/leaderboards/global/capotes', [LeaderboardController::class, 'globalCapotes']);
+    Route::get('/leaderboards/global/bandeiras', [LeaderboardController::class, 'globalBandeiras']);
 
 });

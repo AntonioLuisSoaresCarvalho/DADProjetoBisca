@@ -18,13 +18,13 @@ class LeaderboardController extends Controller
     public function personal(Request $request)
     {
         $user = Auth::user();
-        
+
         // Game statistics
         $gameStats = $this->calculateGameStats($user->id, $request->type);
-        
+
         // Match statistics
         $matchStats = $this->calculateMatchStats($user->id, $request->type);
-        
+
         return response()->json([
             'games' => $gameStats,
             'matches' => $matchStats,
@@ -41,13 +41,13 @@ class LeaderboardController extends Controller
                 $q->where('player1_user_id', $userId)
                   ->orWhere('player2_user_id', $userId);
             });
-        
+
         if ($type) {
             $query->where('type', $type);
         }
 
         $games = $query->get();
-        
+
         $stats = [
             'total' => $games->count(),
             'wins' => 0,
@@ -63,7 +63,7 @@ class LeaderboardController extends Controller
             $isPlayer1 = $game->player1_user_id == $userId;
             $myPoints = $isPlayer1 ? $game->player1_points : $game->player2_points;
             $opponentPoints = $isPlayer1 ? $game->player2_points : $game->player1_points;
-            
+
             $stats['total_points_scored'] += $myPoints;
             $stats['total_points_conceded'] += $opponentPoints;
 
@@ -71,7 +71,7 @@ class LeaderboardController extends Controller
                 $stats['draws']++;
             } elseif ($game->winner_user_id == $userId) {
                 $stats['wins']++;
-                
+
                 if ($myPoints == 120) {
                     $stats['bandeiras']++;
                 } elseif ($myPoints >= 91) {
@@ -83,8 +83,8 @@ class LeaderboardController extends Controller
         }
 
         // Calculate win rate
-        $stats['win_rate'] = $stats['total'] > 0 
-            ? round(($stats['wins'] / $stats['total']) * 100, 2) 
+        $stats['win_rate'] = $stats['total'] > 0
+            ? round(($stats['wins'] / $stats['total']) * 100, 2)
             : 0;
 
         return $stats;
@@ -100,13 +100,13 @@ class LeaderboardController extends Controller
                 $q->where('player1_user_id', $userId)
                   ->orWhere('player2_user_id', $userId);
             });
-        
+
         if ($type) {
             $query->where('type', $type);
         }
 
         $matches = $query->get();
-        
+
         $stats = [
             'total' => $matches->count(),
             'wins' => 0,
@@ -119,7 +119,7 @@ class LeaderboardController extends Controller
             $isPlayer1 = $match->player1_user_id == $userId;
             $myMarks = $isPlayer1 ? $match->player1_marks : $match->player2_marks;
             $opponentMarks = $isPlayer1 ? $match->player2_marks : $match->player1_marks;
-            
+
             $stats['total_marks_scored'] += $myMarks;
             $stats['total_marks_conceded'] += $opponentMarks;
 
@@ -130,8 +130,8 @@ class LeaderboardController extends Controller
             }
         }
 
-        $stats['win_rate'] = $stats['total'] > 0 
-            ? round(($stats['wins'] / $stats['total']) * 100, 2) 
+        $stats['win_rate'] = $stats['total'] > 0
+            ? round(($stats['wins'] / $stats['total']) * 100, 2)
             : 0;
 
         return $stats;
@@ -143,16 +143,16 @@ class LeaderboardController extends Controller
     public function globalGames(Request $request)
     {
         $type = $request->type; // '3' or '9' or null for all
-        
+
         $query = Game::select('winner_user_id', DB::raw('COUNT(*) as wins'))
             ->where('status', 'Ended')
             ->whereNotNull('winner_user_id')
             ->groupBy('winner_user_id');
-        
+
         if ($type) {
             $query->where('type', $type);
         }
-        
+
         $leaders = $query->orderBy('wins', 'desc')
             ->orderBy(DB::raw('MIN(ended_at)'), 'asc') // Earlier achiever ranks higher
             ->limit(100)
@@ -162,9 +162,9 @@ class LeaderboardController extends Controller
                 return [
                     'rank' => $index + 1,
                     'nickname' => $user ? $user->nickname : 'Unknown',
-                    'photo' => $user && $user->photo_avatar_filename 
+                    'photo' => $user && $user->photo_avatar_filename
                         ? asset('storage/photos_avatars/' . $user->photo_avatar_filename)
-                        : null,
+                        : asset('storage/photos_avatars/anonymous.png'),
                     'wins' => $item->wins,
                 ];
             });
@@ -178,16 +178,16 @@ class LeaderboardController extends Controller
     public function globalMatches(Request $request)
     {
         $type = $request->type;
-        
+
         $query = GameMatch::select('winner_user_id', DB::raw('COUNT(*) as wins'))
             ->where('status', 'Ended')
             ->whereNotNull('winner_user_id')
             ->groupBy('winner_user_id');
-        
+
         if ($type) {
             $query->where('type', $type);
         }
-        
+
         $leaders = $query->orderBy('wins', 'desc')
             ->orderBy(DB::raw('MIN(ended_at)'), 'asc')
             ->limit(100)
@@ -197,7 +197,9 @@ class LeaderboardController extends Controller
                 return [
                     'rank' => $index + 1,
                     'nickname' => $user ? $user->nickname : 'Unknown',
-                    'photo' => $user ? $user->photo_avatar_filename : null,
+                    'photo' => $user && $user->photo_avatar_filename
+                        ? asset('storage/photos_avatars/' . $user->photo_avatar_filename)
+                        : asset('storage/photos_avatars/anonymous.png'),
                     'wins' => $item->wins,
                 ];
             });
@@ -211,7 +213,7 @@ class LeaderboardController extends Controller
     public function globalCapotes(Request $request)
     {
         $type = $request->type;
-        
+
         $query = Game::select('winner_user_id', DB::raw('COUNT(*) as capotes'))
             ->where('status', 'Ended')
             ->whereNotNull('winner_user_id')
@@ -220,11 +222,11 @@ class LeaderboardController extends Controller
                   ->orWhereRaw('(winner_user_id = player2_user_id AND player2_points >= 91 AND player2_points < 120)');
             })
             ->groupBy('winner_user_id');
-        
+
         if ($type) {
             $query->where('type', $type);
         }
-        
+
         $leaders = $query->orderBy('capotes', 'desc')
             ->orderBy(DB::raw('MIN(ended_at)'), 'asc')
             ->limit(100)
@@ -234,7 +236,9 @@ class LeaderboardController extends Controller
                 return [
                     'rank' => $index + 1,
                     'nickname' => $user ? $user->nickname : 'Unknown',
-                    'photo' => $user ? $user->photo_avatar_filename : null,
+                    'photo' => $user && $user->photo_avatar_filename
+                        ? asset('storage/photos_avatars/' . $user->photo_avatar_filename)
+                        : asset('storage/photos_avatars/anonymous.png'),
                     'capotes' => $item->capotes,
                 ];
             });
@@ -248,7 +252,7 @@ class LeaderboardController extends Controller
     public function globalBandeiras(Request $request)
     {
         $type = $request->type;
-        
+
         $query = Game::select('winner_user_id', DB::raw('COUNT(*) as bandeiras'))
             ->where('status', 'Ended')
             ->whereNotNull('winner_user_id')
@@ -257,11 +261,11 @@ class LeaderboardController extends Controller
                   ->orWhereRaw('(winner_user_id = player2_user_id AND player2_points = 120)');
             })
             ->groupBy('winner_user_id');
-        
+
         if ($type) {
             $query->where('type', $type);
         }
-        
+
         $leaders = $query->orderBy('bandeiras', 'desc')
             ->orderBy(DB::raw('MIN(ended_at)'), 'asc')
             ->limit(100)
@@ -271,7 +275,9 @@ class LeaderboardController extends Controller
                 return [
                     'rank' => $index + 1,
                     'nickname' => $user ? $user->nickname : 'Unknown',
-                    'photo' => $user ? $user->photo_avatar_filename : null,
+                    'photo' => $user && $user->photo_avatar_filename
+                        ? asset('storage/photos_avatars/' . $user->photo_avatar_filename)
+                        : asset('storage/photos_avatars/anonymous.png'),
                     'bandeiras' => $item->bandeiras,
                 ];
             });
@@ -290,12 +296,14 @@ class LeaderboardController extends Controller
 
         $gameStats = $this->calculateGameStats($user->id, $request->type);
         $matchStats = $this->calculateMatchStats($user->id, $request->type);
-        
+
         return response()->json([
             'user' => [
                 'id' => $user->id,
                 'nickname' => $user->nickname,
-                'photo' => $user->photo_avatar_filename,
+                'photo' => $user && $user->photo_avatar_filename
+                        ? asset('storage/photos_avatars/' . $user->photo_avatar_filename)
+                        : asset('storage/photos_avatars/anonymous.png'),
             ],
             'games' => $gameStats,
             'matches' => $matchStats,

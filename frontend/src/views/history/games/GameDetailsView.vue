@@ -81,7 +81,7 @@
 
         <!-- Main Info -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-          
+
           <!-- Game Information Card -->
           <div class="bg-white border border-green-300 rounded-2xl p-8 shadow-lg">
             <h3 class="text-2xl font-extrabold text-green-900 mb-6">Game Information</h3>
@@ -199,24 +199,26 @@
 </template>
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router' 
+import { useRoute } from 'vue-router'
 import { useHistoryStore } from '@/stores/history'
+import { useAuthStore } from '@/stores/authStore'
 
-const route = useRoute() 
+const route = useRoute()
 const historyStore = useHistoryStore()
+const authStore = useAuthStore()
 
-const game = ref(null) 
+const game = ref(null)
 const currentUser = ref(null)
 
-onMounted(() => { 
-    currentUser.value = JSON.parse(localStorage.getItem('user') || '{}') 
-    loadGame() 
+onMounted(() => {
+    currentUser.value = authStore.currentUser
+    loadGame()
 })
 
-const loadGame = async () => { 
-    const gameId = route.params.id 
-    const gameData = await historyStore.fetchGameDetails(gameId) 
-    game.value = gameData 
+const loadGame = async () => {
+    const gameId = route.params.id
+    const gameData = await historyStore.fetchGameDetails(gameId)
+    game.value = gameData
 }
 
 const formatDate = (dateString) => {
@@ -239,9 +241,9 @@ const formatDuration = (seconds) => {
 }
 
 const getAvatarUrl = (filename) => {
-  if (!filename) return '/default-avatar.png'
-  return `/storage/avatars/${filename}`
-}
-
-
+  console.log('Getting avatar URL for filename:', filename);
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+  if (!filename) return `${apiBaseUrl}/storage/photos_avatars//anonymous.png`;
+  return `${apiBaseUrl}/storage/photos_avatars/${filename}`;
+};
 </script>
