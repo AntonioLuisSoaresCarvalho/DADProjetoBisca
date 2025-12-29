@@ -1,0 +1,193 @@
+import { defineStore } from "pinia";
+import { useApiStore } from "./api";
+
+export const useHistoryStore = defineStore("history",{
+    state: () => ({
+    // Games
+    games: [],
+    gamesPagination: null,
+    currentGame: null,
+    gamesLoading: false,
+    gamesError: null,
+
+    // Matches
+    matches: [],
+    matchesPagination: null,
+    currentMatch: null,
+    matchesLoading: false,
+    matchesError: null,
+  }),
+
+  getters: {
+    // Helper to get stats by variant
+    getStatsByVariant: (state) => (variant) => {
+      if (!state.personalStats) return null
+      return state.personalStats[variant] || null
+    },
+
+    // Check if user has played any games
+    hasGames: (state) => state.games.length > 0,
+
+    // Check if user has played any matches
+    hasMatches: (state) => state.matches.length > 0
+  },
+
+  actions: {
+    // ==========================================
+    // GAMES HISTORY
+    // ==========================================
+    async fetchUserGames(params = {}) {
+      const api = useApiStore()
+      this.gamesLoading = true
+      this.gamesError = null
+
+      try {
+        const response = await api.getUserGames(params)
+        this.games = response.data
+        this.gamesPagination = {
+          current_page: response.current_page,
+          last_page: response.last_page,
+          per_page: response.per_page,
+          total: response.total
+        }
+      } catch (error) {
+        this.gamesError = error.response?.data?.message || 'Failed to load games'
+        console.error('Error fetching games:', error)
+        throw error
+      } finally {
+        this.gamesLoading = false
+      }
+    },
+
+    async fetchGameDetails(gameId) {
+      const api = useApiStore()
+      this.gamesLoading = true
+      this.gamesError = null
+
+      try {
+        const response = await api.getGameDetails(gameId)
+        this.currentGame = response.game
+        return response.game
+      } catch (error) {
+        this.gamesError = error.response?.data?.message || 'Failed to load game details'
+        console.error('Error fetching game details:', error)
+        throw error
+      } finally {
+        this.gamesLoading = false
+      }
+    },
+
+    // Admin - fetch any player's games
+    async fetchPlayerGames(userId, params = {}) {
+      const api = useApiStore()
+      this.gamesLoading = true
+      this.gamesError = null
+
+      try {
+        const response = await api.getPlayerGames(userId, params)
+        this.games = response.data.data
+        this.gamesPagination = {
+          current_page: response.data.current_page,
+          last_page: response.data.last_page,
+          per_page: response.data.per_page,
+          total: response.data.total
+        }
+      } catch (error) {
+        this.gamesError = error.response?.data?.message || 'Failed to load player games'
+        console.error('Error fetching player games:', error)
+        throw error
+      } finally {
+        this.gamesLoading = false
+      }
+    },
+
+    // ==========================================
+    // MATCHES HISTORY
+    // ==========================================
+    async fetchUserMatches(params = {}) {
+      const api = useApiStore()
+      this.matchesLoading = true
+      this.matchesError = null
+
+      try {
+        const response = await api.getUserMatches(params)
+        this.matches = response.data
+        this.matchesPagination = {
+          current_page: response.current_page,
+          last_page: response.last_page,
+          per_page: response.per_page,
+          total: response.total
+        }
+      } catch (error) {
+        this.matchesError = error.response?.data?.message || 'Failed to load matches'
+        console.error('Error fetching matches:', error)
+        throw error
+      } finally {
+        this.matchesLoading = false
+      }
+    },
+
+    async fetchMatchDetails(matchId) {
+      const api = useApiStore()
+      this.matchesLoading = true
+      this.matchesError = null
+
+      try {
+        const response = await api.getMatchDetails(matchId)
+        this.currentMatch = response.match
+        return response.match
+      } catch (error) {
+        this.matchesError = error.response?.data?.message || 'Failed to load match details'
+        console.error('Error fetching match details:', error)
+        throw error
+      } finally {
+        this.matchesLoading = false
+      }
+    },
+
+    // Admin - fetch any player's matches
+    async fetchPlayerMatches(userId, params = {}) {
+      const api = useApiStore()
+      this.matchesLoading = true
+      this.matchesError = null
+
+      try {
+        const response = await api.getPlayerMatches(userId, params)
+        this.matches = response.data.data
+        this.matchesPagination = {
+          current_page: response.data.current_page,
+          last_page: response.data.last_page,
+          per_page: response.data.per_page,
+          total: response.data.total
+        }
+      } catch (error) {
+        this.matchesError = error.response?.data?.message || 'Failed to load player matches'
+        console.error('Error fetching player matches:', error)
+        throw error
+      } finally {
+        this.matchesLoading = false
+      }
+    },
+
+    // ==========================================
+    // UTILITY ACTIONS
+    // ==========================================
+    clearGames() {
+      this.games = []
+      this.gamesPagination = null
+      this.currentGame = null
+    },
+
+    clearMatches() {
+      this.matches = []
+      this.matchesPagination = null
+      this.currentMatch = null
+    },
+
+    clearAll() {
+      this.clearGames()
+      this.clearMatches()
+    }
+  }
+
+})

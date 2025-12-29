@@ -4,21 +4,21 @@
       <!-- Header -->
       <h1 class="text-3xl font-bold text-green-700 mb-6">👤 O Meu Perfil</h1>
 
-      
+
       <div class="bg-white rounded-lg shadow-md border border-green-300 p-6 mb-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          
+
           <div class="flex items-center gap-4">
-            
+
             <div class="shrink-0">
-              <img 
-                v-if="user?.photo_avatar_filename" 
-                :src="user.photo_avatar_url" 
+              <img
+                v-if="user.photo_avatar_filename"
+                :src=getAvatarUrl(user.photo_avatar_filename)
                 :alt="user.nickname"
                 class="w-24 h-24 rounded-full object-cover border-4 border-green-600"
               />
-              <div 
-                v-else 
+              <div
+                v-else
                 class="w-24 h-24 rounded-full bg-linear-to-br from-green-500 to-green-700 text-white flex items-center justify-center text-4xl font-bold border-4 border-green-600"
               >
                 {{ user?.nickname?.charAt(0).toUpperCase() }}
@@ -29,14 +29,14 @@
             <div>
               <h2 class="text-2xl font-bold text-gray-800">{{ user?.nickname }}</h2>
               <p class="mt-1">
-                <span 
-                  v-if="isAdmin" 
+                <span
+                  v-if="isAdmin"
                   class="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-md text-sm font-semibold"
                 >
                   🛡️ Administrador
                 </span>
-                <span 
-                  v-else 
+                <span
+                  v-else
                   class="inline-block px-3 py-1 bg-purple-100 text-purple-800 rounded-md text-sm font-semibold"
                 >
                   🎮 Jogador
@@ -48,18 +48,18 @@
             </div>
           </div>
 
-          
+
           <div class="flex gap-3">
-            <button 
-              v-if="!editMode" 
-              @click="enableEditMode" 
+            <button
+              v-if="!editMode"
+              @click="enableEditMode"
               class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-semibold"
             >
               ✏️ Editar Perfil
             </button>
-            <button 
-              v-if="editMode" 
-              @click="cancelEdit" 
+            <button
+              v-if="editMode"
+              @click="cancelEdit"
               class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors font-semibold"
             >
               Cancelar
@@ -71,9 +71,9 @@
       <!-- Edit Form -->
       <div v-if="editMode" class="bg-white rounded-lg shadow-md border border-green-300 p-6 mb-6">
         <h3 class="text-xl font-bold text-gray-800 mb-4">Editar Informações do Perfil</h3>
-        
+
         <form @submit.prevent="handleUpdate" class="space-y-4">
-          
+
           <div>
             <label for="name" class="block text-sm font-semibold text-gray-700 mb-1">Nome Completo</label>
             <input
@@ -89,7 +89,7 @@
             <span v-if="errors.name" class="text-red-500 text-xs mt-1 block">{{ errors.name[0] }}</span>
           </div>
 
-          
+
           <div>
             <label for="email" class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
             <input
@@ -105,7 +105,7 @@
             <span v-if="errors.email" class="text-red-500 text-xs mt-1 block">{{ errors.email[0] }}</span>
           </div>
 
-          
+
           <div>
             <label for="nickname" class="block text-sm font-semibold text-gray-700 mb-1">Nickname</label>
             <input
@@ -121,7 +121,7 @@
             <span v-if="errors.nickname" class="text-red-500 text-xs mt-1 block">{{ errors.nickname[0] }}</span>
           </div>
 
-          
+
           <div>
             <label for="password" class="block text-sm font-semibold text-gray-700 mb-1">
               Nova Password (deixe vazio para manter a atual)
@@ -139,7 +139,7 @@
             <span v-if="errors.password" class="text-red-500 text-xs mt-1 block">{{ errors.password[0] }}</span>
           </div>
 
-          
+
           <div>
             <label for="photo_avatar" class="block text-sm font-semibold text-gray-700 mb-1">Foto de Perfil</label>
             <input
@@ -152,9 +152,9 @@
             <span v-if="errors.photo_avatar" class="text-red-500 text-xs mt-1 block">{{ errors.photo_avatar[0] }}</span>
           </div>
 
-          
-          <div 
-            v-if="updateMessage" 
+
+          <div
+            v-if="updateMessage"
             :class="[
               'p-3 rounded-lg text-sm font-semibold',
               updateMessage.type === 'success' ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'
@@ -163,9 +163,9 @@
             {{ updateMessage.text }}
           </div>
 
-          
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             :disabled="loading"
             class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all font-semibold"
           >
@@ -178,7 +178,7 @@
       <!-- Display Mode -->
       <div v-else class="bg-white rounded-lg shadow-md border border-green-300 p-6 mb-6">
         <h3 class="text-xl font-bold text-gray-800 mb-4">Informações do Perfil</h3>
-        
+
         <div class="space-y-3">
           <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
             <span class="text-gray-600 font-medium">Nome Completo:</span>
@@ -211,25 +211,25 @@
       <div class="bg-white rounded-lg shadow-md border border-green-300 p-6 mb-6">
         <h3 class="text-xl font-bold text-gray-800 mb-4">Links Rápidos</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-          <router-link 
-            v-if="isPlayer" 
-            to="/coins" 
+          <router-link
+            v-if="isPlayer"
+            to="/coins"
             class="block p-4 bg-gray-50 rounded-lg text-green-600 font-semibold text-center hover:bg-green-600 hover:text-white transition-colors"
           >
             💰 Gerir Moedas
           </router-link>
         </div>
       </div>
-    
+
       <div class="bg-white rounded-lg shadow-md border-2 border-red-500 p-6">
         <h3 class="text-xl font-bold text-red-600 mb-2">⚠️ Zona de Perigo</h3>
         <p class="text-gray-600 mb-4">
           Uma vez que apague a sua conta, não há volta atrás. Todas as suas moedas serão perdidas.
         </p>
-        
-        <button 
-          v-if="!showDeleteConfirm" 
-          @click="showDeleteConfirm = true" 
+
+        <button
+          v-if="!showDeleteConfirm"
+          @click="showDeleteConfirm = true"
           class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-semibold"
         >
           🗑️ Apagar Conta
@@ -241,12 +241,12 @@
           <p class="text-gray-600 mb-3">
             Insira a sua {{ confirmationType}} para confirmar:
           </p>
-          
+
           <div class="flex gap-4 mb-3">
             <label class="flex items-center gap-2 cursor-pointer">
-              <input 
-                type="radio" 
-                value="password" 
+              <input
+                type="radio"
+                value="password"
                 v-model="confirmationType"
                 class="text-green-600 focus:ring-green-600"
               />
@@ -266,16 +266,16 @@
           </div>
 
           <div class="flex flex-col md:flex-row gap-3">
-            <button 
-              @click="handleDelete" 
+            <button
+              @click="handleDelete"
               :disabled="loadingDelete"
               class="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors font-semibold"
             >
               <span v-if="loadingDelete">A apagar...</span>
               <span v-else>Confirmar Eliminação</span>
             </button>
-            <button 
-              @click="cancelDelete" 
+            <button
+              @click="cancelDelete"
               class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors font-semibold"
             >
               Cancelar
@@ -366,7 +366,7 @@ const handleUpdate = async () => {
 
   if (result.success) {
     updateMessage.value = { type: 'success', text: result.message }
-    
+
     setTimeout(() => {
       editMode.value = false
       updateMessage.value = null
@@ -414,4 +414,10 @@ const formatDate = (date) => {
     year: 'numeric'
   })
 }
+
+const getAvatarUrl = (filename) => {
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+  if (!filename) return `${apiBaseUrl}/storage/photos_avatars//anonymous.png`;
+  return `${apiBaseUrl}/storage/photos_avatars/${filename}`;
+};
 </script>
