@@ -59,13 +59,14 @@ export const useHistoryStore = defineStore("history",{
       }
     },
 
-    async fetchGameDetails(gameId) {
+    async fetchGameDetails(gameId, playerId = null) {
       const api = useApiStore()
       this.gamesLoading = true
       this.gamesError = null
 
       try {
-        const response = await api.getGameDetails(gameId)
+        const params = playerId ? { playerId } : {}
+        const response = await api.getGameDetails(gameId, params)
         this.currentGame = response.game
         return response.game
       } catch (error) {
@@ -85,12 +86,12 @@ export const useHistoryStore = defineStore("history",{
 
       try {
         const response = await api.getPlayerGames(userId, params)
-        this.games = response.data.data
+        this.games = response.data
         this.gamesPagination = {
-          current_page: response.data.current_page,
-          last_page: response.data.last_page,
-          per_page: response.data.per_page,
-          total: response.data.total
+          current_page: response.current_page,
+          last_page: response.last_page,
+          per_page: response.per_page,
+          total: response.total
         }
       } catch (error) {
         this.gamesError = error.response?.data?.message || 'Failed to load player games'
@@ -127,13 +128,14 @@ export const useHistoryStore = defineStore("history",{
       }
     },
 
-    async fetchMatchDetails(matchId) {
+    async fetchMatchDetails(matchId, playerId = null) {
       const api = useApiStore()
       this.matchesLoading = true
       this.matchesError = null
 
       try {
-        const response = await api.getMatchDetails(matchId)
+        const params = playerId ? { playerId } : {}
+        const response = await api.getMatchDetails(matchId, params)
         this.currentMatch = response.match
         return response.match
       } catch (error) {
@@ -153,12 +155,12 @@ export const useHistoryStore = defineStore("history",{
 
       try {
         const response = await api.getPlayerMatches(userId, params)
-        this.matches = response.data.data
+        this.matches = response.data
         this.matchesPagination = {
-          current_page: response.data.current_page,
-          last_page: response.data.last_page,
-          per_page: response.data.per_page,
-          total: response.data.total
+          current_page: response.current_page,
+          last_page: response.last_page,
+          per_page: response.per_page,
+          total: response.total
         }
       } catch (error) {
         this.matchesError = error.response?.data?.message || 'Failed to load player matches'

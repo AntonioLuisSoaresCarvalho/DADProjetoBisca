@@ -16,8 +16,7 @@ class GameHistoryController extends Controller
     {
         $userId = Auth::id();
 
-        // Query parameters for filtering
-        $type = $request->query('type'); // '3' or '9'
+        $type = $request->query('type');
         $perPage = $request->query('per_page', 15);
 
         $query = Game::where(function($q) use ($userId) {
@@ -35,7 +34,6 @@ class GameHistoryController extends Controller
         'match:id,type'])
         ->orderBy('ended_at', 'desc');
 
-        // Filter by type if specified
         if ($type && in_array($type, ['3', '9'])) {
             $query->where('type', $type);
         }
@@ -90,19 +88,23 @@ class GameHistoryController extends Controller
      */
     public function getGameDetails(Request $request, $id)
     {
-        $userId = Auth::id();
         $user = Auth::user();
+        $perspectiveUserId = $request->query('playerId') ?? Auth::id();
+        $perspectiveUserId = (int) $perspectiveUserId;
 
         $game = Game::with([
-            'player1:id,nickname,name,photo_avatar_filename',
-            'player2:id,nickname,name,photo_avatar_filename',
+            'player1' => function($query) {
+                $query->withTrashed()->select('id', 'nickname', 'name', 'photo_avatar_filename');
+            },
+            'player2' => function($query) {
+                $query->withTrashed()->select('id', 'nickname', 'name', 'photo_avatar_filename');
+            },
             'winner:id,nickname',
             'loser:id,nickname',
             'match:id,type,stake'
         ])->findOrFail($id);
 
-        // Check authorization: only participants or admins can view details
-        $isParticipant = in_array($userId, [$game->player1_user_id, $game->player2_user_id]);
+        $isParticipant = in_array($perspectiveUserId, [$game->player1_user_id, $game->player2_user_id]);
         $isAdmin = $user->type === 'A';
 
         if (!$isParticipant && !$isAdmin) {
@@ -111,31 +113,41 @@ class GameHistoryController extends Controller
             ], 403);
         }
 
+        // Add perspective player info
+        $perspectivePlayer = $game->player1_user_id === $perspectiveUserId
+            ? $game->player1
+            : $game->player2;
+
         return response()->json([
-            'game' => $this->transformGameForUser($game, $userId, true)
+            'game' => $this->transformGameForUser($game, $perspectiveUserId, true),
+            'perspective_player' => $perspectivePlayer  // Add this!
         ]);
     }
 
-    /**
-     * Get detailed match information
-     */
     public function getMatchDetails(Request $request, $id)
     {
-        $userId = Auth::id();
         $user = Auth::user();
 
+        // Se houver playerId na query, use-o (admin vendo outro jogador)
+        $perspectiveUserId = $request->query('playerId') ?? Auth::id();
+        $perspectiveUserId = (int) $perspectiveUserId;
+
         $match = GameMatch::with([
-            'player1:id,nickname,name,photo_avatar_filename',
-            'player2:id,nickname,name,photo_avatar_filename',
+            'player1' => function($query) {
+                $query->withTrashed()->select('id', 'nickname', 'name', 'photo_avatar_filename');
+            },
+            'player2' => function($query) {
+                $query->withTrashed()->select('id', 'nickname', 'name', 'photo_avatar_filename');
+            },
             'winner:id,nickname',
             'loser:id,nickname',
             'games' => function($q) {
                 $q->with(['winner:id,nickname'])
-                  ->orderBy('began_at', 'asc');
+                ->orderBy('began_at', 'asc');
             }
         ])->findOrFail($id);
 
-        $isParticipant = in_array($userId, [$match->player1_user_id, $match->player2_user_id]);
+        $isParticipant = in_array($perspectiveUserId, [$match->player1_user_id, $match->player2_user_id]);
         $isAdmin = $user->type === 'A';
 
         if (!$isParticipant && !$isAdmin) {
@@ -145,7 +157,7 @@ class GameHistoryController extends Controller
         }
 
         return response()->json([
-            'match' => $this->transformMatchForUser($match, $userId, true)
+            'match' => $this->transformMatchForUser($match, $perspectiveUserId, true)
         ]);
     }
 
@@ -158,6 +170,7 @@ class GameHistoryController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        $userId = (int) $userId;
 
         $type = $request->query('type');
         $perPage = $request->query('per_page', 15);
@@ -167,7 +180,14 @@ class GameHistoryController extends Controller
               ->orWhere('player2_user_id', $userId);
         })
         ->where('status', 'Ended')
-        ->with(['player1:id,nickname', 'player2:id,nickname', 'winner:id,nickname'])
+        ->with(['player1' => function($query) {
+            $query->withTrashed()->select('id', 'nickname', 'photo_avatar_filename');
+        },
+        'player2' => function($query) {
+            $query->withTrashed()->select('id', 'nickname', 'photo_avatar_filename');
+        },
+        'winner:id,nickname',
+        'match:id,type'])
         ->orderBy('ended_at', 'desc');
 
         if ($type && in_array($type, ['3', '9'])) {
@@ -176,7 +196,8 @@ class GameHistoryController extends Controller
 
         $games = $query->paginate($perPage);
 
-        $games->getCollection()->transform(function ($game) use ($userId) {
+        // Use through() for consistent pagination structure
+        $games->through(function ($game) use ($userId) {
             return $this->transformGameForUser($game, $userId);
         });
 
@@ -192,6 +213,8 @@ class GameHistoryController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        $userId = (int) $userId;
+
         $type = $request->query('type');
         $perPage = $request->query('per_page', 15);
 
@@ -200,7 +223,16 @@ class GameHistoryController extends Controller
               ->orWhere('player2_user_id', $userId);
         })
         ->where('status', 'Ended')
-        ->with(['player1:id,nickname', 'player2:id,nickname', 'winner:id,nickname'])
+        ->with(['player1' => function($query) {
+            $query->withTrashed()->select('id', 'nickname', 'photo_avatar_filename');
+        },
+        'player2' => function($query) {
+            $query->withTrashed()->select('id', 'nickname', 'photo_avatar_filename');
+        },
+        'winner:id,nickname',
+        'games' => function($q) {
+            $q->select('id', 'match_id', 'winner_user_id', 'player1_points', 'player2_points');
+        }])
         ->orderBy('ended_at', 'desc');
 
         if ($type && in_array($type, ['3', '9'])) {
@@ -209,7 +241,8 @@ class GameHistoryController extends Controller
 
         $matches = $query->paginate($perPage);
 
-        $matches->getCollection()->transform(function ($match) use ($userId) {
+        // Use through() for consistent pagination structure
+        $matches->through(function ($match) use ($userId) {
             return $this->transformMatchForUser($match, $userId);
         });
 
@@ -261,6 +294,7 @@ class GameHistoryController extends Controller
         if ($detailed) {
             $transformed['match_info'] = $game->match;
             $transformed['status'] = $game->status;
+            $transformed['custom'] = $game->custom;
         }
 
         return $transformed;
@@ -295,6 +329,8 @@ class GameHistoryController extends Controller
                 return $this->transformGameForUser($game, $userId);
             });
             $transformed['status'] = $match->status;
+            $transformed['custom'] = $match->custom;
+            $transformed['match_type'] = $match->match_type;
         }
 
         return $transformed;
