@@ -30,6 +30,9 @@ export const useGameStore = defineStore('game', () => {
   const types_of_games = [3, 9]
   const types_of_matches = ['game', 'match']
 
+  const currentDbGameId = ref(null)
+  const previousGameNumber = ref(0)
+
   const authStore = useAuthStore()
   const apiStore = useApiStore()
   const socket = inject('socket')
@@ -350,6 +353,22 @@ export const useGameStore = defineStore('game', () => {
   const multiplayerGame = ref({})
 
   const setMultiplayerGame = (game) => {
+    if (game.is_match) {
+      if (game.current_game_number > previousGameNumber.value) {
+        currentDbGameId.value = null
+        previousGameNumber.value = game.current_game_number
+      }
+    } else {
+      // Para jogos avulsos, se o ID do jogo mudar, resetar currentDbGameId
+      if (multiplayerGame.value && multiplayerGame.value.id !== game.id) {
+        currentDbGameId.value = null
+      }
+    }
+    
+    // Atribui o currentDbGameId ao objeto game para uso nas condições
+    game.db_game_id = currentDbGameId.value
+
+
     multiplayerGame.value = game
     console.log(`[Game] Multiplayer Game changed | round ${game.current_round}`)
   }
@@ -369,16 +388,17 @@ export const useGameStore = defineStore('game', () => {
       console.log('✅ Game saved to database:', response.game)
       
       // Store the database game ID
-      if (multiplayerGame.value && multiplayerGame.value.id === gameData.id) {
-        multiplayerGame.value.db_game_id = response.game.id
-      }
+      // if (multiplayerGame.value && multiplayerGame.value.id === gameData.id) {
+      //   multiplayerGame.value.db_game_id = response.game.id
+      // }
+
+      currentDbGameId.value = response.game.id
 
       return response.game
     } catch (error) {
       console.error('❌ Failed to save game start:', error)
       console.error('❌ Error response:', error.response?.data)
       console.error('❌ Error status:', error.response?.status)
-      toast.error('Failed to save game to database')
     }
   }
 
