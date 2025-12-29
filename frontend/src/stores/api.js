@@ -50,7 +50,7 @@ export const useApiStore = defineStore("api", () => {
                 form_data.append(key,data[key]);
             }
         })
-        
+
         const res = await axios.post(`${API_BASE_URL}/register`,form_data,{
             headers: {'Content-Type' : 'multipart/form-data'}
         })
@@ -177,6 +177,60 @@ export const useApiStore = defineStore("api", () => {
         return response.data
     }
 
+    // ==========================================
+    // HISTORY ENDPOINTS
+    // ==========================================
+
+    const getUserGames = async (params = {}) => {
+        const response = await axios.get(`${API_BASE_URL}/history/games`, { params })
+        return response.data
+    }
+
+    const getGameDetails = async (gameId) => {
+        const response = await axios.get(`${API_BASE_URL}/history/games/${gameId}`)
+        return response.data
+    }
+
+    const getPlayerGames = async (userId, params = {}) => {
+        const response = await axios.get(`${API_BASE_URL}/admin/history/games/${userId}`, { params })
+        return response.data
+    }
+
+    const getUserMatches = async (params = {}) => {
+        const response = await axios.get(`${API_BASE_URL}/history/matches`, { params })
+        return response.data
+    }
+
+    const getMatchDetails = async (matchId) => {
+        const response = await axios.get(`${API_BASE_URL}/history/matches/${matchId}`)
+        return response.data
+    }
+
+    const getPlayerMatches = async (userId, params = {}) => {
+        const response = await axios.get(`${API_BASE_URL}/admin/history/matches/${userId}`, { params })
+        return response.data
+    }
+
+    // ==========================================
+    // LEADERBOARD ENDPOINTS
+    // ==========================================
+
+    const getPersonalStats = async (params = {}) => {
+        const response = await axios.get(`${API_BASE_URL}/leaderboards/personal`, { params })
+        return response.data
+    }
+
+    const getGlobalLeaderboard = async (type, params = {}) => {
+        const endpoints = {
+            games: `${API_BASE_URL}/leaderboards/global/games`,
+            matches: `${API_BASE_URL}/leaderboards/global/matches`,
+            capotes: `${API_BASE_URL}/leaderboards/global/capotes`,
+            bandeiras: `${API_BASE_URL}/leaderboards/global/bandeiras`,
+        }
+        const response = await axios.get(endpoints[type], { params })
+        return response.data
+    }
+
     return {
         token,
         initAuth,
@@ -200,6 +254,14 @@ export const useApiStore = defineStore("api", () => {
         deleteUser,
         fetchTransactions,
         fetchGames,
-        fetchStatistics
+        fetchStatistics,
+        getUserGames,
+        getGameDetails,
+        getPlayerGames,
+        getUserMatches,
+        getMatchDetails,
+        getPlayerMatches,
+        getPersonalStats,
+        getGlobalLeaderboard
     }
 })

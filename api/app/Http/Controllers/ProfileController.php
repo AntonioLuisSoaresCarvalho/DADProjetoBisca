@@ -36,17 +36,17 @@ class ProfileController extends Controller
         if($request->has('nickname')) $user->nickname = $request->nickname;
         if($request->filled('password')){
             $user->password = Hash::make($request->password);
-        } 
+        }
 
 
         if($request->hasFile('photo_avatar')){
             if($user->photo_avatar_filename){
-                Storage::delete('public/avatars/' . $user->photo_avatar_filename);
+                Storage::delete('storage/photos_avatars/' . $user->photo_avatar_filename);
             }
 
             $photo = $request->file('photo_avatar');
-            $photo_filename = time().'_'.$photo->getClientOriginalName();
-            $photo->storeAs('public/avatars', $photo_filename);
+            $photo_filename =$photo->getClientOriginalName();
+            $photo->storeAs('storage/photos_avatars/', $photo_filename);
             $user->photo_avatar_filename = $photo_filename;
         }
 
@@ -66,7 +66,7 @@ class ProfileController extends Controller
         $user = $request->user();
 
         if($user->type === 'A'){
-            return response()->json(['message' => 'Admins can not delete their own account'],403); 
+            return response()->json(['message' => 'Admins can not delete their own account'],403);
         }
 
         $validated = Validator::make($request->all(),['confirmation' => 'required|string']);
@@ -88,7 +88,7 @@ class ProfileController extends Controller
         } else {
             //$user->delete();
             if($user->photo_avatar_filename){
-                Storage::delete('public/avatars/' . $user->photo_avatar_filename );
+                Storage::delete('storage/photos_avatars/' . $user->photo_avatar_filename );
             }
             $user->forceDelete();
             $message = 'Account permanently deleted';
