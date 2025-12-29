@@ -60,32 +60,32 @@ const router = createRouter({
     },
 
     {
-    path: '/history/games',
-    name: 'GameHistory',
-    component: GameHistoryView,
-    meta: { requiresAuth: true, requirePlayer: true }
-  },
+      path: '/history/games',
+      name: 'GameHistory',
+      component: GameHistoryView,
+      meta: { requiresAuth: true }
+    },
 
-  {
-    path: '/history/matches',
-    name: 'MatchHistory',
-    component: MatchHistoryView,
-    meta: { requiresAuth: true, requirePlayer: true }
-  },
+    {
+      path: '/history/matches',
+      name: 'MatchHistory',
+      component: MatchHistoryView,
+      meta: { requiresAuth: true }
+    },
 
-  {
-    path: '/history/games/:id',  // ← Changed to :id
-    name: 'GameDetails',  // ← Added name
-    component: GameDetailsView,
-    meta: { requiresAuth: true, requirePlayer: true, title: 'Game Details' }
-  },
+    {
+      path: '/history/games/:id',
+      name: 'GameDetails',
+      component: GameDetailsView,
+      meta: { requiresAuth: true, title: 'Game Details' }
+    },
 
-  {
-    path: '/history/matches/:id',  // ← Changed to :id
-    name: 'MatchDetails',  // ← Added name
-    component: MatchDetailsView,  // ← Changed from GameDetailsView
-    meta: { requiresAuth: true, requirePlayer: true, title: 'Match Details' }
-  },
+    {
+      path: '/history/matches/:id',
+      name: 'MatchDetails',
+      component: MatchDetailsView,
+      meta: { requiresAuth: true, title: 'Match Details' }
+    },
 
     {
       path: '/admin',

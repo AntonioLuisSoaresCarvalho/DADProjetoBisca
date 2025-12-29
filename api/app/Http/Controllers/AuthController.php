@@ -130,4 +130,13 @@ class AuthController extends Controller
             'user' => $request->user()
         ],200);
     }
+
+    public function getUserById($id)
+    {
+        $user = User::withTrashed()
+            ->select('id', 'nickname', 'name', 'photo_avatar_filename', 'type')
+            ->findOrFail($id);
+
+        return response()->json(['data' => $user]);
+    }
 }

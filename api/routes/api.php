@@ -57,6 +57,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/admin/games/{id}', [GameHistoryController::class, 'getGameDetails']);
         Route::get('/admin/matches/{id}', [GameHistoryController::class, 'getMatchDetails']);
 
+    Route::get('/users/{id}', [AuthController::class, 'getUserById']);
+
     Route::get('/leaderboards/personal', [LeaderboardController::class, 'personal']);
     Route::get('/admin/users/{user}/leaderboards', [LeaderboardController::class, 'userStats']);
 

@@ -153,7 +153,7 @@
                 />
                 <div>
                   <div class="font-bold text-green-900 text-lg">{{ currentUser.nickname }}</div>
-                  <div class="text-sm text-green-700">You</div>
+                  <div class="text-sm text-green-700">{{ viewingAsAdmin ? 'Player' : 'You' }}</div>
                 </div>
               </div>
 
@@ -206,28 +206,53 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useHistoryStore } from '@/stores/history'
 import { useAuthStore } from '@/stores/authStore'
+import { useApiStore } from '@/stores/api'
 
 const route = useRoute()
 const router = useRouter()
 const historyStore = useHistoryStore()
 const authStore = useAuthStore()
+const apiStore = useApiStore()
 
 const match = ref(null)
 const currentUser = ref(null)
+const viewingAsAdmin = ref(false)
 
-onMounted(() => {
-  currentUser.value = authStore.currentUser
-  loadMatch()
+onMounted(async () => {
+    // Check if admin is viewing another player's history
+    const playerId = route.query.playerId
+
+    if (playerId) {
+        // Admin viewing another player's match
+        viewingAsAdmin.value = true
+        try {
+            const playerResponse = await apiStore.getUser(playerId)
+            currentUser.value = playerResponse.data
+        } catch (error) {
+            console.error('Error loading player info:', error)
+            currentUser.value = authStore.currentUser
+        }
+    } else {
+        // Normal user viewing their own match
+        currentUser.value = authStore.currentUser
+    }
+
+    loadMatch()
 })
 
 const loadMatch = async () => {
-  const matchId = route.params.id
-  const matchData = await historyStore.fetchMatchDetails(matchId)
-  match.value = matchData
+    const matchId = route.params.id
+    const playerId = route.query.playerId || null
+    const matchData = await historyStore.fetchMatchDetails(matchId, playerId)
+    match.value = matchData
 }
 
 const viewGameDetails = (gameId) => {
-  router.push({ name: 'GameDetails', params: { id: gameId } })
+    const query = {};
+    if (viewingAsAdmin.value && route.query.playerId) {
+        query.playerId = route.query.playerId;
+    }
+    router.push({ name: 'GameDetails', params: { id: gameId }, query })
 }
 
 const formatResult = (result) => {

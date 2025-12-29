@@ -4,25 +4,54 @@
     <!-- HEADER -->
     <section class="text-center mb-12">
       <h1 class="text-4xl font-extrabold mb-3 drop-shadow">
-        Histórico de Matches
+        Match History
       </h1>
       <p class="opacity-80">
-        Consulta todos os matches multiplayer que jogaste.
+        Check match history from all users
       </p>
     </section>
 
     <div class="max-w-6xl mx-auto">
 
+      <!-- ADMIN PLAYER SELECTOR -->
+      <div v-if="isAdmin" class="bg-white text-green-800 p-5 rounded-lg shadow border border-green-300 mb-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <label class="font-semibold whitespace-nowrap">History: </label>
+          <select
+            v-model="selectedPlayerId"
+            @change="onPlayerChange"
+            class="flex-1 px-4 py-2 border border-green-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="">My Hystory</option>
+            <option v-for="player in players" :key="player.id" :value="player.id">
+              {{ player.nickname }} ({{ player.name }})
+            </option>
+          </select>
+
+          <button
+            v-if="selectedPlayerId"
+            @click="clearPlayerSelection"
+            class="px-4 py-2 bg-red-100 text-red-700 border border-red-300 rounded-lg hover:bg-red-200 transition"
+          >
+            Limpar
+          </button>
+        </div>
+
+        <p v-if="selectedPlayerName" class="mt-3 text-sm text-green-700">
+          Checking history of: <strong>{{ selectedPlayerName }}</strong>
+        </p>
+      </div>
+
       <!-- FILTERS -->
       <div class="bg-white text-green-800 p-5 rounded-lg shadow border border-green-300 mb-8">
         <div class="flex items-center gap-4">
-          <label class="font-semibold">Filtrar por variante:</label>
+          <label class="font-semibold">Filter by variant:</label>
           <select
             v-model="selectedType"
             @change="loadMatches(1)"
             class="px-4 py-2 border border-green-300 rounded-lg bg-white focus:outline-none"
           >
-            <option value="">Todas</option>
+            <option value="">All</option>
             <option value="3">Bisca de 3</option>
             <option value="9">Bisca de 9</option>
           </select>
@@ -35,7 +64,7 @@
         class="bg-white text-green-800 p-12 rounded-lg shadow border border-green-300 text-center"
       >
         <div class="animate-spin mb-4 inline-block w-12 h-12 border-4 border-green-700 border-t-transparent rounded-full"></div>
-        <p>A carregar matches...</p>
+        <p>Loading matches...</p>
       </div>
 
       <!-- ERROR -->
@@ -48,7 +77,7 @@
           @click="loadMatches(1)"
           class="px-6 py-2 bg-green-700 text-white rounded-lg font-semibold shadow hover:bg-green-800 transition"
         >
-          Tentar novamente
+          Try again
         </button>
       </div>
 
@@ -58,8 +87,10 @@
         class="bg-white text-green-800 p-12 rounded-lg shadow border border-green-300 text-center"
       >
         <div class="text-6xl mb-4">🏆</div>
-        <p class="text-lg font-semibold">Nenhum match encontrado</p>
-        <p class="opacity-70 mt-2">Joga matches para começar o teu histórico!</p>
+        <p class="text-lg font-semibold">No matches found</p>
+        <p class="opacity-70 mt-2">
+          {{ selectedPlayerId ? 'This player has no history yet.' : 'Play matches to start your history!' }}
+        </p>
       </div>
 
       <!-- MATCH LIST -->
@@ -183,28 +214,74 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHistoryStore } from '@/stores/history'
+import { useAuthStore } from '@/stores/authStore'
+import { useApiStore } from '@/stores/api'
 
 const router = useRouter()
 const historyStore = useHistoryStore()
+const authStore = useAuthStore()
+const apiStore = useApiStore()
 
 const selectedType = ref('')
+const selectedPlayerId = ref('')
+const selectedPlayerName = ref('')
+const players = ref([])
 
-onMounted(() => {
+const isAdmin = computed(() => authStore.currentUser?.type === 'A')
+
+onMounted(async () => {
+  if (isAdmin.value) {
+    await loadPlayers()
+  }
   loadMatches(1)
 })
+
+const loadPlayers = async () => {
+  try {
+    const response = await apiStore.getUsers({ type: 'P' })
+    players.value = response.data || []
+  } catch (error) {
+    console.error('Error loading players:', error)
+  }
+}
+
+const onPlayerChange = () => {
+  if (selectedPlayerId.value) {
+    const player = players.value.find(p => p.id === parseInt(selectedPlayerId.value))
+    selectedPlayerName.value = player ? `${player.nickname} (${player.name})` : ''
+  } else {
+    selectedPlayerName.value = ''
+  }
+  loadMatches(1)
+}
+
+const clearPlayerSelection = () => {
+  selectedPlayerId.value = ''
+  selectedPlayerName.value = ''
+  loadMatches(1)
+}
 
 const loadMatches = async (page = 1) => {
   const params = { page, per_page: 10 }
   if (selectedType.value) params.type = selectedType.value
-  await historyStore.fetchUserMatches(params)
+
+  if (isAdmin.value && selectedPlayerId.value) {
+    await historyStore.fetchPlayerMatches(selectedPlayerId.value, params)
+  } else {
+    await historyStore.fetchUserMatches(params)
+  }
 }
 
 const viewMatchDetails = (matchId) => {
-  router.push({ name: 'MatchDetails', params: { id: matchId } })
-}
+  const query = {};
+  if (isAdmin.value && selectedPlayerId.value) {
+    query.playerId = selectedPlayerId.value;
+  }
+  router.push({ name: 'MatchDetails', params: { id: matchId }, query });
+};
 
 const formatDate = (dateString) => {
   const date = new Date(dateString)
@@ -225,8 +302,8 @@ const formatDuration = (seconds) => {
 }
 
 const getAvatarUrl = (filename) => {
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-  if (!filename) return `${apiBaseUrl}/storage/photos_avatars//anonymous.png`;
-  return `${apiBaseUrl}/storage/photos_avatars/${filename}`;
-};
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+  if (!filename) return `${apiBaseUrl}/storage/photos_avatars//anonymous.png`
+  return `${apiBaseUrl}/storage/photos_avatars/${filename}`
+}
 </script>

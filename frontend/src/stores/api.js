@@ -186,8 +186,8 @@ export const useApiStore = defineStore("api", () => {
         return response.data
     }
 
-    const getGameDetails = async (gameId) => {
-        const response = await axios.get(`${API_BASE_URL}/history/games/${gameId}`)
+    const getGameDetails = async (gameId, params = {}) => {
+        const response = await axios.get(`${API_BASE_URL}/history/games/${gameId}`, { params })
         return response.data
     }
 
@@ -201,13 +201,18 @@ export const useApiStore = defineStore("api", () => {
         return response.data
     }
 
-    const getMatchDetails = async (matchId) => {
-        const response = await axios.get(`${API_BASE_URL}/history/matches/${matchId}`)
+    const getMatchDetails = async (matchId, params = {}) => {
+        const response = await axios.get(`${API_BASE_URL}/history/matches/${matchId}`, { params })
         return response.data
     }
 
     const getPlayerMatches = async (userId, params = {}) => {
         const response = await axios.get(`${API_BASE_URL}/admin/history/matches/${userId}`, { params })
+        return response.data
+    }
+
+    const getUser = async (userId) => {
+        const response = await axios.get(`${API_BASE_URL}/users/${userId}`)
         return response.data
     }
 
@@ -261,6 +266,7 @@ export const useApiStore = defineStore("api", () => {
         getUserMatches,
         getMatchDetails,
         getPlayerMatches,
+        getUser,
         getPersonalStats,
         getGlobalLeaderboard
     }

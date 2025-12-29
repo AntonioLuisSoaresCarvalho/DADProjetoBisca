@@ -144,12 +144,12 @@
             <div class="p-5 bg-green-100 border border-green-300 rounded-xl flex justify-between items-center mb-6">
               <div class="flex items-center gap-4">
                 <img
-                  :src="getAvatarUrl(currentUser.photo_avatar_filename)"
+                  :src="getAvatarUrl(currentUser?.photo_avatar_filename)"
                   class="w-16 h-16 rounded-full border-4 border-green-300 object-cover"
                 />
                 <div>
-                  <div class="font-bold text-green-900 text-lg">{{ currentUser.nickname }}</div>
-                  <div class="text-sm text-green-700">You</div>
+                  <div class="font-bold text-green-900 text-lg">{{ currentUser?.nickname }}</div>
+                  <div class="text-sm text-green-700">{{ viewingAsAdmin ? 'Player' : 'You' }}</div>
                 </div>
               </div>
 
@@ -202,23 +202,49 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useHistoryStore } from '@/stores/history'
 import { useAuthStore } from '@/stores/authStore'
+import { useApiStore } from '@/stores/api'
 
 const route = useRoute()
 const historyStore = useHistoryStore()
 const authStore = useAuthStore()
+const apiStore = useApiStore()
 
 const game = ref(null)
 const currentUser = ref(null)
+const viewingAsAdmin = ref(false)
 
-onMounted(() => {
-    currentUser.value = authStore.currentUser
+onMounted(async () => {
+    // Check if admin is viewing another player's history
+    const playerId = route.query.playerId
+
+    if (playerId) {
+        // Admin viewing another player's game
+        viewingAsAdmin.value = true
+        try {
+            const playerResponse = await apiStore.getUser(playerId)
+            currentUser.value = playerResponse.data
+        } catch (error) {
+            console.error('Error loading player info:', error)
+            currentUser.value = authStore.currentUser
+        }
+    } else {
+        // Normal user viewing their own game
+        currentUser.value = authStore.currentUser
+    }
+
     loadGame()
 })
 
 const loadGame = async () => {
     const gameId = route.params.id
-    const gameData = await historyStore.fetchGameDetails(gameId)
-    game.value = gameData
+    const playerId = route.query.playerId || null
+    const response = await historyStore.fetchGameDetails(gameId, playerId)
+    game.value = response
+
+    // If backend provides perspective_player, use it
+    if (response.perspective_player) {
+        currentUser.value = response.perspective_player
+    }
 }
 
 const formatDate = (dateString) => {
@@ -241,7 +267,6 @@ const formatDuration = (seconds) => {
 }
 
 const getAvatarUrl = (filename) => {
-  console.log('Getting avatar URL for filename:', filename);
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
   if (!filename) return `${apiBaseUrl}/storage/photos_avatars//anonymous.png`;
   return `${apiBaseUrl}/storage/photos_avatars/${filename}`;
