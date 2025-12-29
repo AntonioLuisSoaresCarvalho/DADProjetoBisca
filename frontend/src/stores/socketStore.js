@@ -2,11 +2,13 @@ import { defineStore } from 'pinia'
 import { inject, ref } from 'vue'
 import { useAuthStore } from './authStore'
 import { useGameStore } from './gameStore'
+import { useMatchStore } from './matchStore'
 
 export const useSocketStore = defineStore('socket', () => {
   const socket = inject('socket')
   const authStore = useAuthStore()
   const gameStore = useGameStore()
+  const matchStore = useMatchStore()
   const joined = ref(false)
   
   const emitJoin = (user) => {
@@ -61,7 +63,26 @@ export const useSocketStore = defineStore('socket', () => {
     
     socket.on('game-change', (game) => {
       console.log(`[Socket] Game state changed | game: ${game.id}`)
+      console.log('🔍 [DEBUG] Full game object:', game)
       gameStore.setMultiplayerGame(game)
+
+      // 💾 Save game start when status becomes 'playing' for the first time
+      if (game.started && !gameStore.multiplayerGame.db_game_id) {
+        gameStore.saveGameStart({
+          id: game.id,
+          type: game.game_type,
+          player1: game.player1,
+          player2: game.player2,
+          match_id: game.match_id || null
+        })
+      }
+      
+      // 💾 Save game end when game is over
+      if (game.game_over && game.db_game_id) {
+        console.log('🔍 [DEBUG] Game over! Saving game end...')
+        gameStore.saveGameEnd(game)
+        console.log('💾 Game end saved to database')
+      }
     })
     
     socket.on('error', (error) => {

@@ -139,6 +139,26 @@ export const useApiStore = defineStore("api", () => {
         return response.data
     }
 
+    const createGame = async (data) => {
+        const response = await axios.post(`${API_BASE_URL}/games`, data)
+        return response.data
+    }
+
+    const updateGame = async (id, data) => {
+        const response = await axios.put(`${API_BASE_URL}/games/${id}`, data)
+        return response.data
+    }
+
+    const createMatch = async (data) => {
+        const response = await axios.post(`${API_BASE_URL}/matches`, data)
+        return response.data
+    }
+
+    const updateMatch = async (id, data) => {
+        const response = await axios.put(`${API_BASE_URL}/matches/${id}`, data)
+        return response.data
+    }
+
     const createAdmin = async (data) => {
         const formData = new FormData()
         Object.keys(data).forEach(key => {
@@ -268,6 +288,10 @@ export const useApiStore = defineStore("api", () => {
         getPlayerMatches,
         getUser,
         getPersonalStats,
-        getGlobalLeaderboard
+        getGlobalLeaderboard,
+        updateMatch,
+        updateGame,
+        createGame, 
+        createMatch
     }
 })

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, inject, computed } from 'vue'
 import { useAuthStore } from './authStore'
+import { useApiStore } from './api'
 import { toast } from 'vue-sonner'
 
 export const useGameStore = defineStore('game', () => {
@@ -30,6 +31,7 @@ export const useGameStore = defineStore('game', () => {
   const types_of_matches = ['game', 'match']
 
   const authStore = useAuthStore()
+  const apiStore = useApiStore()
   const socket = inject('socket')
 
   const SUITS = [
@@ -351,6 +353,84 @@ export const useGameStore = defineStore('game', () => {
     multiplayerGame.value = game
     console.log(`[Game] Multiplayer Game changed | round ${game.current_round}`)
   }
+
+  const saveGameStart = async (gameData) => {
+    console.log('🔍 [DEBUG] saveGameStart called with:', gameData)
+    try {
+      const response = await apiStore.createGame({
+        type: gameData.type,
+        player1_user_id: gameData.player1,
+        player2_user_id: gameData.player2,
+        match_id: gameData.match_id || null,
+        began_at: new Date().toISOString(),
+        status: 'Playing'
+      })
+
+      console.log('✅ Game saved to database:', response.game)
+      
+      // Store the database game ID
+      if (multiplayerGame.value && multiplayerGame.value.id === gameData.id) {
+        multiplayerGame.value.db_game_id = response.game.id
+      }
+
+      return response.game
+    } catch (error) {
+      console.error('❌ Failed to save game start:', error)
+      console.error('❌ Error response:', error.response?.data)
+      console.error('❌ Error status:', error.response?.status)
+      toast.error('Failed to save game to database')
+    }
+  }
+
+  /**
+   * Update game in database when it ends
+   * Called when game finishes (win/loss/draw/resignation)
+   */
+  const saveGameEnd = async (gameData) => {
+    try {
+      const dbGameId = gameData.db_game_id
+      
+      if (!dbGameId) {
+        console.error('❌ No database game ID found')
+        return
+      }
+
+      // Determine winner and loser
+      let winnerUserId = null
+      let loserUserId = null
+      let isDraw = false
+
+      if (gameData.resigned_player) {
+        // Resignation case
+        const resignedIsPlayer1 = gameData.resigned_player === 1
+        winnerUserId = resignedIsPlayer1 ? gameData.player2 : gameData.player1
+        loserUserId = resignedIsPlayer1 ? gameData.player1 : gameData.player2
+      } else if (gameData.winner === 'draw') {
+        isDraw = true
+      } else {
+        winnerUserId = gameData.winner === 1 ? gameData.player1 : gameData.player2
+        loserUserId = gameData.winner === 1 ? gameData.player2 : gameData.player1
+      }
+
+      const response = await apiStore.updateGame(dbGameId, {
+        status: 'Ended',
+        player1_points: gameData.points_player1,
+        player2_points: gameData.points_player2,
+        is_draw: isDraw,
+        winner_user_id: winnerUserId,
+        loser_user_id: loserUserId,
+        ended_at: new Date().toISOString(),
+        resigned_player: gameData.resigned_player || null
+      })
+
+      console.log('✅ Game end saved to database:', response.game)
+      return response.game
+    } catch (error) {
+      console.error('❌ Failed to save game end:', error)
+      toast.error('Failed to update game in database')
+    }
+  }
+
   return {
     hand_player1,
     hand_player2,
@@ -384,5 +464,7 @@ export const useGameStore = defineStore('game', () => {
     availableGames,
     multiplayerGame,
     setMultiplayerGame,
+    saveGameStart,
+    saveGameEnd
   }
 })

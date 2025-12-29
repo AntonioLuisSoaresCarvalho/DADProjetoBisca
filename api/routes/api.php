@@ -9,6 +9,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\LeaderboardController;
 //Game History controla a history de games e matches
 use App\Http\Controllers\GameHistoryController;
+use App\Http\Controllers\GameMatchController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -49,13 +50,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/matches/{id}', [GameHistoryController::class, 'getMatchDetails']);
     });
 
-        // Game/Match History só do admin
-        Route::get('/admin/history/games/{userId}', [GameHistoryController::class, 'getPlayerGames']);
-        Route::get('/admin/history/matches/{userId}', [GameHistoryController::class, 'getPlayerMatches']);
+    Route::post('/games', [GameMatchController::class, 'storeGame']);
+    Route::put('/games/{id}', [GameMatchController::class, 'updateGame']);
+    Route::post('/matches', [GameMatchController::class, 'storeMatch']);
+    Route::put('/matches/{id}', [GameMatchController::class, 'updateMatch']);
 
-        // Detailed Game/Match History, o admin tem acesso a todos
-        Route::get('/admin/games/{id}', [GameHistoryController::class, 'getGameDetails']);
-        Route::get('/admin/matches/{id}', [GameHistoryController::class, 'getMatchDetails']);
+    // Game/Match History só do admin
+    Route::get('/admin/history/games/{userId}', [GameHistoryController::class, 'getPlayerGames']);
+    Route::get('/admin/history/matches/{userId}', [GameHistoryController::class, 'getPlayerMatches']);
+
+    // Detailed Game/Match History, o admin tem acesso a todos
+    Route::get('/admin/games/{id}', [GameHistoryController::class, 'getGameDetails']);
+    Route::get('/admin/matches/{id}', [GameHistoryController::class, 'getMatchDetails']);
 
     Route::get('/users/{id}', [AuthController::class, 'getUserById']);
 

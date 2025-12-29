@@ -1,11 +1,13 @@
 // stores/match.js
 import { defineStore } from 'pinia'
+import { useApiStore } from './api'
 
 export const useMatchStore = defineStore('match', {
   state: () => ({
     // Match info
     is_match_mode: false, // true se estamos em modo match, false para jogo avulso
     match_id: null,
+    db_match_id: null,
     match_type: 9, // 3 ou 9
     match_status: 'pending', // 'pending', 'playing', 'ended', 'interrupted'
     
@@ -39,6 +41,7 @@ export const useMatchStore = defineStore('match', {
     // Match is over when one player reaches 4 marks
     match_over: false,
   }),
+  
 
   getters: {
     /**
@@ -116,9 +119,10 @@ export const useMatchStore = defineStore('match', {
      * @param {Object} player2 - { id, name }
      * @param {number} stake - valor da aposta (3-100)
      */
-    startMatch(matchType = 9, player1, player2, stake = 3) {
+    async startMatch(matchType = 9, player1, player2, stake = 3) {
+      const apiStore = useApiStore()
       this.is_match_mode = true
-      this.match_id = `match_${Date.now()}`
+      //this.match_id = `match_${Date.now()}`
       this.match_type = matchType
       this.match_status = 'playing'
       
@@ -145,6 +149,23 @@ export const useMatchStore = defineStore('match', {
       console.log(`🎮 Match iniciado: ${this.player1_name} vs ${this.player2_name}`)
       console.log(`   Tipo: Bisca de ${this.match_type}`)
       console.log(`   Stake: ${this.stake} moedas`)
+
+      try {
+        const response = await apiStore.createMatch({
+          type: this.match_type,
+          player1_user_id: this.player1_id,
+          player2_user_id: this.player2_id,
+          stake: this.stake,
+          began_at: this.began_at,
+          status: 'Playing'
+        })
+
+        this.db_match_id = response.match.id
+        console.log('✅ Match saved to database with ID:', this.db_match_id)
+      } catch (error) {
+        console.error('❌ Failed to save match to database:', error)
+        toast.error('Failed to save match to database')
+      }
     },
 
     /**
@@ -152,7 +173,7 @@ export const useMatchStore = defineStore('match', {
      * @param {Object} gameResult - { winner, points_player1, points_player2, is_draw }
      * @returns {boolean} - true se deve continuar com próximo jogo, false se match acabou
      */
-    processGameResult(gameResult) {
+    async processGameResult(gameResult) {
       const { 
         winner, 
         points_player1, 
@@ -203,6 +224,8 @@ export const useMatchStore = defineStore('match', {
       // Adiciona ao histórico
       this.games_played.push(gameRecord)
 
+      await this.updateMatchInDatabase()
+
       // Verifica se o match acabou
       if (this.isMatchOver) {
         this.endMatch()
@@ -237,7 +260,7 @@ export const useMatchStore = defineStore('match', {
     /**
      * Termina o match
      */
-    endMatch() {
+    async endMatch() {
       this.match_status = 'ended'
       this.match_over = true
       this.ended_at = new Date().toISOString()
@@ -258,7 +281,7 @@ export const useMatchStore = defineStore('match', {
       console.log(`   💰 Payout: ${this.winnerPayout} moedas`)
       
       // Guarda o match no servidor
-      //this.saveMatchToServer()
+      await this.updateMatchInDatabase(true)
     },
 
     /**
@@ -266,7 +289,7 @@ export const useMatchStore = defineStore('match', {
      * O jogador que desiste perde todo o match
      * @param {number|string} playerId - ID do jogador que desistiu
      */
-    forfeitMatch(playerId) {
+    async forfeitMatch(playerId) {
       console.log(`❌ Jogador ${playerId} desistiu do match`)
       
       this.match_status = 'ended'
@@ -286,49 +309,40 @@ export const useMatchStore = defineStore('match', {
 
       console.log(`   🏆 Vencedor por desistência: ${this.winner_id === this.player1_id ? this.player1_name : this.player2_name}`)
 
-      //this.saveMatchToServer()
+      await this.updateMatchInDatabase(true)
     },
 
     /**
      * Guarda o match no servidor (API)
      */
-    async saveMatchToServer() {
+    async updateMatchInDatabase(isFinal = false) {
+      if (!this.db_match_id) {
+        console.error('❌ No database match ID found')
+        return
+      }
+
+      const apiStore = useApiStore()
+
       try {
-        const matchData = {
-          type: this.match_type,
-          player1_user_id: this.player1_id,
-          player2_user_id: this.player2_id,
-          winner_user_id: this.winner_id,
-          loser_user_id: this.loser_id,
-          status: this.match_status,
-          stake: this.stake,
-          began_at: this.began_at,
-          ended_at: this.ended_at,
+        const updateData = {
           player1_marks: this.player1_marks,
           player2_marks: this.player2_marks,
           player1_points: this.player1_total_points,
           player2_points: this.player2_total_points,
-          games: this.games_played
         }
 
-        console.log('💾 A guardar match no servidor...')
-        
-        // Fazer POST para a tua API
-        // const response = await fetch('/api/matches', {
-        //   method: 'POST',
-        //   headers: { 
-        //     'Content-Type': 'application/json',
-        //     'Authorization': `Bearer ${token}` // se usares auth
-        //   },
-        //   body: JSON.stringify(matchData)
-        // })
-        
-        // const data = await response.json()
-        // console.log('✅ Match guardado:', data)
-        
-        console.log('📄 Match data:', matchData)
+        if (isFinal) {
+          updateData.status = 'Ended'
+          updateData.winner_user_id = this.winner_id
+          updateData.loser_user_id = this.loser_id
+          updateData.ended_at = this.ended_at
+        }
+
+        const response = await apiStore.updateMatch(this.db_match_id, updateData)
+        console.log('✅ Match updated in database:', response.match)
       } catch (error) {
-        console.error('❌ Erro ao guardar match:', error)
+        console.error('❌ Failed to update match:', error)
+        toast.error('Failed to update match in database')
       }
     },
 
