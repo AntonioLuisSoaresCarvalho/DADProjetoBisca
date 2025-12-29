@@ -1,5 +1,3 @@
-//import { triggerPlayCardDelay } from "../events/game.js"
-
 const games = new Map()
 let currentGameID = 0
 
@@ -23,40 +21,49 @@ const RANKS = [
     { rank: '2', name: '2', points: 0 }
 ]
 
-export const createGame = (game_type, user) => {
+export const createGame = (gameConfig, user) => {
     currentGameID++
 
     const game = {
         id: currentGameID,
-        game_type,
+        game_type: gameConfig.type,
         creator: user.id,
         player1: user.id,
         player2: null,
-        winner: null,
-        currentPlayer: user.id,
+        
+        // Match-specific fields
+        is_match: gameConfig.mode === 'match',
+        stake: gameConfig.stake || 0,
+        player1_marks: 0,
+        player2_marks: 0,
+        player1_total_points: 0,
+        player2_total_points: 0,
+        current_game_number: 1,
+        games_history: [],
+        match_over: false,
+        match_winner: null,
+        winner_payout: 0,
+        
+        // Game state
         deck: generateDeck(),
-        //
         hand_player1: [],
         hand_player2: [],
         deck_index: null,
         card_played_player1: null,
         card_played_player2: null,
         turn_player: null,
+        trump_card: null,
         trump_suit: null,
-        game_over: null,
+        game_over: false,
         points_player1: 0,
         points_player2: 0,
         winner: null,
         current_round: 0,
         round_starter: null,
-        game_mode: 'game',
-        //
-        playedCards: [],
         started: false,
         complete: false,
-        rounds: 0,
-        beganAt: null,
-        endedAt: null
+        endedAt: null,
+        round_in_progress: false
     }
 
     game.deck = shuffle(game.deck)
@@ -68,8 +75,19 @@ export const getGames = () => {
     return Array.from(games.values())
 }
 
+export const getGameById = (gameID) => {
+    return games.get(gameID)
+}
+
 export const joinGame = (gameID, player2) => {
-    games.get(gameID).player2 = player2
+    const game = games.get(gameID)
+    if (game) {
+        game.player2 = player2
+    }
+}
+
+export const startGameSession = (game) => {
+    startGame(game, game.game_type)
 }
 
 export const cancelGamesByUser = (userId) => {
@@ -82,6 +100,107 @@ export const cancelGamesByUser = (userId) => {
         }
     }
     return removedCount
+}
+
+export function playCard(game, card, player) {
+    if (game.game_over) return false
+    if (game.turn_player !== player) return false
+    if (game.round_in_progress) return false
+
+    const hand = player === 1 ? game.hand_player1 : game.hand_player2
+    const idx = hand.findIndex(c => c.id === card.id)
+    if (idx === -1) return false
+
+    hand.splice(idx, 1)
+
+    if (player === 1) game.card_played_player1 = card
+    else game.card_played_player2 = card
+
+    console.log(`Player ${player} played ${card.name}`)
+
+    if (game.card_played_player1 && game.card_played_player2) {
+        game.round_in_progress = true
+        resolveRound(game)
+    } else {
+        game.turn_player = player === 1 ? 2 : 1
+    }
+
+    return true
+}
+
+export function continueMatch(game) {
+    if (!game.is_match || game.match_over) return false
+    
+    console.log(`[Match] Starting next game in match (Game ${game.current_game_number + 1})`)
+    game.current_game_number++
+    startGame(game, game.game_type)
+    return true
+}
+
+export function resignGame(game, player) {
+    if (game.game_over) return false
+    
+    console.log(`[Game] Player ${player} resigned!`)
+    
+    // Calculate points from resigning player's hand
+    const resigningHand = player === 1 ? game.hand_player1 : game.hand_player2
+    const handPoints = resigningHand.reduce((sum, card) => sum + (card.points || 0), 0)
+    
+    console.log(`[Game] Resigning player had ${handPoints} points in hand`)
+    
+    // Award hand points to the opponent
+    if (player === 1) {
+        game.points_player2 += handPoints
+    } else {
+        game.points_player1 += handPoints
+    }
+    
+    // Set winner (opponent of resigning player)
+    game.winner = player === 1 ? 2 : 1
+    game.resigned_player = player
+    
+    // Clear hands
+    game.hand_player1 = []
+    game.hand_player2 = []
+    
+    // Mark game as over and complete
+    game.game_over = true
+    game.complete = true
+    game.endedAt = new Date()
+    
+    // If it's a match, resigning player loses the entire match (4-0)
+    if (game.is_match) {
+        console.log('[Match] Player resigned - instant match loss!')
+        if (player === 1) {
+            game.player2_marks = 4
+            game.player1_marks = 0
+        } else {
+            game.player1_marks = 4
+            game.player2_marks = 0
+        }
+        game.match_over = true
+        game.match_winner = player === 1 ? 2 : 1
+        
+        // Calculate payout
+        const totalStake = game.stake * 2
+        const platformCommission = 1
+        game.winner_payout = totalStake - platformCommission
+        
+        console.log(`[Match] Instant match loss by resignation`)
+        console.log(`[Match] Winner: Player ${game.match_winner}`)
+        console.log(`[Match] Final Marks: ${game.player1_marks} - ${game.player2_marks}`)
+        console.log(`[Match] Payout: ${game.winner_payout} coins`)
+    }
+    
+    return true
+}
+
+export function removeGame(gameID) {
+    const deleted = games.delete(gameID)
+    if (deleted) {
+        console.log(`[Game] Removed game ${gameID} from active games`)
+    }
+    return deleted
 }
 
 function generateDeck() {
@@ -107,205 +226,227 @@ function shuffle(array) {
     const a = array.slice()
     for (let i = a.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1))
-            ;[a[i], a[j]] = [a[j], a[i]]
+        ;[a[i], a[j]] = [a[j], a[i]]
     }
     return a
 }
 
-function startGame(type = 3, mode = 'game') {
+function startGame(game, type = 3) {
     const newDeck = shuffle(generateDeck())
-    deck.value = newDeck
+    game.deck = newDeck
 
-    // Guarda o tipo e modo do jogo
-    game_type.value = type
-    game_mode.value = mode
+    game.trump_card = game.deck[game.deck.length - 1]
+    game.trump_suit = game.trump_card.suit
 
-    // Set trump card (last card in deck)
-    trump_card.value = deck.value[deck.value.length - 1]
-    trump_suit.value = trump_card.value.suit
+    game.hand_player1 = game.deck.slice(0, type)
+    game.hand_player2 = game.deck.slice(type, type * 2)
+    game.deck_index = type * 2
 
-    // Deal 3 cards to each player
-    hand_player1.value = deck.value.slice(0, type)
-    hand_player2.value = deck.value.slice(type, type * 2)
-    deck_index.value = type * 2 // Next card to draw
+    game.turn_player = Math.random() < 0.5 ? 1 : 2
+    game.round_starter = game.turn_player
 
-    // Random first player
-    turn_player.value = Math.random() < 0.5 ? 1 : 2
-    round_starter.value = turn_player.value
+    game.current_round = 0
+    game.points_player1 = 0
+    game.points_player2 = 0
+    game.card_played_player1 = null
+    game.card_played_player2 = null
+    game.game_over = false
+    game.winner = null
+    game.started = true
+    game.round_in_progress = false
 
-    // Reset game state
-    current_round.value = 0
-    points_player1.value = 0
-    points_player2.value = 0
-    card_played_player1.value = null
-    card_played_player2.value = null
-    game_over.value = false
-    winner.value = null
-
-    console.log(`Game started! Bisca de ${type} | Mode: ${mode}`)
-    console.log(`Game started! Player ${turn_player.value} goes first`)
-    console.log(`Trump card: ${trump_card.value.name}`)
+    console.log(`Game started! Bisca de ${type}${game.is_match ? ' (Match mode)' : ''}`)
+    console.log(`Player ${game.turn_player} goes first`)
+    console.log(`Trump card: ${game.trump_card.name}`)
 }
 
-function determineTrickWinner(card1, card2) {
-    // Same suit: higher rank wins (lower order = higher rank)
+function determineTrickWinner(game, card1, card2) {
     if (card1.suit === card2.suit) {
         return card1.order < card2.order ? 1 : 2
     }
-    // Player 1's card is trump
-    if (card1.suit === trump_suit.value) return 1
-    // Player 2's card is trump
-    if (card2.suit === trump_suit.value) return 2
-    // No trump: first player wins
-    return round_starter.value
+    if (card1.suit === game.trump_suit) return 1
+    if (card2.suit === game.trump_suit) return 2
+    return game.round_starter
 }
 
-function playCard(card, player) {
-    if (game_over.value) return false
-    if (turn_player.value !== player) return false
-
-    const hand = player === 1 ? hand_player1.value : hand_player2.value
-    const idx = hand.findIndex(c => c.id === card.id)
-    if (idx === -1) return false
-
-    // Remove card from hand
-    hand.splice(idx, 1)
-
-    // Place card on table
-    if (player === 1) {
-        card_played_player1.value = card
-        console.log(`Player 1 played: ${card.name}`)
-    } else {
-        card_played_player2.value = card
-        console.log(`Player 2 (Bot) played: ${card.name}`)
-    }
-
-    // Check if round is complete
-    if (card_played_player1.value && card_played_player2.value) {
-        resolveRound()
-    } else {
-        // Switch turn to other player
-        turn_player.value = player === 1 ? 2 : 1
-        console.log(`Turn switched to Player ${turn_player.value}`)
-    }
-
-    return true
-}
-
-function resolveRound() {
-    const c1 = card_played_player1.value
-    const c2 = card_played_player2.value
+function resolveRound(game) {
+    const c1 = game.card_played_player1
+    const c2 = game.card_played_player2
     if (!c1 || !c2) return
 
-    console.log(`Resolving round ${current_round.value + 1}...`)
-
-    const winnerPlayer = determineTrickWinner(c1, c2)
+    const winnerPlayer = determineTrickWinner(game, c1, c2)
     const totalPoints = (c1.points || 0) + (c2.points || 0)
 
-    if (winnerPlayer === 1) {
-        points_player1.value += totalPoints
-    } else {
-        points_player2.value += totalPoints
-    }
+    if (winnerPlayer === 1) game.points_player1 += totalPoints
+    else game.points_player2 += totalPoints
 
-    console.log(`Player ${winnerPlayer} wins the round! (+${totalPoints} points)`)
-    console.log(`Score: P1=${points_player1.value} P2=${points_player2.value}`)
+    game.current_round++
 
-    current_round.value++
+    console.log(`Round ${game.current_round}: Player ${winnerPlayer} wins (+${totalPoints} pts)`)
+    console.log(`Score: P1=${game.points_player1} P2=${game.points_player2}`)
 
-    // Wait before drawing cards and starting next round
+    game.round_in_progress = true
+
     setTimeout(() => {
-        drawCards(winnerPlayer)
-        startNextRound(winnerPlayer)
-    }, 2000)
+        game.card_played_player1 = null
+        game.card_played_player2 = null
+
+        drawCards(game, winnerPlayer)
+
+        game.turn_player = winnerPlayer
+        game.round_starter = winnerPlayer
+
+        if (game.hand_player1.length === 0 && game.hand_player2.length === 0) {
+            endGame(game)
+        } else {
+            console.log(`Next round: Player ${game.turn_player} starts`)
+        }
+
+        game.round_in_progress = false
+    }, 800)
 }
 
-function drawCards(winnerPlayer) {
-    // Check if there are cards left to draw
-    if (deck_index.value >= deck.value.length) {
+function drawCards(game, winnerPlayer) {
+    if (game.deck_index >= game.deck.length) {
         console.log('No more cards to draw')
         return
     }
 
-    // Winner draws first
     if (winnerPlayer === 1) {
-        if (deck_index.value < deck.value.length) {
-            hand_player1.value.push(deck.value[deck_index.value])
-            console.log(`Player 1 draws: ${deck.value[deck_index.value].name}`)
-            deck_index.value++
+        if (game.deck_index < game.deck.length) {
+            game.hand_player1.push(game.deck[game.deck_index++])
         }
-        if (deck_index.value < deck.value.length) {
-            hand_player2.value.push(deck.value[deck_index.value])
-            console.log(`Player 2 draws: ${deck.value[deck_index.value].name}`)
-            deck_index.value++
+        if (game.deck_index < game.deck.length) {
+            game.hand_player2.push(game.deck[game.deck_index++])
         }
     } else {
-        if (deck_index.value < deck.value.length) {
-            hand_player2.value.push(deck.value[deck_index.value])
-            console.log(`Player 2 draws: ${deck.value[deck_index.value].name}`)
-            deck_index.value++
+        if (game.deck_index < game.deck.length) {
+            game.hand_player2.push(game.deck[game.deck_index++])
         }
-        if (deck_index.value < deck.value.length) {
-            hand_player1.value.push(deck.value[deck_index.value])
-            console.log(`Player 1 draws: ${deck.value[deck_index.value].name}`)
-            deck_index.value++
+        if (game.deck_index < game.deck.length) {
+            game.hand_player1.push(game.deck[game.deck_index++])
         }
     }
-}
-
-function startNextRound(lastWinner) {
-    // Check if game is over (no cards left in both hands)
-    if (hand_player1.value.length === 0 && hand_player2.value.length === 0) {
-        endGame()
-        return
-    }
-
-    // Clear table
-    card_played_player1.value = null
-    card_played_player2.value = null
-
-    // Winner of last round starts next round
-    turn_player.value = lastWinner
-    round_starter.value = lastWinner
-
-    console.log(`Starting round ${current_round.value + 1}`)
-    console.log(`Player ${turn_player.value} starts this round`)
-    console.log(`Cards in deck: ${deck.value.length - deck_index.value}`)
-
-    // If bot starts, trigger bot play
-    if (turn_player.value === 2) {
-        setTimeout(() => botPlay(), 800)
-    }
-}
-
-function endGame() {
-    game_over.value = true
     
-    if (points_player1.value > points_player2.value) {
-        winner = 1
-    } else if (points_player2.value > points_player1.value) {
-        winner = 2
+    console.log(`Cards remaining in deck: ${game.deck.length - game.deck_index}`)
+}
+
+function endGame(game) {
+    game.game_over = true
+
+    if (game.points_player1 > game.points_player2) {
+        game.winner = 1
+    } else if (game.points_player2 > game.points_player1) {
+        game.winner = 2
     } else {
-        winner = 'draw'
+        game.winner = 'draw'
     }
 
-    //AAAAAAAAAAA
+    console.log('=== Game Over ===')
+    console.log(`Final Score: P1=${game.points_player1} P2=${game.points_player2}`)
+    console.log(`Winner: ${game.winner === 'draw' ? 'Draw' : 'Player ' + game.winner}`)
+
+    // Process match if this is match mode
+    if (game.is_match) {
+        processMatchResult(game)
+    } else {
+        game.complete = true
+        game.endedAt = new Date()
+    }
+}
+
+/**
+ * Calcula as marcas baseado nos pontos do vencedor
+ * Regras da Bisca:
+ * - 120 pontos = BANDEIRA (4 marcas - vitória automática)
+ * - 91-119 pontos = CAPOTE (2 marcas)
+ * - 61-90 pontos = RISCA/MOCA (1 marca)
+ * - 0-60 pontos = SEM MARCA
+ */
+function calculateMarks(winnerPoints) {
+    if (winnerPoints === 120) {
+        console.log(`   🏁 BANDEIRA! (120 pontos)`)
+        return 4 // Vitória automática
+    } else if (winnerPoints >= 91 && winnerPoints <= 119) {
+        console.log(`   💪 CAPOTE! (${winnerPoints} pontos)`)
+        return 2
+    } else if (winnerPoints >= 61 && winnerPoints <= 90) {
+        console.log(`   ✓ RISCA (${winnerPoints} pontos)`)
+        return 1
+    } else {
+        console.log(`   ○ Sem marca (${winnerPoints} pontos)`)
+        return 0
+    }
+}
+
+function processMatchResult(game) {
+    console.log('[Match] Processing game result...')
+    
+    const gameRecord = {
+        game_number: game.current_game_number,
+        winner: game.winner,
+        points_player1: game.points_player1,
+        points_player2: game.points_player2,
+        is_draw: game.winner === 'draw',
+        marks_awarded: 0,
+        timestamp: new Date().toISOString()
+    }
+
+    // Accumulate total points
+    game.player1_total_points += game.points_player1
+    game.player2_total_points += game.points_player2
+
+    // Calculate marks (empate = sem marcas)
+    if (game.winner === 'draw') {
+        console.log(`   🤝 Empate - sem marcas`)
+        gameRecord.marks_awarded = 0
+    } else {
+        const winnerPoints = game.winner === 1 ? game.points_player1 : game.points_player2
+        const marks = calculateMarks(winnerPoints)
+        
+        // Award marks to winner
+        if (game.winner === 1) {
+            game.player1_marks += marks
+            console.log(`   ✅ Player 1 ganhou ${marks} marca(s)`)
+            console.log(`   📈 Marcas: ${game.player1_marks}/4`)
+        } else {
+            game.player2_marks += marks
+            console.log(`   ✅ Player 2 ganhou ${marks} marca(s)`)
+            console.log(`   📈 Marcas: ${game.player2_marks}/4`)
+        }
+
+        gameRecord.marks_awarded = marks
+    }
+
+    // Add to history
+    game.games_history.push(gameRecord)
+
+    // Check if match is over (4 marks or bandeira)
+    if (game.player1_marks >= 4 || game.player2_marks >= 4) {
+        endMatch(game)
+    }
+}
+
+function endMatch(game) {
+    game.match_over = true
+    
+    if (game.player1_marks >= 4) {
+        game.match_winner = 1
+    } else {
+        game.match_winner = 2
+    }
+    
+    // Calculate payout (stake x 2 - commission)
+    const totalStake = game.stake * 2
+    const platformCommission = 1
+    game.winner_payout = totalStake - platformCommission
+    
     game.complete = true
     game.endedAt = new Date()
-
-    console.log('Game Over!')
-    console.log(`Final Score: P1=${points_player1.value} P2=${points_player2.value}`)
-    console.log(`Winner: ${winner.value}`)
+    
+    console.log('=== MATCH OVER ===')
+    console.log(`Winner: Player ${game.match_winner}`)
+    console.log(`Final Marks: ${game.player1_marks} - ${game.player2_marks}`)
+    console.log(`Total Points: ${game.player1_total_points} - ${game.player2_total_points}`)
+    console.log(`Payout: ${game.winner_payout} coins`)
 }
-
-function getGameResult() {
-    return {
-        winner: winner.value === 'draw' ? null : winner.value,
-        points_player1: points_player1.value,
-        points_player2: points_player2.value,
-        is_draw: winner.value === 'draw'
-    }
-}
-
-
-

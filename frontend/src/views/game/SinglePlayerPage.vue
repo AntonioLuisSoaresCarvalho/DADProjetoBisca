@@ -25,7 +25,6 @@ const authStore = useAuthStore()
 // Flag para controlar transição entre jogos
 const showingGameResult = ref(false)
 
-//const showEndModal = ref(false)
 const modalTitle = ref("")
 const modalText = ref("")
 const modalButton = ref("OK")
@@ -61,7 +60,22 @@ const marksDisplay = computed(() => {
   return { marks1, marks2 }
 })
 
+// Computed to check if cards should be disabled
+const cardsDisabled = computed(() => {
+  // Disable if: not your turn, game over, showing result, OR you've already played a card
+  return gameStore.turn_player !== 1 || 
+         gameStore.game_over || 
+         showingGameResult.value ||
+         gameStore.card_played_player1 !== null  // Already played a card this round
+})
+
 function handleCardPlayed(card) {
+  // Extra check - don't allow if card already played
+  if (gameStore.card_played_player1 !== null) {
+    console.log('Already played a card this round!')
+    return
+  }
+  
   const success = gameStore.playCard(card, 1)
   
   if (success && gameStore.turn_player === 2 && !gameStore.game_over) {
@@ -227,15 +241,18 @@ onMounted(() => {
       <CardFooter class="flex flex-col items-center justify-center gap-4">
           <CardHand
           :cards="gameStore.hand_player1"
-          :disabled="gameStore.turn_player !== 1 || gameStore.game_over || showingGameResult"
+          :disabled="cardsDisabled"
           @playCard="handleCardPlayed"
         />
         
         
         <!-- Indicador de turno -->
         <div v-if="!gameStore.game_over && !showingGameResult" class="text-3xl font-bold">
-          <span v-if="gameStore.turn_player === 1" class="text-black-600">
+          <span v-if="gameStore.turn_player === 1 && !gameStore.card_played_player1" class="text-green-600">
             É a tua vez!
+          </span>
+          <span v-else-if="gameStore.card_played_player1 && !gameStore.card_played_player2" class="text-blue-600">
+            À espera do Bot...
           </span>
           <span v-else class="text-orange-600">
             Bot a jogar...
@@ -287,7 +304,7 @@ onMounted(() => {
 
         <div class="flex gap-3 justify-center mt-4">
           <button
-            @click="router.push('/play')"
+            @click="router.push('/')"
             class="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-semibold transition"
           >
             ← Voltar
@@ -325,7 +342,7 @@ onMounted(() => {
 
         <div class="flex gap-3 justify-center mt-4">
           <button
-            @click="router.push('/play')"
+            @click="router.push('/')"
             class="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-semibold transition cursor-pointer "
           >
             ← Voltar

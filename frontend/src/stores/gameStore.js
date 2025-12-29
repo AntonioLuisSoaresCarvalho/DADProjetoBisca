@@ -349,9 +349,8 @@ export const useGameStore = defineStore('game', () => {
 
   const setMultiplayerGame = (game) => {
     multiplayerGame.value = game
-    console.log(`[Game] Multiplayer Game changed | game moves ${game.moves}`)
+    console.log(`[Game] Multiplayer Game changed | round ${game.current_round}`)
   }
-
   return {
     hand_player1,
     hand_player2,
