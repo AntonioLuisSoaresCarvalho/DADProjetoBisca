@@ -165,8 +165,8 @@ class GameMatchController extends Controller
         DB::beginTransaction();
         try {
             // Deduct stake from both players
-            $player1 = \App\Models\User::findOrFail($request->player1_user_id);
-            $player2 = \App\Models\User::findOrFail($request->player2_user_id);
+            $player1 = User::findOrFail($request->player1_user_id);
+            $player2 = User::findOrFail($request->player2_user_id);
 
             if ($player1->coins_balance < $request->stake) {
                 return response()->json([

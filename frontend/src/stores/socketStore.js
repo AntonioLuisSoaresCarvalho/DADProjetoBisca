@@ -67,7 +67,7 @@ export const useSocketStore = defineStore('socket', () => {
       gameStore.setMultiplayerGame(game)
 
       // 💾 Save game start when status becomes 'playing' for the first time
-      if (game.started && !gameStore.multiplayerGame.db_game_id) {
+      if (game.started && !game.db_game_id) {
         gameStore.saveGameStart({
           id: game.id,
           type: game.game_type,
