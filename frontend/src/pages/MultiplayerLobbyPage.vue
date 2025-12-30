@@ -435,18 +435,18 @@ const joinGame = (game) => {
   const requiredCoins = game.is_match ? game.stake : 2
   
   if (!authStore.hasEnoughCoins(requiredCoins)) {
-    toast.error(`You need ${requiredCoins} coins to join this game. You only have ${authStore.coinsBalance}.`)
+    console.error(`You need ${requiredCoins} coins to join this game. You only have ${authStore.coinsBalance}.`)
     return
   }
   socketStore.emitJoinGame(game)
   // Wait a bit for server to process, then check if we're player 2
-  toast.info(`Joining game... ${requiredCoins} coins will be deducted when game starts.`)
+  console.log(`Joining game... ${requiredCoins} coins will be deducted when game starts.`)
   setTimeout(() => {
     const updatedGame = gameStore.games.find(g => g.id === game.id)
     if (updatedGame && updatedGame.player2 === authStore.currentUser?.id) {
       gameStore.multiplayerGame = updatedGame
       // Don't navigate yet - wait for host to start the game
-      toast.success('Successfully joined the game! Waiting for host to start...')
+      console.log('Successfully joined the game! Waiting for host to start...')
     }
   }, 500)
 }

@@ -5,8 +5,8 @@ import { io } from 'socket.io-client'
 import App from './App.vue'
 import router from './router'
 
-const apiDomain = import.meta.env.VITE_API_DOMAIN
-const wsConnection = import.meta.env.VITE_WS_CONNECTION
+const apiDomain = import.meta.env.VITE_API_DOMAIN || 'http://localhost:8000'
+const wsConnection = import.meta.env.VITE_WS_CONNECTION || 'http://localhost:3000'
 
 console.log('[main.js] api domain', apiDomain)
 console.log('[main.js] ws connection', wsConnection)

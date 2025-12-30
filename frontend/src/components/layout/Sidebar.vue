@@ -41,7 +41,7 @@
         </router-link>
 
         <!-- Dropdown History -->
-        <div class="dropdown-sidebar">
+        <div class="dropdown-sidebar" v-if="!auth.isAdmin">
           <button
             @click="toggleHistoryDropdown"
             class="flex items-center justify-between w-full px-2 py-2 rounded hover:bg-green-600 text-left"
@@ -70,6 +70,7 @@
 
         <router-link
           to="/leaderboard"
+          v-if="!auth.isAdmin"
           @click="$emit('close')"
           class="px-2 py-2 rounded hover:bg-green-600"
         >
@@ -79,6 +80,7 @@
 
         <router-link
           to="/play"
+          v-if="!auth.isAdmin"
           @click="$emit('close')"
           class="px-2 py-2 rounded hover:bg-green-600"
         >
@@ -87,6 +89,7 @@
 
         <router-link
           to="/coins"
+          v-if="!auth.isAdmin"
           @click="$emit('close')"
           class="px-2 py-2 rounded hover:bg-green-600"
         >

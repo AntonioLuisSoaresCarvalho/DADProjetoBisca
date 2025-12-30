@@ -120,6 +120,10 @@ export const useMatchStore = defineStore('match', {
      * @param {number} stake - valor da aposta (3-100)
      */
     async startMatch(matchType = 9, player1, player2, stake = 3) {
+      if (this.db_match_id) {
+        console.log('⚠️ [MATCH] Match already exists in database, skipping creation')
+        return
+      }
       const apiStore = useApiStore()
       this.is_match_mode = true
       //this.match_id = `match_${Date.now()}`
@@ -162,9 +166,9 @@ export const useMatchStore = defineStore('match', {
 
         this.db_match_id = response.match.id
         console.log('✅ Match saved to database with ID:', this.db_match_id)
+        return response.match
       } catch (error) {
         console.error('❌ Failed to save match to database:', error)
-        toast.error('Failed to save match to database')
       }
     },
 
@@ -342,7 +346,6 @@ export const useMatchStore = defineStore('match', {
         console.log('✅ Match updated in database:', response.match)
       } catch (error) {
         console.error('❌ Failed to update match:', error)
-        toast.error('Failed to update match in database')
       }
     },
 

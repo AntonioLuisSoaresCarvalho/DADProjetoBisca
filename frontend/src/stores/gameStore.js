@@ -364,7 +364,7 @@ export const useGameStore = defineStore('game', () => {
         previousGameNumber.value = game.current_game_number
       }
     } else {
-      // Para jogos avulsos, se o ID do jogo mudar, resetar currentDbGameId
+      // For standalone games - clear the currentDbGameId
       if (multiplayerGame.value && multiplayerGame.value.id !== game.id) {
         currentDbGameId.value = null
       }
@@ -379,7 +379,11 @@ export const useGameStore = defineStore('game', () => {
   }
 
   const saveGameStart = async (gameData) => {
-    console.log('🔍 [DEBUG] saveGameStart called with:', gameData)
+    if (currentDbGameId.value) {
+      console.log('⚠️ Game already saved with ID:', currentDbGameId.value)
+      return { game: { id: currentDbGameId.value } }
+    }
+    
     try {
       const response = await apiStore.createGame({
         type: gameData.type,
@@ -390,22 +394,24 @@ export const useGameStore = defineStore('game', () => {
         status: 'Playing'
       })
 
-      console.log('✅ Game saved to database:', response.game)
+      console.log('✅ [saveGameStart] Game saved to database:', response.game)
       
-      // Store the database game ID
-      // if (multiplayerGame.value && multiplayerGame.value.id === gameData.id) {
-      //   multiplayerGame.value.db_game_id = response.game.id
-      // }
+       const gameId = response.game.id
+      currentDbGameId.value = gameId
+      
+      // Sync multiplayer game
+      if (multiplayerGame.value?.id === gameData.id) {
+        multiplayerGame.value.db_game_id = gameId
+      }
 
-      currentDbGameId.value = response.game.id
-
-      return response.game
+      return response
     } catch (error) {
-      console.error('❌ Failed to save game start:', error)
+      console.error('❌ [saveGameStart] Failed to save game start:', error)
       console.error('❌ Error response:', error.response?.data)
       console.error('❌ Error status:', error.response?.status)
+      throw error 
     }
-  }
+}
 
   /**
    * Update game in database when it ends
