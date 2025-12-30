@@ -183,9 +183,11 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useSocketStore } from '@/stores/socketStore'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const socketStore = useSocketStore()
 
 const form = ref({
   name: '',
@@ -223,6 +225,7 @@ const handleRegister = async () => {
   const result = await authStore.register(form.value)
 
   if (result.success) {
+    socketStore.emitJoin(authStore.currentUser)
     router.push('/')
   } else {
     errorMessage.value = result.message || 'Erro ao registar'

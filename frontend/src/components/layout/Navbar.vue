@@ -31,8 +31,11 @@
 <script setup>
 import router from "@/router"
 import { useAuthStore } from "@/stores/authStore"
+import { useSocketStore } from "@/stores/socketStore"
 
 const auth = useAuthStore()
+const socket = useSocketStore()
+
 
 // Define emit - THIS WAS MISSING!
 const emit = defineEmits(['toggleSidebar', 'cancelGames'])
@@ -44,6 +47,7 @@ const handleLogoClick = () => {
 
 const logout = async () => {
   await auth.logout()
+  socket.emitLeave()
   router.push('/')
 }
 </script>

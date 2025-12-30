@@ -101,9 +101,11 @@
 import { ref } from 'vue'
 import { useRouter} from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useSocketStore } from '@/stores/socketStore'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const socketStore = useSocketStore()
 
 const form = ref({
   email: '',
@@ -123,6 +125,7 @@ const handleLogin = async () => {
 
   if (result.success) {
     const redirect = '/'
+    socketStore.emitJoin(authStore.currentUser)
     router.push(redirect)
   } else {
     errorMessage.value = result.message || 'Erro ao fazer login'
