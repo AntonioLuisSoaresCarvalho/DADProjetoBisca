@@ -12,6 +12,17 @@ export const useAuthStore = defineStore("auth",{
         isPlayer: (state) => state.user?.type === 'P',
         isLoggedIn: (state) => state.isAuthenticated,
         currentUser: (state) => state.user, 
+
+        coinsBalance: (state) => {
+            return state.user?.coins_balance || 0
+        },
+        
+        hasEnoughCoins: (state) => {
+            return (amount) => {
+                const balance = state.user?.coins_balance || 0
+                return balance >= amount
+            }
+        }
     },
 
     actions : {
@@ -130,7 +141,24 @@ export const useAuthStore = defineStore("auth",{
             apiStore.clearAuth();
             this.user = null;
             this.isAuthenticated = false;            
-        }
+        },
+
+        updateCoinsBalance(newBalance) {
+            if (this.user) {
+                this.user.coins_balance = newBalance
+            }
+        },
+        
+        // 4. Action para atualizar saldo após transação
+        async refreshCoinsBalance() {
+            try {
+                const apiStore = useApiStore()
+                const response = await apiStore.fetchProfile()
+                this.user = response.data.user
+            } catch (error) {
+                console.error('Erro ao atualizar saldo:', error)
+            }
+        },
 }
 
 })

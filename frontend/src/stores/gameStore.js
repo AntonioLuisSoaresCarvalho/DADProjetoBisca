@@ -323,7 +323,7 @@ export const useGameStore = defineStore('game', () => {
 
   const games = ref([])
 
-  const createGame = (gameType = '3') => {
+  const createGame = (gameConfig) => {
     if (!authStore.currentUser) {
       toast.error('You must be logged in to create a game')
       return
@@ -334,7 +334,12 @@ export const useGameStore = defineStore('game', () => {
       return
     }
 
-    socket.emit('create-game', gameType)
+    socket.emit('create-game', {
+      type: gameConfig.type,
+      mode: gameConfig.mode,
+      stake: gameConfig.stake,
+      creator: authStore.currentUser.id
+    })
   }
 
   const setGames = (newGames) => {
