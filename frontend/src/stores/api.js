@@ -3,7 +3,7 @@ import axios from "axios";
 import { inject,ref} from "vue";
 
 export const useApiStore = defineStore("api", () => {
-    const API_BASE_URL = inject('apiBaseUrl');
+    const API_BASE_URL = inject('apiBaseURL');
 
     const token = ref(localStorage.getItem("token") || null)
 

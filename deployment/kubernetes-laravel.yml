@@ -1,0 +1,50 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: laravel-app
+  namespace: dad-group-27
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: laravel-app
+  template:
+    metadata:
+      labels:
+        app: laravel-app
+    spec:
+      priorityClassName: high-priority
+      containers:
+        - name: api
+          image: registry-172.22.21.115.sslip.io/dad-group-27/api:v4.0.1
+          imagePullPolicy: Always
+          env:
+            - name: APP_KEY
+              value: "base64:nXab4QcGA/oq5a0VlmZTcOVLTea0WdT4BeylQn0CgDM="
+            - name: APP_ENV
+              value: "production"
+            - name: APP_DEBUG
+              value: "false"
+            - name: DB_CONNECTION
+              value: "sqlite"
+            - name: LOG_CHANNEL
+              value: "stack"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "300m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: laravel-app
+  namespace: dad-group-27
+spec:
+  ports:
+    - port: 80
+  selector:
+    app: laravel-app
