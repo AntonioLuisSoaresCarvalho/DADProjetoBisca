@@ -9,7 +9,7 @@ export const useMatchStore = defineStore('match', {
     match_id: null,
     db_match_id: null,
     match_type: 9, // 3 ou 9
-    match_status: 'pending', // 'pending', 'playing', 'ended', 'interrupted'
+    match_status: 'Pending', // 'pending', 'playing', 'ended', 'interrupted'
     
     // Players
     player1_id: null,
@@ -114,10 +114,6 @@ export const useMatchStore = defineStore('match', {
   actions: {
     /**
      * Inicia um novo match
-     * @param {number} matchType - 3 ou 9
-     * @param {Object} player1 - { id, name }
-     * @param {Object} player2 - { id, name }
-     * @param {number} stake - valor da aposta (3-100)
      */
     async startMatch(matchType = 9, player1, player2, stake = 3) {
       if (this.db_match_id) {
@@ -128,12 +124,12 @@ export const useMatchStore = defineStore('match', {
       this.is_match_mode = true
       //this.match_id = `match_${Date.now()}`
       this.match_type = matchType
-      this.match_status = 'playing'
+      this.match_status = 'Playing'
       
-      this.player1_id = player1.id
-      this.player1_name = player1.name
-      this.player2_id = player2.id
-      this.player2_name = player2.name
+      this.player1_id = player1
+      //this.player1_name = player1.name
+      this.player2_id = player2
+      //this.player2_name = player2.name
       
       this.stake = Math.max(3, Math.min(100, stake)) // Entre 3 e 100
       
@@ -150,13 +146,13 @@ export const useMatchStore = defineStore('match', {
       this.winner_id = null
       this.loser_id = null
       
-      console.log(`🎮 Match iniciado: ${this.player1_name} vs ${this.player2_name}`)
+      console.log(`🎮 Match iniciado: ${this.player1_id} vs ${this.player2_id}`)
       console.log(`   Tipo: Bisca de ${this.match_type}`)
       console.log(`   Stake: ${this.stake} moedas`)
 
       try {
         const response = await apiStore.createMatch({
-          type: this.match_type,
+          type: String(this.match_type),
           player1_user_id: this.player1_id,
           player2_user_id: this.player2_id,
           stake: this.stake,
@@ -169,6 +165,9 @@ export const useMatchStore = defineStore('match', {
         return response.match
       } catch (error) {
         console.error('❌ Failed to save match to database:', error)
+        console.error('❌ Validation errors:', error.response?.data?.errors) // ADD THIS
+        console.error('❌ Full response:', error.response?.data) // ADD THIS
+        throw error
       }
     },
 

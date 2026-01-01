@@ -58,22 +58,51 @@ export const useSocketStore = defineStore('socket', () => {
   /* HELPERS */
   const handleMatchGameState = async (game) => {
     console.log('🏆 [Match Mode] Processing game state...')
+      console.log('📊 Current state:', {
+      db_match_id: matchStore.db_match_id,
+      game_started: game.started,
+      game_over: game.game_over,
+      is_match: game.is_match,
+      game_type: game.game_type,
+      player1: game.player1,
+      player2: game.player2,
+      stake: game.stake
+    })
     
     // 1. Start match if not already started
-    if (!matchStore.db_match_id && game.started && !game.game_over) {
+    if (!matchStore.db_match_id && game.is_match) {
       console.log('🆕 [Match] Creating match in database...')
       
-      const player1Data = game.player1
-      const player2Data = game.player2
+      // const player1Data = game.player1
+      // const player2Data = game.player2
       
-      await matchStore.startMatch(
-        game.game_type,
-        player1Data,
-        player2Data,
-        game.stake
-      )
+      // await matchStore.startMatch(
+      //   game.game_type,
+      //   player1Data,
+      //   player2Data,
+      //   game.stake
+      // )
       
-      console.log('✅ [Match] Match created with ID:', matchStore.db_match_id)
+      // console.log('✅ [Match] Match created with ID:', matchStore.db_match_id)
+        try {
+        await matchStore.startMatch(
+          game.game_type,
+          game.player1,
+          game.player2,
+          game.stake
+        )
+        
+        console.log('✅ [Match] Match created with ID:', matchStore.db_match_id)
+      } catch (error) {
+        console.error('❌ [Match] Failed to create match:', error)
+        console.error('❌ Error details:', error.response?.data)
+      }
+    }
+    else {
+      console.log('❌ CONDITION NOT MET - Match not created because:')
+      if (matchStore.db_match_id) console.log('   ⚠️ db_match_id already exists:', matchStore.db_match_id)
+      if (!game.started) console.log('   ⚠️ game.started is false')
+      if (game.game_over) console.log('   ⚠️ game.game_over is true')
     }
 
     // 2. Save individual game start within the match

@@ -103,6 +103,7 @@ const opponentTotalPoints = computed(() => {
 
 const marksDisplay = computed(() => {
     if (!isMatch.value) return null
+    if (myMarks.value > 4 || opponentMarks.value > 4) return 4
     const myDisplay = '●'.repeat(myMarks.value) + '○'.repeat(4 - myMarks.value)
     const oppDisplay = '●'.repeat(opponentMarks.value) + '○'.repeat(4 - opponentMarks.value)
     return { my: myDisplay, opponent: oppDisplay }
