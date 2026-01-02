@@ -7,7 +7,12 @@ export const useApiStore = defineStore("api", () => {
 
     const token = ref(localStorage.getItem("token") || null)
 
-    axios.interceptors.request.use(
+    const apiClient = axios.create({
+        baseURL: 'http://127.0.0.1:8000/api',
+        withCredentials: true,
+    })
+
+    apiClient.interceptors.request.use(
         (config) => {
             const currentToken = token.value || localStorage.getItem("token");
             if (currentToken) {
@@ -24,7 +29,7 @@ export const useApiStore = defineStore("api", () => {
         const storedToken = localStorage.getItem("token");
         if(storedToken){
             token.value = storedToken;
-            axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+            apiClient.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
             try {
                 return await fetchProfile();
             } catch (error) {
@@ -35,10 +40,10 @@ export const useApiStore = defineStore("api", () => {
     }
 
     const login = async (data) => {
-        const res = await axios.post(`${API_BASE_URL}/login`,data);
+        const res = await apiClient.post(`/login`,data);
         token.value = res.data.token;
         localStorage.setItem('token',token.value);
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`;
+        apiClient.defaults.headers.common['Authorization'] = `Bearer ${token.value}`;
         console.log(token.value)
         return res;
     }
@@ -51,20 +56,20 @@ export const useApiStore = defineStore("api", () => {
             }
         })
 
-        const res = await axios.post(`${API_BASE_URL}/register`,form_data,{
+        const res = await apiClient.post(`/register`,form_data,{
             headers: {'Content-Type' : 'multipart/form-data'}
         })
 
         token.value = res.data.token
 
         localStorage.setItem("token",token.value);
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        apiClient.defaults.headers.common['Authorization'] = `Bearer ${token.value}`;
 
         return res;
     }
 
     const fetchProfile = async () => {
-        const res = await axios.get(`${API_BASE_URL}/me`);
+        const res = await apiClient.get(`/me`);
         return res;
     }
 
@@ -76,7 +81,7 @@ export const useApiStore = defineStore("api", () => {
             }
         });
 
-        const res = await axios.post(`${API_BASE_URL}/profile`,form_data,{
+        const res = await apiClient.post(`/profile`,form_data,{
             headers: {'Content-Type' : 'multipart/form-data','X-HTTP-Method-Override': 'PUT'}
         })
 
@@ -84,12 +89,12 @@ export const useApiStore = defineStore("api", () => {
     }
 
     const logout = async () => {
-        await axios.post(`${API_BASE_URL}/logout`);
+        await apiClient.post(`/logout`);
         clearAuth();
     }
 
     const deleteAccount = async (confirmation) => {
-        await axios.delete(`${API_BASE_URL}/profile`,{data : {confirmation}});
+        await apiClient.delete(`/profile`,{data : {confirmation}});
         clearAuth();
     }
 
@@ -100,62 +105,62 @@ export const useApiStore = defineStore("api", () => {
     }
 
     const getTransactions = async (page = 1) => {
-        const response = await axios.get(`${API_BASE_URL}/transactions?page=${page}`)
+        const response = await apiClient.get(`/transactions?page=${page}`)
         return response.data
     }
 
     const getTransactionById = async (id) => {
-        const response = await axios.get(`${API_BASE_URL}/transactions/${id}`)
+        const response = await apiClient.get(`/transactions/${id}`)
         return response.data
     }
 
     const createTransaction = async (data) => {
-        const response = await axios.post(`${API_BASE_URL}/transactions`, data)
+        const response = await apiClient.post(`/transactions`, data)
         return response.data
     }
 
     const getPurchases = async (page = 1) =>{
-        const response = await axios.get(`${API_BASE_URL}/purchases?page=${page}`)
+        const response = await apiClient.get(`/purchases?page=${page}`)
         return response.data
     }
 
     const purchaseCoins = async (data) =>  {
-        const response = await axios.post(`${API_BASE_URL}/purchases`, data)
+        const response = await apiClient.post(`/purchases`, data)
         return response.data
     }
 
     const getUsers = async (filters = {}) => {
-        const response = await axios.get(`${API_BASE_URL}/admin/users`, { params: filters })
+        const response = await apiClient.get(`/admin/users`, { params: filters })
         return response.data
     }
 
     const blockUser = async (id) => {
-        const response = await axios.post(`${API_BASE_URL}/admin/users/${id}/block`)
+        const response = await apiClient.post(`/admin/users/${id}/block`)
         return response.data
     }
 
     const unblockUser = async (id) => {
-        const response = await axios.post(`${API_BASE_URL}/admin/users/${id}/unblock`)
+        const response = await apiClient.post(`/admin/users/${id}/unblock`)
         return response.data
     }
 
     const createGame = async (data) => {
-        const response = await axios.post(`${API_BASE_URL}/games`, data)
+        const response = await apiClient.post(`/games`, data)
         return response.data
     }
 
     const updateGame = async (id, data) => {
-        const response = await axios.put(`${API_BASE_URL}/games/${id}`, data)
+        const response = await apiClient.put(`/games/${id}`, data)
         return response.data
     }
 
     const createMatch = async (data) => {
-        const response = await axios.post(`${API_BASE_URL}/matches`, data)
+        const response = await apiClient.post(`/matches`, data)
         return response.data
     }
 
     const updateMatch = async (id, data) => {
-        const response = await axios.put(`${API_BASE_URL}/matches/${id}`, data)
+        const response = await apiClient.put(`/matches/${id}`, data)
         return response.data
     }
 
@@ -166,34 +171,34 @@ export const useApiStore = defineStore("api", () => {
             formData.append(key, data[key])
           }
         })
-        const response = await axios.post(`${API_BASE_URL}/admin/users`, data, {
+                const response = await apiClient.post(`/admin/users`, data, {
           headers: { 'Content-Type': 'multipart/form-data' }
         })
         return response.data
     }
 
     const deleteUser = async (id) => {
-        const response = await axios.delete(`${API_BASE_URL}/admin/users/${id}`)
+        const response = await apiClient.delete(`/admin/users/${id}`)
         return response.data
     }
 
     const restoreUser = async (id) => {
-        const response = await axios.post(`${API_BASE_URL}/admin/users/${id}/restore`)
+        const response = await apiClient.post(`/admin/users/${id}/restore`)
         return response.data
     }
 
     const fetchTransactions = async (filters = {}) => {
-        const response = await axios.get(`${API_BASE_URL}/admin/transactions`, { params: filters })
+        const response = await apiClient.get(`/admin/transactions`, { params: filters })
         return response.data
     }
 
     const fetchGames = async (filters = {}) => {
-        const response = await axios.get(`${API_BASE_URL}/admin/games`, { params: filters })
+        const response = await apiClient.get(`/admin/games`, { params: filters })
         return response.data
     }
 
     const fetchStatistics = async () => {
-        const response = await axios.get(`${API_BASE_URL}/admin/statistics`)
+        const response = await apiClient.get(`/admin/statistics`)
         return response.data
     }
 
@@ -202,37 +207,37 @@ export const useApiStore = defineStore("api", () => {
     // ==========================================
 
     const getUserGames = async (params = {}) => {
-        const response = await axios.get(`${API_BASE_URL}/history/games`, { params })
+        const response = await apiClient.get(`/history/games`, { params })
         return response.data
     }
 
     const getGameDetails = async (gameId, params = {}) => {
-        const response = await axios.get(`${API_BASE_URL}/history/games/${gameId}`, { params })
+        const response = await apiClient.get(`/history/games/${gameId}`, { params })
         return response.data
     }
 
     const getPlayerGames = async (userId, params = {}) => {
-        const response = await axios.get(`${API_BASE_URL}/admin/history/games/${userId}`, { params })
+        const response = await apiClient.get(`/admin/history/games/${userId}`, { params })
         return response.data
     }
 
     const getUserMatches = async (params = {}) => {
-        const response = await axios.get(`${API_BASE_URL}/history/matches`, { params })
+        const response = await apiClient.get(`/history/matches`, { params })
         return response.data
     }
 
     const getMatchDetails = async (matchId, params = {}) => {
-        const response = await axios.get(`${API_BASE_URL}/history/matches/${matchId}`, { params })
+        const response = await apiClient.get(`/history/matches/${matchId}`, { params })
         return response.data
     }
 
     const getPlayerMatches = async (userId, params = {}) => {
-        const response = await axios.get(`${API_BASE_URL}/admin/history/matches/${userId}`, { params })
+        const response = await apiClient.get(`/admin/history/matches/${userId}`, { params })
         return response.data
     }
 
     const getUser = async (userId) => {
-        const response = await axios.get(`${API_BASE_URL}/users/${userId}`)
+        const response = await apiClient.get(`/users/${userId}`)
         return response.data
     }
 
@@ -241,7 +246,7 @@ export const useApiStore = defineStore("api", () => {
     // ==========================================
 
     const getPersonalStats = async (params = {}) => {
-        const response = await axios.get(`${API_BASE_URL}/leaderboards/personal`, { params })
+        const response = await apiClient.get(`/leaderboards/personal`, { params })
         return response.data
     }
 
@@ -252,7 +257,7 @@ export const useApiStore = defineStore("api", () => {
             capotes: `${API_BASE_URL}/leaderboards/global/capotes`,
             bandeiras: `${API_BASE_URL}/leaderboards/global/bandeiras`,
         }
-        const response = await axios.get(endpoints[type], { params })
+        const response = await apiClient.get(endpoints[type], { params })
         return response.data
     }
 

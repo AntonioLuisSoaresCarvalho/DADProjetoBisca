@@ -7,6 +7,7 @@ use App\Http\Controllers\CoinController;
 use App\Http\Controllers\CoinPurchaseController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\LeaderboardController;
+use App\Http\Controllers\StatisticsController;
 //Game History controla a history de games e matches
 use App\Http\Controllers\GameHistoryController;
 use App\Http\Controllers\GameMatchController;
@@ -38,7 +39,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/users/{id}/restore', [AdminController::class, 'restoreUser']);
     Route::get('/admin/transactions', [AdminController::class, 'getAllTransactions']);
     Route::get('/admin/games', [AdminController::class, 'getAllGames']);
-    Route::get('/admin/statistics', [AdminController::class, 'getStatistics']);
 
     Route::prefix('history')->group(function () {
         // History dos games do user
@@ -73,4 +73,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/leaderboards/global/capotes', [LeaderboardController::class, 'globalCapotes']);
     Route::get('/leaderboards/global/bandeiras', [LeaderboardController::class, 'globalBandeiras']);
 
+});
+
+// Public statistics endpoint
+Route::get('/statistics', [StatisticsController::class, 'publicStats']);
+
+// Protected admin statistics endpoint
+Route::middleware(['auth:sanctum', 'is_admin'])->group(function () {
+    Route::get('/admin/statistics', [StatisticsController::class, 'adminStats']);
 });
