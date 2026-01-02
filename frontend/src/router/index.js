@@ -58,6 +58,11 @@ const router = createRouter({
       path: '/leaderboard',
       component: LeaderboardView,
     },
+    {
+      path: '/statistics',
+      name: 'statistics',
+      component: () => import('@/views/statistics/StatisticsView.vue'),
+    },
 
     {
       path: '/history/games',

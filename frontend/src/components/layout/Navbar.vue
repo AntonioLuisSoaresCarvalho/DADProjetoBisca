@@ -12,6 +12,7 @@
       </router-link>
     </div>
     <div class="flex gap-4">
+      <router-link to="/statistics" class="hover:text-green-200 cursor-pointer ">Estatísticas</router-link>
       <template v-if="auth.user">
         <router-link to="/profile" class="hover:text-green-200 cursor-pointer ">
           {{ auth.user.nickname }}
