@@ -4,7 +4,6 @@
     <Sidebar :visible="sidebarOpen" @close="sidebarOpen = false" />
     <main class="flex-1 p-4 transition-all">
       <router-view />
-      <GameModeSelector v-if="showGameSelector" /> 
     </main>
     <Footer />
   </div>

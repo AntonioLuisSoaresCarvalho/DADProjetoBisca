@@ -31,22 +31,44 @@ export const handleGameEvents = (io, socket) => {
     })
     
     socket.on("join-game", (gameID, userID) => {
-        joinGame(gameID, userID)
-        socket.join(`game-${gameID}`)
-        console.log(`[Game] User ${userID} requested to join game ${gameID}`)
-        
-        // Notify all clients about the join request
-        io.emit("games", getGames())
-        
-        // Notify the game room about pending player
         const game = getGameById(gameID)
-        if (game) {
+        if (!game) {
+            console.log(`[Game] Game ${gameID} not found`)
+            return
+        }
+        
+        // For matches: use offer review system
+        if (game.is_match) {
+            joinGame(gameID, userID)
+            socket.join(`game-${gameID}`)
+            console.log(`[Match] User ${userID} requested to join match ${gameID} - pending review`)
+            
+            // Notify all clients about the join request
+            io.emit("games", getGames())
+            
+            // Notify the game room about pending player
             io.to(`game-${gameID}`).emit('player-join-request', {
                 gameID,
                 player2: userID,
                 stake: game.stake,
                 gameType: game.game_type,
                 isMatch: game.is_match
+            })
+        } 
+        // For standalone games: auto-accept immediately
+        else {
+            game.player2 = userID
+            game.offer_status = 'accepted' // Mark as accepted for consistency
+            socket.join(`game-${gameID}`)
+            console.log(`[Game] User ${userID} joined standalone game ${gameID} - auto-accepted`)
+            
+            // Notify all clients with updated games list
+            io.emit("games", getGames())
+            
+            // Also emit to the game room so both players see the update immediately
+            io.to(`game-${gameID}`).emit('player-joined', {
+                gameID,
+                player2: userID
             })
         }
     })
@@ -117,8 +139,16 @@ export const handleGameEvents = (io, socket) => {
             console.log('[Game] Only creator can start game')
             return
         }
-        if (!game.player2 || game.offer_status !== 'accepted') {
-            console.log(`[Game] Cannot start - player2: ${game.player2}, offer_status: ${game.offer_status}`)
+        
+        // For matches: check if offer was accepted
+        if (game.is_match && (!game.player2 || game.offer_status !== 'accepted')) {
+            console.log(`[Match] Cannot start - player2: ${game.player2}, offer_status: ${game.offer_status}`)
+            return
+        }
+        
+        // For standalone games: just check if player2 exists
+        if (!game.is_match && !game.player2) {
+            console.log('[Game] Cannot start - no player 2')
             return
         }
         

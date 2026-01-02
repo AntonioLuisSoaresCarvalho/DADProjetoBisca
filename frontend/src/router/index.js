@@ -18,6 +18,7 @@ import GameHistoryView from "@/views/history/games/GameHistoryView.vue";
 import MatchHistoryView from "@/views/history/matches/MatchHistoryView.vue";
 import GameDetailsView from "@/views/history/games/GameDetailsView.vue";
 import MatchDetailsView from "@/views/history/matches/MatchDetailsView.vue";
+import PlayView from "@/views/game/StartGameView.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -34,6 +35,12 @@ const router = createRouter({
       name: 'Admin',
       component: AdminView,
       meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
+      path: '/play',
+      name: 'Play',
+      component: PlayView,
+      meta: { requiresAuth: true, title: 'Play - Choose Game Mode' }
     },
     {
       path: '/games/singleplayer',

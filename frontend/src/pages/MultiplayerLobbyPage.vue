@@ -221,17 +221,23 @@
                   Stake: {{ game.stake }} 💰
                 </Badge>
                 
-                <!-- NEW: Show pending player status -->
-                <Badge v-if="game.player2_pending && game.offer_status === 'pending'" 
+                <!-- Show different badges based on game type and status -->
+                <Badge v-if="game.is_match && game.player2_pending && game.offer_status === 'pending'" 
                        variant="outline" 
                        class="bg-yellow-50 border-yellow-300">
                   🔍 Player reviewing offer...
                 </Badge>
                 
-                <Badge v-if="game.player2 && game.offer_status === 'accepted'" 
+                <Badge v-if="game.is_match && game.player2 && game.offer_status === 'accepted'" 
                        variant="outline" 
                        class="bg-green-50 border-green-300">
                   ✅ Player 2 accepted!
+                </Badge>
+                
+                <Badge v-if="!game.is_match && game.player2" 
+                       variant="outline" 
+                       class="bg-green-50 border-green-300">
+                  ✅ Player 2 joined!
                 </Badge>
               </div>
             </div>
@@ -241,7 +247,7 @@
                 Cancel Game
               </Button>
               <Button 
-                v-if="game.player2 && game.offer_status === 'accepted' && game.creator === authStore.currentUser?.id" 
+                v-if="(game.is_match && game.player2 && game.offer_status === 'accepted') || (!game.is_match && game.player2)" 
                 @click="startGame(game)"
                 variant="default" 
                 size="sm">
@@ -283,8 +289,8 @@
                     Stake: {{ game.stake }} 💰
                   </Badge>
                   
-                  <!-- NEW: Show if I'm reviewing this offer -->
-                  <Badge v-if="game.offer_status === 'pending' && game.player2_pending === authStore.currentUser?.id" 
+                  <!-- Show reviewing badge ONLY for matches -->
+                  <Badge v-if="game.is_match && game.offer_status === 'pending' && game.player2_pending === authStore.currentUser?.id" 
                          variant="outline" 
                          class="bg-yellow-50 border-yellow-300">
                     ⏳ You're reviewing...
@@ -292,20 +298,24 @@
                 </div>
               </div>
               
-              <!-- NEW: Different buttons based on state -->
-              <div v-if="game.player2_pending === authStore.currentUser?.id && game.offer_status === 'pending'">
+              <!-- Review button - ONLY for matches with pending status -->
+              <div v-if="game.is_match && game.player2_pending === authStore.currentUser?.id && game.offer_status === 'pending'">
                 <Button @click="reviewOffer(game)" size="sm" variant="default" class="animate-pulse">
                   Review Offer
                 </Button>
               </div>
-              <div v-else-if="!game.player2_pending">
+              
+              <!-- Join button - for games without player2 or pending -->
+              <div v-else-if="!game.player2_pending && !game.player2">
                 <Button @click="joinGame(game)" size="sm">
                   Join Game
                 </Button>
               </div>
+              
+              <!-- Waiting badge -->
               <div v-else>
                 <Badge variant="outline" class="bg-gray-100">
-                  Another player reviewing...
+                  {{ game.is_match ? 'Another player reviewing...' : 'Player 2 joined' }}
                 </Badge>
               </div>
             </div>
@@ -314,20 +324,18 @@
       </Card>
     </div>
 
-    <!-- NEW: Offer Review Modal -->
-    <div v-if="showOfferModal && selectedOffer" 
+    <!-- Offer Review Modal - ONLY for matches -->
+    <div v-if="showOfferModal && selectedOffer && selectedOffer.is_match" 
          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
          @click.self="showOfferModal = false">
       <Card class="w-full max-w-md m-4">
         <CardHeader>
-          <CardTitle>Review Game Offer</CardTitle>
+          <CardTitle>Review Match Offer</CardTitle>
         </CardHeader>
         <CardContent class="space-y-4">
           <div class="text-center py-4">
-            <div class="text-6xl mb-4">{{ selectedOffer.is_match ? '🏆' : '🎮' }}</div>
-            <h3 class="text-2xl font-bold mb-2">
-              {{ selectedOffer.is_match ? 'Match Invitation' : 'Game Invitation' }}
-            </h3>
+            <div class="text-6xl mb-4">🏆</div>
+            <h3 class="text-2xl font-bold mb-2">Match Invitation</h3>
           </div>
           
           <div class="space-y-3 bg-gray-50 p-4 rounded-lg">
@@ -338,27 +346,18 @@
             
             <div class="flex justify-between items-center">
               <span class="text-gray-600">Mode:</span>
-              <Badge :variant="selectedOffer.is_match ? 'default' : 'secondary'">
-                {{ selectedOffer.is_match ? '🏆 Match (First to 4 marks)' : '🎮 Single Game' }}
-              </Badge>
+              <Badge variant="default">🏆 Match (First to 4 marks)</Badge>
             </div>
             
-            <div v-if="selectedOffer.is_match" class="flex justify-between items-center border-t pt-3">
+            <div class="flex justify-between items-center border-t pt-3">
               <span class="text-gray-600 font-medium">Your Stake:</span>
               <span class="text-2xl font-bold text-blue-600">
                 {{ selectedOffer.stake }} 💰
               </span>
             </div>
-            
-            <div v-else class="flex justify-between items-center border-t pt-3">
-              <span class="text-gray-600 font-medium">Entry Cost:</span>
-              <span class="text-2xl font-bold text-blue-600">
-                2 💰
-              </span>
-            </div>
           </div>
           
-          <div v-if="selectedOffer.is_match" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div class="text-sm text-blue-800">
               <div class="font-medium mb-2">💡 Match Details:</div>
               <ul class="space-y-1 text-xs">
@@ -376,12 +375,12 @@
                 <div class="font-medium">Balance Check:</div>
                 <div class="mt-1">
                   Your balance: <strong>{{ authStore.coinsBalance }} coins</strong>
-                  <div v-if="authStore.hasEnoughCoins(selectedOffer.is_match ? selectedOffer.stake : 2)" 
+                  <div v-if="authStore.hasEnoughCoins(selectedOffer.stake)" 
                        class="text-green-600 font-medium mt-1">
                     ✅ Sufficient balance
                   </div>
                   <div v-else class="text-red-600 font-medium mt-1">
-                    ❌ Insufficient balance - Need {{ (selectedOffer.is_match ? selectedOffer.stake : 2) - authStore.coinsBalance }} more coins
+                    ❌ Insufficient balance - Need {{ selectedOffer.stake - authStore.coinsBalance }} more coins
                   </div>
                 </div>
               </div>
@@ -400,7 +399,7 @@
             @click="acceptOffer" 
             variant="default" 
             class="flex-1"
-            :disabled="!authStore.hasEnoughCoins(selectedOffer.is_match ? selectedOffer.stake : 2)">
+            :disabled="!authStore.hasEnoughCoins(selectedOffer.stake)">
             Accept & Join
           </Button>
         </CardContent>
@@ -429,7 +428,7 @@ const selectedType = ref(3)
 const selectedMode = ref('game')
 const selectedStake = ref(10)
 
-// NEW: Modal state
+// Modal state
 const showOfferModal = ref(false)
 const selectedOffer = ref(null)
 
@@ -544,20 +543,26 @@ const joinGame = (game) => {
   }
   
   socketStore.emitJoinGame(game)
-  toast.info('Reviewing game offer...')
+  
+  if (game.is_match) {
+    toast.info('Reviewing match offer...')
+  } else {
+    toast.success('Joined game! Waiting for host to start...')
+  }
 }
 
-// NEW: Show offer review modal
+// Show offer review modal (only for matches)
 const reviewOffer = (game) => {
+  if (!game.is_match) return // Safety check
   selectedOffer.value = game
   showOfferModal.value = true
 }
 
-// NEW: Accept the offer
+// Accept the offer
 const acceptOffer = () => {
   if (!selectedOffer.value) return
   
-  const requiredCoins = selectedOffer.value.is_match ? selectedOffer.value.stake : 2
+  const requiredCoins = selectedOffer.value.stake
   
   if (!authStore.hasEnoughCoins(requiredCoins)) {
     toast.error('Insufficient balance to accept this offer')
@@ -571,7 +576,7 @@ const acceptOffer = () => {
   toast.success('Offer accepted! Waiting for host to start the game.')
 }
 
-// NEW: Reject the offer
+// Reject the offer
 const rejectOffer = () => {
   if (!selectedOffer.value) return
   
@@ -583,8 +588,15 @@ const rejectOffer = () => {
 }
 
 const startGame = (game) => {
-  if (!game.player2 || game.offer_status !== 'accepted') {
+  // For matches: check offer acceptance
+  if (game.is_match && (!game.player2 || game.offer_status !== 'accepted')) {
     toast.warning('Wait for player 2 to accept the offer!')
+    return
+  }
+  
+  // For standalone games: just check player2 exists
+  if (!game.is_match && !game.player2) {
+    toast.warning('Wait for player 2 to join!')
     return
   }
   
@@ -623,7 +635,7 @@ onMounted(() => {
     }
   })
   
-  // NEW: Listen for offer events with toasts
+  // Listen for offer events with toasts
   socketStore.socket.on('offer-accepted', (data) => {
     console.log('[Lobby] Offer accepted:', data)
     toast.success('Player 2 accepted the offer! You can now start the game.')
@@ -642,7 +654,7 @@ onMounted(() => {
     socketStore.emitGetGames() // Refresh to show updated state
   })
   
-  // NEW: Listen for join requests
+  // Listen for join requests
   socketStore.socket.on('player-join-request', (data) => {
     console.log('[Lobby] Player join request:', data)
     const currentUser = authStore.currentUser?.id
@@ -650,10 +662,24 @@ onMounted(() => {
     if (data.gameID) {
       const game = gameStore.games.find(g => g.id === data.gameID)
       if (game && game.creator === currentUser) {
-        toast.info('A player is reviewing your game offer...')
+        toast.info('A player is reviewing your match offer...')
       }
     }
     socketStore.emitGetGames() // Refresh to show pending player
+  })
+  
+  // NEW: Listen for standalone game joins
+  socketStore.socket.on('player-joined', (data) => {
+    console.log('[Lobby] Player joined standalone game:', data)
+    const currentUser = authStore.currentUser?.id
+    
+    if (data.gameID) {
+      const game = gameStore.games.find(g => g.id === data.gameID)
+      if (game && game.creator === currentUser) {
+        toast.success('Player 2 joined! You can start the game now.')
+      }
+    }
+    socketStore.emitGetGames() // Refresh to show player 2
   })
 })
 </script>
