@@ -15,11 +15,39 @@ class StatisticsController extends Controller
 {
     public function publicStats(): JsonResponse
     {
+        // Generic, anonymized platform aggregates
         return response()->json([
-            'totalUsers' => User::count(),
-            'totalGames' => Game::count(),
-            'totalFinished' => GameMatch::count(), // matches/jogos concluídos (ajustamos si tienen status)
+            'platform' => [
+                'total_registered_players' => User::where('type', 'P')->whereNull('deleted_at')->count(),
+                'total_games_played' => Game::whereIn('status', ['Ended', 'Interrupted'])->count(),
+                'total_matches_played' => GameMatch::whereIn('status', ['Ended', 'Interrupted'])->count(),
+                'games_today' => Game::whereIn('status', ['Ended', 'Interrupted'])
+                    ->whereDate('ended_at', Carbon::today())
+                    ->count(),
+                'games_this_week' => Game::whereIn('status', ['Ended', 'Interrupted'])
+                    ->whereBetween('ended_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+                    ->count(),
+            ],
+            'recent_activity' => $this->getRecentActivityPublic(),
         ]);
+    }
+
+    private function getRecentActivityPublic()
+    {
+        // Games played in last 7 days (anonymized)
+        $last7Days = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::today()->subDays($i);
+            $count = Game::whereIn('status', ['Ended', 'Interrupted'])
+                ->whereDate('ended_at', $date)
+                ->count();
+            
+            $last7Days[] = [
+                'date' => $date->format('Y-m-d'),
+                'games' => $count
+            ];
+        }
+        return $last7Days;
     }
 
     public function adminStats(Request $request)
@@ -40,29 +68,64 @@ class StatisticsController extends Controller
             ->orderBy('day')
             ->get();
 
-        // Time-series: games by day
+        // Time-series: games by day (use ended_at for finished games)
         $gamesByDay = DB::table('games')
-            ->selectRaw('DATE(created_at) as day, COUNT(*) as total')
-            ->where('created_at', '>=', $from)
+            ->selectRaw('DATE(ended_at) as day, COUNT(*) as total')
+            ->whereIn('status', ['Ended', 'Interrupted'])
+            ->whereNotNull('ended_at')
+            ->where('ended_at', '>=', $from)
             ->groupBy('day')
             ->orderBy('day')
             ->get();
 
-        // Time-series: matches by day
-        $matchesByDay = DB::table('game_matches')
-            ->selectRaw('DATE(created_at) as day, COUNT(*) as total')
-            ->where('created_at', '>=', $from)
+        // Time-series: matches by day (table: matches)
+        $matchesByDay = DB::table('matches')
+            ->selectRaw('DATE(ended_at) as day, COUNT(*) as total')
+            ->whereIn('status', ['Ended', 'Interrupted'])
+            ->whereNotNull('ended_at')
+            ->where('ended_at', '>=', $from)
             ->groupBy('day')
             ->orderBy('day')
             ->get();
 
-        // Breakdown: top players by number of games (adjust join column if needed)
-        $topPlayers = DB::table('games')
-            ->join('users', 'users.id', '=', 'games.player_id')
-            ->selectRaw('users.id as user_id, users.name, users.email, COUNT(games.id) as games')
-            ->where('games.created_at', '>=', $from)
-            ->groupBy('users.id', 'users.name', 'users.email')
+        // Breakdown: top players by number of games (count participation without duplicates using UNION ALL)
+        $part1 = DB::table('games')
+            ->selectRaw('player1_user_id as user_id')
+            ->whereIn('status', ['Ended', 'Interrupted'])
+            ->whereNotNull('ended_at')
+            ->where('ended_at', '>=', $from);
+
+        $part2 = DB::table('games')
+            ->selectRaw('player2_user_id as user_id')
+            ->whereIn('status', ['Ended', 'Interrupted'])
+            ->whereNotNull('ended_at')
+            ->where('ended_at', '>=', $from);
+
+        $union = $part1->unionAll($part2);
+
+        $topPlayers = DB::query()
+            ->fromSub($union, 'participations')
+            ->join('users', 'users.id', '=', 'participations.user_id')
+            ->selectRaw('users.id as user_id, users.nickname, users.name, COUNT(*) as games')
+            ->groupBy('users.id', 'users.nickname', 'users.name')
             ->orderByDesc('games')
+            ->limit(10)
+            ->get();
+
+        // Purchases time-series and top purchasers
+        $purchasesByDay = DB::table('coin_purchases')
+            ->selectRaw('DATE(purchase_datetime) as day, COUNT(*) as count, SUM(euros) as total_euros')
+            ->where('purchase_datetime', '>=', $from)
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
+
+        $topPurchasers = DB::table('coin_purchases')
+            ->join('users', 'users.id', '=', 'coin_purchases.user_id')
+            ->selectRaw('users.id as user_id, users.nickname, users.name, COUNT(*) as purchases, SUM(euros) as total_euros')
+            ->where('coin_purchases.purchase_datetime', '>=', $from)
+            ->groupBy('users.id', 'users.nickname', 'users.name')
+            ->orderByDesc('total_euros')
             ->limit(10)
             ->get();
 
@@ -72,9 +135,11 @@ class StatisticsController extends Controller
                 'usersByDay' => $usersByDay,
                 'gamesByDay' => $gamesByDay,
                 'matchesByDay' => $matchesByDay,
+                'purchasesByDay' => $purchasesByDay,
             ],
             'breakdowns' => [
                 'topPlayersByGames' => $topPlayers,
+                'topPurchasers' => $topPurchasers,
             ],
         ]);
     }
