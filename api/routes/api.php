@@ -27,7 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/transactions/{transaction}', [CoinController::class, 'show']);
     Route::post('/transactions', [CoinController::class, 'store']);
 
-    // 🔹 Compras de moedas (utilizador normal)
+
     Route::get('/purchases', [CoinPurchaseController::class, 'index']);
     Route::post('/purchases', [CoinPurchaseController::class, 'store']);
 
@@ -39,6 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/users/{id}/restore', [AdminController::class, 'restoreUser']);
     Route::get('/admin/transactions', [AdminController::class, 'getAllTransactions']);
     Route::get('/admin/games', [AdminController::class, 'getAllGames']);
+    Route::get('/admin/stats', [AdminController::class, 'getStatistics']);
 
     Route::prefix('history')->group(function () {
         // History dos games do user

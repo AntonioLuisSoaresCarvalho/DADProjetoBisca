@@ -12,7 +12,7 @@ class CoinPurchaseRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        return $this->user() !== null && $this->user()->type === 'P';
     }
 
     /**
@@ -21,7 +21,7 @@ class CoinPurchaseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'euros' => ['required', 'numeric', 'min:1'],
+            'euros' => ['required', 'integer', 'min:1', 'max:99'],
             'payment_type' => [
                 'required',
                 Rule::in(['MBWAY', 'PAYPAL', 'IBAN', 'MB', 'VISA']),
@@ -85,7 +85,9 @@ class CoinPurchaseRequest extends FormRequest
     {
         return [
             'euros.required' => 'É necessário indicar o valor em euros.',
+            'euros.integer' => 'O valor deve ser um número inteiro.',
             'euros.min' => 'O valor mínimo de compra é 1€.',
+            'euros.max' => 'O valor máximo de compra é 99€.',
             'payment_type.required' => 'Deve indicar o método de pagamento.',
             'payment_type.in' => 'O método de pagamento indicado é inválido.',
             'payment_reference.required' => 'É necessária uma referência de pagamento.',

@@ -198,7 +198,7 @@ export const useApiStore = defineStore("api", () => {
     }
 
     const fetchStatistics = async () => {
-        const response = await apiClient.get(`/admin/statistics`)
+        const response = await apiClient.get(`/admin/stats`)
         return response.data
     }
 

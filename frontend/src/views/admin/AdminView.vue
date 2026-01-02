@@ -529,7 +529,6 @@ onMounted(() => {
 // ========================================
 const loadUsers = async () => {
   await adminStore.fetchUsers(userFilters.value)
-  console.log('Users loaded:', adminStore.users)
 }
 
 const loadTransactions = async (page = 1) => {

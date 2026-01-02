@@ -36,8 +36,8 @@ class AuthController extends Controller
         $photo_filename = null;
         if($request->hasFile('photo_avatar')){
             $photo = $request->file('photo_avatar');
-            $photo_filename = time().'_'.$photo->getClientOriginalName();
-            $photo->storeAs('public/avatars', $photo_filename);
+            $photo_filename = $photo->getClientOriginalName();
+            $photo->storeAs('storage/photos_avatars/', $photo_filename);
         }
 
         $user = User::create([

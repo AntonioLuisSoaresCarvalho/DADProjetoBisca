@@ -8,6 +8,9 @@ use App\Models\CoinPurchase;
 use App\Models\CoinTransaction;
 use App\Models\CoinTransactionType;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Log;
 
 class CoinPurchaseController extends Controller
 {
@@ -35,11 +38,42 @@ class CoinPurchaseController extends Controller
         $user = $request->user();
         $validated = $request->validated();
 
+        $api_service_url = 'https://dad-payments-api.vercel.app/';
+        $endpoint = 'api/debit';
+        $payment_url = "{$api_service_url}{$endpoint}";
+
+        $payload = [
+            'type' => $validated['payment_type'],
+            'reference' => $validated['payment_reference'],
+            'value' => $validated['euros']
+        ];
+        //::withoutVerifying()
+        $response = Http::withoutVerifying()
+                ->timeout(30)
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ])
+                ->post($payment_url, $payload);
+
+        if ($response->status() !== 201) {
+                $errorData = $response->json();
+                
+                return response()->json([
+                    'message' => $errorData['message'] ?? 'Pagamento rejeitado pelo gateway.',
+                    'errors' => $errorData['errors'] ?? []
+                ], 422);
+        }
+
         return DB::transaction(function () use ($validated, $user) {
             
             $coins = $validated['euros'] * 10;
 
             $type = CoinTransactionType::where('name', 'Coin purchase')->first();
+
+            if (!$type) {
+                throw new \Exception('Tipo de transação "Coin purchase" não encontrado no sistema.');
+            }
             
             $transaction = CoinTransaction::create([
                 'transaction_datetime' => now(),
