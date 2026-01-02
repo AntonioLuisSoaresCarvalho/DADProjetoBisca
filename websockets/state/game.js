@@ -30,6 +30,8 @@ export const createGame = (gameConfig, user) => {
         creator: user.id,
         player1: user.id,
         player2: null,
+        player2_pending: null, //Track pending player
+        offer_status: null, //null | 'pending' | 'accepted' | 'rejected'
         
         // Match-specific fields
         is_match: gameConfig.mode === 'match',
@@ -81,9 +83,33 @@ export const getGameById = (gameID) => {
 
 export const joinGame = (gameID, player2) => {
     const game = games.get(gameID)
-    if (game) {
-        game.player2 = player2
+    if (game && !game.player2) {
+        game.player2_pending = player2
+        game.offer_status = 'pending'
+        console.log(`[Game] Player ${player2} requested to join game ${gameID} - pending acceptance`)
     }
+}
+
+export const acceptOffer = (gameID, player2) => {
+    const game = games.get(gameID)
+    if (game && game.player2_pending === player2 && game.offer_status === 'pending') {
+        game.player2 = player2
+        game.offer_status = 'accepted'
+        console.log(`[Game] Player ${player2} accepted the offer for game ${gameID}`)
+        return true
+    }
+    return false
+}
+
+export const rejectOffer = (gameID, player2) => {
+    const game = games.get(gameID)
+    if (game && game.player2_pending === player2 && game.offer_status === 'pending') {
+        game.player2_pending = null
+        game.offer_status = null
+        console.log(`[Game] Player ${player2} rejected the offer for game ${gameID}`)
+        return true
+    }
+    return false
 }
 
 export const startGameSession = (game) => {

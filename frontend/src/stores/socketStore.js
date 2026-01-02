@@ -58,7 +58,7 @@ export const useSocketStore = defineStore('socket', () => {
   /* HELPERS */
   const handleMatchGameState = async (game) => {
     console.log('🏆 [Match Mode] Processing game state...')
-      console.log('📊 Current state:', {
+    console.log('📊 Current state:', {
       db_match_id: matchStore.db_match_id,
       game_started: game.started,
       game_over: game.game_over,
@@ -73,18 +73,7 @@ export const useSocketStore = defineStore('socket', () => {
     if (!matchStore.db_match_id && game.is_match) {
       console.log('🆕 [Match] Creating match in database...')
       
-      // const player1Data = game.player1
-      // const player2Data = game.player2
-      
-      // await matchStore.startMatch(
-      //   game.game_type,
-      //   player1Data,
-      //   player2Data,
-      //   game.stake
-      // )
-      
-      // console.log('✅ [Match] Match created with ID:', matchStore.db_match_id)
-        try {
+      try {
         await matchStore.startMatch(
           game.game_type,
           game.player1,
@@ -125,7 +114,6 @@ export const useSocketStore = defineStore('socket', () => {
     if (game.game_over && game.db_game_id) {
       console.log(`🏁 [Match Game ${game.current_game_number}] Game ended, saving results...`)
       
-      // Save the game end to database
       await gameStore.saveGameEnd({
         db_game_id: game.db_game_id,
         player1: game.player1,
@@ -138,7 +126,6 @@ export const useSocketStore = defineStore('socket', () => {
       
       console.log('✅ [Match Game] Game end saved')
 
-      // Process the result in the match (calculates marks, updates match state)
       const shouldContinue = await matchStore.processGameResult({
         winner: game.winner,
         points_player1: game.points_player1,
@@ -148,7 +135,6 @@ export const useSocketStore = defineStore('socket', () => {
 
       console.log(`📊 [Match] Game result processed. Continue: ${shouldContinue}`)
       
-      // If match is over, it's already saved by matchStore.endMatch()
       if (game.match_over) {
         console.log('🏆 [Match] Match has ended!')
         console.log(`   Winner: Player ${game.match_winner}`)
@@ -173,7 +159,7 @@ export const useSocketStore = defineStore('socket', () => {
         type: game.game_type,
         player1: game.player1,
         player2: game.player2,
-        match_id: null, // No match for standalone games
+        match_id: null,
         began_at: new Date().toISOString()
       })
       
@@ -238,7 +224,27 @@ export const useSocketStore = defineStore('socket', () => {
       console.log(`[Socket] Game state changed | game: ${game.id}`)
       gameStore.setMultiplayerGame(game)
       await handleGameStateChange(game)
-      
+    })
+    
+    // NEW: Handle player join request notification
+    socket.on('player-join-request', (data) => {
+      console.log(`[Socket] Player join request:`, data)
+      // Refresh games list to show pending player
+      emitGetGames()
+    })
+    
+    // NEW: Handle offer acceptance
+    socket.on('offer-accepted', (data) => {
+      console.log(`[Socket] Offer accepted:`, data)
+      // Refresh games list to show accepted status
+      emitGetGames()
+    })
+    
+    // NEW: Handle offer rejection
+    socket.on('offer-rejected', (data) => {
+      console.log(`[Socket] Offer rejected:`, data)
+      // Refresh games list to remove pending player
+      emitGetGames()
     })
     
     socket.on('error', (error) => {
@@ -249,6 +255,18 @@ export const useSocketStore = defineStore('socket', () => {
   const emitJoinGame = (game) => {
     console.log(`[Socket] Joining Game ${game.id}`)
     socket.emit('join-game', game.id, authStore.currentUser.id)
+  }
+  
+  // NEW: Accept offer
+  const emitAcceptOffer = (gameID) => {
+    console.log(`[Socket] Accepting offer for game ${gameID}`)
+    socket.emit('accept-offer', gameID, authStore.currentUser.id)
+  }
+  
+  // NEW: Reject offer
+  const emitRejectOffer = (gameID) => {
+    console.log(`[Socket] Rejecting offer for game ${gameID}`)
+    socket.emit('reject-offer', gameID, authStore.currentUser.id)
   }
   
   const emitStartGame = (game) => {
@@ -280,6 +298,8 @@ export const useSocketStore = defineStore('socket', () => {
     handleGameEvents,
     cancelMatchMaking,
     emitJoinGame,
+    emitAcceptOffer,  
+    emitRejectOffer,    
     emitStartGame,
     emitPlayCard,
     emitContinueMatch,

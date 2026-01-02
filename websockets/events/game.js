@@ -2,7 +2,9 @@ import { getUser } from "../state/connection.js"
 import { 
     createGame, 
     getGames, 
-    joinGame, 
+    joinGame,
+    acceptOffer,      // NEW
+    rejectOffer,      // NEW
     cancelGamesByUser, 
     getGameById, 
     playCard,
@@ -31,17 +33,94 @@ export const handleGameEvents = (io, socket) => {
     socket.on("join-game", (gameID, userID) => {
         joinGame(gameID, userID)
         socket.join(`game-${gameID}`)
-        console.log(`[Game] User ${userID} joined game ${gameID}`)
+        console.log(`[Game] User ${userID} requested to join game ${gameID}`)
+        
+        // Notify all clients about the join request
         io.emit("games", getGames())
+        
+        // Notify the game room about pending player
+        const game = getGameById(gameID)
+        if (game) {
+            io.to(`game-${gameID}`).emit('player-join-request', {
+                gameID,
+                player2: userID,
+                stake: game.stake,
+                gameType: game.game_type,
+                isMatch: game.is_match
+            })
+        }
+    })
+    
+    // NEW: Handle offer acceptance
+    socket.on("accept-offer", (gameID, userID) => {
+        console.log(`[Game] User ${userID} accepting offer for game ${gameID}`)
+        const success = acceptOffer(gameID, userID)
+        
+        if (success) {
+            console.log(`[Game] Offer accepted for game ${gameID}`)
+            
+            // Broadcast updated games list to everyone
+            io.emit("games", getGames())
+            
+            // Notify everyone in the game room
+            io.to(`game-${gameID}`).emit('offer-accepted', {
+                gameID,
+                player2: userID
+            })
+            
+            console.log(`[Game] Emitted offer-accepted event to all clients`)
+        } else {
+            console.log(`[Game] Failed to accept offer for game ${gameID}`)
+        }
+    })
+    
+    // NEW: Handle offer rejection
+    socket.on("reject-offer", (gameID, userID) => {
+        console.log(`[Game] User ${userID} rejecting offer for game ${gameID}`)
+        const success = rejectOffer(gameID, userID)
+        
+        if (success) {
+            console.log(`[Game] Offer rejected for game ${gameID}`)
+            
+            // Broadcast updated games list to everyone
+            io.emit("games", getGames())
+            
+            // Notify everyone in the game room
+            io.to(`game-${gameID}`).emit('offer-rejected', {
+                gameID,
+                player2: userID
+            })
+            
+            console.log(`[Game] Emitted offer-rejected event to all clients`)
+            
+            // Player 2 leaves the game room
+            const userSocket = Array.from(io.sockets.sockets.values())
+                .find(s => getUser(s.id)?.id === userID)
+            if (userSocket) {
+                userSocket.leave(`game-${gameID}`)
+                console.log(`[Game] Player ${userID} left game room ${gameID}`)
+            }
+        } else {
+            console.log(`[Game] Failed to reject offer for game ${gameID}`)
+        }
     })
     
     socket.on("start-game", (gameID) => {
         console.log(`[Game] Host starting game ${gameID}`)
         const user = getUser(socket.id)
         const game = getGameById(gameID)
-        if (!user || !game) return
-        if (game.creator !== user.id) return
-        if (!game.player2) return
+        if (!user || !game) {
+            console.log('[Game] User or game not found')
+            return
+        }
+        if (game.creator !== user.id) {
+            console.log('[Game] Only creator can start game')
+            return
+        }
+        if (!game.player2 || game.offer_status !== 'accepted') {
+            console.log(`[Game] Cannot start - player2: ${game.player2}, offer_status: ${game.offer_status}`)
+            return
+        }
         
         // Start the first game session
         startGameSession(game)
