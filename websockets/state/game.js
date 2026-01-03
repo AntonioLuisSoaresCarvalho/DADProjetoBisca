@@ -30,7 +30,7 @@ export const createGame = (gameConfig, user) => {
         creator: user.id,
         player1: user.id,
         player2: null,
-        player2_pending: null, // Track pending player
+        player2_pending: null,
         offer_status: null, // null | 'pending' | 'accepted' | 'rejected'
         
         // Match-specific fields
@@ -129,21 +129,13 @@ export const cancelGamesByUser = (userId) => {
     return removedCount
 }
 
-/**
- * Verifica se é obrigatório seguir o naipe
- * Retorna true quando não há mais cartas para comprar do baralho
- */
+
+//Verifica se é obrigatório seguir o naipe
 function mustFollowSuit(game) {
     return game.deck_index >= game.deck.length
 }
 
-/**
- * Obtém as cartas válidas que um jogador pode jogar
- * @param {Object} game - Estado do jogo
- * @param {Array} playerHand - Mão do jogador
- * @param {Object} leadCard - Primeira carta jogada na rodada (ou null)
- * @returns {Array} - Cartas que o jogador pode jogar
- */
+
 function getValidCards(game, playerHand, leadCard) {
     // Se ainda há cartas no deck OU ninguém jogou ainda, todas as cartas são válidas
     if (!mustFollowSuit(game) || !leadCard) {
@@ -155,28 +147,24 @@ function getValidCards(game, playerHand, leadCard) {
     
     if (sameSuitCards.length > 0) {
         // Tem cartas do mesmo naipe - DEVE jogar uma delas
-        console.log(`⚠️ Must follow suit: ${leadCard.suit}`)
         return sameSuitCards
     }
     
     // Não tem cartas do mesmo naipe - pode jogar qualquer carta
-    console.log(`✓ No cards of suit ${leadCard.suit} - can play any card`)
+    console.log(`No cards of suit ${leadCard.suit} - can play any card`)
     return playerHand
 }
 
 export function playCard(game, card, player) {
     if (game.game_over) {
-        console.log('❌ Game is over')
         return false
     }
     
     if (game.turn_player !== player) {
-        console.log('❌ Not player turn')
         return false
     }
     
     if (game.round_in_progress) {
-        console.log('❌ Round in progress')
         return false
     }
 
@@ -184,28 +172,24 @@ export function playCard(game, card, player) {
     const idx = hand.findIndex(c => c.id === card.id)
     
     if (idx === -1) {
-        console.log('❌ Card not in hand')
         return false
     }
 
-    // ===== VALIDAÇÃO: Verificar regra de assistir =====
     // Determinar qual carta foi jogada primeiro (se houver)
     const leadCard = player === 1 ? game.card_played_player2 : game.card_played_player1
     const validCards = getValidCards(game, hand, leadCard)
     
     // Verificar se a carta jogada está na lista de válidas
     if (!validCards.find(c => c.id === card.id)) {
-        console.log(`❌ Invalid card! Must follow suit ${leadCard?.suit}`)
         return false
     }
-    // ==================================================
 
     hand.splice(idx, 1)
 
     if (player === 1) game.card_played_player1 = card
     else game.card_played_player2 = card
 
-    console.log(`✓ Player ${player} played ${card.name}`)
+    console.log(`Player ${player} played ${card.name}`)
 
     if (game.card_played_player1 && game.card_played_player2) {
         game.round_in_progress = true
@@ -238,7 +222,7 @@ export function resignGame(game, player) {
 
     const winner = player === 1 ? 2 : 1
 
-    // ===== Award ALL remaining points to winner =====
+    // O vencedor recebe todos os pontos restantes
     const sumPoints = (cards = []) =>
         cards.reduce((sum, card) => sum + (card.points || 0), 0)
 
@@ -253,7 +237,6 @@ export function resignGame(game, player) {
         game.points_player2 += remainingPoints
     }
 
-    // ===== Finalize game =====
     game.hand_player1 = []
     game.hand_player2 = []
     game.deck_index = game.deck.length
@@ -267,7 +250,7 @@ export function resignGame(game, player) {
 
     console.log(`[Game] Player ${winner} wins by resignation`)
 
-    // ===== MATCH MODE =====
+    //MATCH MODE
     if (game.is_match) {
         console.log('[Match] Match ended by resignation')
 
@@ -348,10 +331,6 @@ function startGame(game, type = 3) {
     game.winner = null
     game.started = true
     game.round_in_progress = false
-
-    console.log(`Game started! Bisca de ${type}${game.is_match ? ' (Match mode)' : ''}`)
-    console.log(`Player ${game.turn_player} goes first`)
-    console.log(`Trump card: ${game.trump_card.name}`)
 }
 
 function determineTrickWinner(game, card1, card2) {
@@ -377,7 +356,6 @@ function resolveRound(game) {
     game.current_round++
 
     console.log(`Round ${game.current_round}: Player ${winnerPlayer} wins (+${totalPoints} pts)`)
-    console.log(`Score: P1=${game.points_player1} P2=${game.points_player2}`)
 
     game.round_in_progress = true
 
@@ -426,9 +404,8 @@ function drawCards(game, winnerPlayer) {
 }
 
 function endGame(game) {
-    //Game already finished by resign
+    //Jogo já acabou por desistência
     if (game.ended_by_resign) {
-        console.log('[Game] Skipping endGame — already ended by resignation')
         return
     }
 
@@ -442,11 +419,8 @@ function endGame(game) {
         game.winner = 'draw'
     }
 
-    console.log('=== Game Over ===')
     console.log(`Final Score: P1=${game.points_player1} P2=${game.points_player2}`)
-    console.log(`Winner: ${game.winner === 'draw' ? 'Draw' : 'Player ' + game.winner}`)
 
-    // Only process match if NOT resigned
     if (game.is_match) {
         processMatchResult(game)
     } else {
@@ -466,23 +440,18 @@ function endGame(game) {
  */
 function calculateMarks(winnerPoints) {
     if (winnerPoints === 120) {
-        console.log(`   🏁 BANDEIRA! (120 pontos)`)
         return 4 // Vitória automática
     } else if (winnerPoints >= 91 && winnerPoints <= 119) {
-        console.log(`   💪 CAPOTE! (${winnerPoints} pontos)`)
         return 2
     } else if (winnerPoints >= 61 && winnerPoints <= 90) {
-        console.log(`   ✓ RISCA (${winnerPoints} pontos)`)
         return 1
     } else {
-        console.log(`   ○ Sem marca (${winnerPoints} pontos)`)
         return 0
     }
 }
 
 function processMatchResult(game) {
     if (game.match_over || game.ended_by_resign) {
-        console.log('[Match] Skipping processMatchResult — match already ended')
         return
     }
     console.log('[Match] Processing game result...')
@@ -503,7 +472,7 @@ function processMatchResult(game) {
 
     // Calculate marks (empate = sem marcas)
     if (game.winner === 'draw') {
-        console.log(`   🤝 Empate - sem marcas`)
+        console.log('Empate - sem marcas')
         gameRecord.marks_awarded = 0
     } else {
         const winnerPoints = game.winner === 1 ? game.points_player1 : game.points_player2
@@ -512,21 +481,19 @@ function processMatchResult(game) {
         // Award marks to winner
         if (game.winner === 1) {
             game.player1_marks += marks
-            console.log(`   ✅ Player 1 ganhou ${marks} marca(s)`)
-            console.log(`   📈 Marcas: ${game.player1_marks}/4`)
+            console.log(`Player 1 ganhou ${marks} marca(s)`)
         } else {
             game.player2_marks += marks
-            console.log(`   ✅ Player 2 ganhou ${marks} marca(s)`)
-            console.log(`   📈 Marcas: ${game.player2_marks}/4`)
+            console.log(`Player 2 ganhou ${marks} marca(s)`)
         }
 
         gameRecord.marks_awarded = marks
     }
 
-    // Add to history
+    // Adiciona ao histórico
     game.games_history.push(gameRecord)
 
-    // Check if match is over (4 marks or bandeira)
+    // Verifica se match já acabou
     if (game.player1_marks >= 4 || game.player2_marks >= 4) {
         endMatch(game)
     }
@@ -549,12 +516,10 @@ function endMatch(game) {
     game.complete = true
     game.endedAt = new Date()
     
-    console.log('=== MATCH OVER ===')
     console.log(`Winner: Player ${game.match_winner}`)
     console.log(`Final Marks: ${game.player1_marks} - ${game.player2_marks}`)
     console.log(`Total Points: ${game.player1_total_points} - ${game.player2_total_points}`)
     console.log(`Payout: ${game.winner_payout} coins`)
 }
 
-// Export helper functions for validation
 export { mustFollowSuit, getValidCards }

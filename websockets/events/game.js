@@ -3,8 +3,8 @@ import {
     createGame, 
     getGames, 
     joinGame,
-    acceptOffer,      // NEW
-    rejectOffer,      // NEW
+    acceptOffer,
+    rejectOffer,
     cancelGamesByUser, 
     getGameById, 
     playCard,
@@ -37,16 +37,15 @@ export const handleGameEvents = (io, socket) => {
             return
         }
         
-        // For matches: use offer review system
+        //Para matches usa o sistema onde é possível recusar bets
         if (game.is_match) {
             joinGame(gameID, userID)
             socket.join(`game-${gameID}`)
             console.log(`[Match] User ${userID} requested to join match ${gameID} - pending review`)
             
-            // Notify all clients about the join request
+            // Notifica todos os clientes sobre o join request
             io.emit("games", getGames())
             
-            // Notify the game room about pending player
             io.to(`game-${gameID}`).emit('player-join-request', {
                 gameID,
                 player2: userID,
@@ -55,14 +54,13 @@ export const handleGameEvents = (io, socket) => {
                 isMatch: game.is_match
             })
         } 
-        // For standalone games: auto-accept immediately
         else {
             game.player2 = userID
-            game.offer_status = 'accepted' // Mark as accepted for consistency
+            game.offer_status = 'accepted'
             socket.join(`game-${gameID}`)
             console.log(`[Game] User ${userID} joined standalone game ${gameID} - auto-accepted`)
             
-            // Notify all clients with updated games list
+            // Notifica todos os clientes com a nova lista de jogos
             io.emit("games", getGames())
             
             // Also emit to the game room so both players see the update immediately
@@ -73,7 +71,6 @@ export const handleGameEvents = (io, socket) => {
         }
     })
     
-    // NEW: Handle offer acceptance
     socket.on("accept-offer", (gameID, userID) => {
         console.log(`[Game] User ${userID} accepting offer for game ${gameID}`)
         const success = acceptOffer(gameID, userID)
@@ -81,7 +78,6 @@ export const handleGameEvents = (io, socket) => {
         if (success) {
             console.log(`[Game] Offer accepted for game ${gameID}`)
             
-            // Broadcast updated games list to everyone
             io.emit("games", getGames())
             
             // Notify everyone in the game room
@@ -96,7 +92,6 @@ export const handleGameEvents = (io, socket) => {
         }
     })
     
-    // NEW: Handle offer rejection
     socket.on("reject-offer", (gameID, userID) => {
         console.log(`[Game] User ${userID} rejecting offer for game ${gameID}`)
         const success = rejectOffer(gameID, userID)
@@ -140,13 +135,13 @@ export const handleGameEvents = (io, socket) => {
             return
         }
         
-        // For matches: check if offer was accepted
+        // Para matches verificar se a oferta foi aceita
         if (game.is_match && (!game.player2 || game.offer_status !== 'accepted')) {
             console.log(`[Match] Cannot start - player2: ${game.player2}, offer_status: ${game.offer_status}`)
             return
         }
         
-        // For standalone games: just check if player2 exists
+        // Para jogos verificar se o player 2 existe
         if (!game.is_match && !game.player2) {
             console.log('[Game] Cannot start - no player 2')
             return
@@ -189,19 +184,15 @@ export const handleGameEvents = (io, socket) => {
         
         console.log('Card played successfully. Round in progress:', game.round_in_progress)
         
-        // Emit immediate state update (card placed on table)
         io.to(`game-${gameID}`).emit("game-change", game)
         
-        // If both cards are played, the round will resolve after timeout
         if (game.card_played_player1 && game.card_played_player2) {
             console.log('Both cards played, round will resolve in 800ms')
             
-            // Wait for the resolution timeout to complete, then emit again
             setTimeout(() => {
                 console.log('Round resolved, emitting updated state')
                 io.to(`game-${gameID}`).emit("game-change", game)
                 
-                // If game ended and it's a match that's not over, auto-continue
                 if (game.game_over && game.is_match && !game.match_over) {
                     console.log('[Match] Game ended, will start next game in 3 seconds...')
                     setTimeout(() => {
@@ -210,7 +201,6 @@ export const handleGameEvents = (io, socket) => {
                         io.to(`game-${gameID}`).emit("game-change", game)
                     }, 3000)
                 } else if (game.game_over && game.complete) {
-                    // Game/Match is completely over, remove it after delay
                     console.log('[Game] Game completed, will remove in 5 seconds...')
                     setTimeout(() => {
                         removeGame(gameID)
@@ -247,10 +237,10 @@ export const handleGameEvents = (io, socket) => {
         if (success) {
             console.log(`[Game] Player ${player} resigned successfully`)
             
-            // Notify both players of the resignation
+            // Notificar ambos os players da disistencia
             io.to(`game-${gameID}`).emit("game-change", game)
             
-            // Remove the game after a short delay to let clients see the result
+            // Remover o jogo para deixar os player ver o resultado
             setTimeout(() => {
                 removeGame(gameID)
                 console.log(`[Game] Removed completed game ${gameID}`)
