@@ -4,7 +4,7 @@
       <!-- Page Header -->
       <div class="text-center mb-8">
         <h1 class="text-4xl font-bold mb-2 text-white">Bisca</h1>
-        <p class="text-white">Escolha o modo de jogo e comece a jogar!</p>
+        <p class="text-white">Pick the game mode you want to play!</p>
       </div>
 
       <!-- Game Mode Selector Component -->
@@ -16,9 +16,9 @@
           <CardContent class="pt-6">
             <div class="text-center">
               <div class="text-3xl mb-2">🤖</div>
-              <h3 class="font-bold mb-2">Modo Singleplayer</h3>
+              <h3 class="font-bold mb-2">Singleplayer mode</h3>
               <p class="text-sm text-gray-600">
-                Jogue contra o nosso bot inteligente. Perfeito para praticar estratégias!
+                Play against our AI bot. Challenge yourself and improve your skills!
               </p>
             </div>
           </CardContent>
@@ -28,9 +28,9 @@
           <CardContent class="pt-6">
             <div class="text-center">
               <div class="text-3xl mb-2">👥</div>
-              <h3 class="font-bold mb-2">Modo Multiplayer</h3>
+              <h3 class="font-bold mb-2">Multiplayer mode</h3>
               <p class="text-sm text-gray-600">
-                Desafie outros jogadores em tempo real. Ganhe moedas e suba no ranking!
+                Challenge other players online and win exciting prizes!
               </p>
             </div>
           </CardContent>
@@ -42,7 +42,7 @@
               <div class="text-3xl mb-2">🏆</div>
               <h3 class="font-bold mb-2">Matches & Stakes</h3>
               <p class="text-sm text-gray-600">
-                Jogue matches até 4 marcas com apostas de 3 a 100 moedas!
+                Play matches until you obtain 4 marks with stakes from 3 until 100 coins!
               </p>
             </div>
           </CardContent>
@@ -52,25 +52,25 @@
       <!-- Optional: How to Play Section -->
       <Card class="mt-12">
         <CardHeader>
-          <CardTitle>📖 Como Jogar</CardTitle>
+          <CardTitle>📖 How to play</CardTitle>
         </CardHeader>
         <CardContent>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h4 class="font-semibold mb-2">🎯 Objetivo do Jogo</h4>
+              <h4 class="font-semibold mb-2">🎯 Main goal</h4>
               <p class="text-sm text-gray-600 mb-4">
-                Ganhe mais pontos que o seu oponente capturando cartas de valor durante as rondas. 
-                O jogador com mais pontos no final vence!
+                Win more points than your opponent by gaining the best cards during tricks. 
+                The player with more points in the final round wins!
               </p>
               
-              <h4 class="font-semibold mb-2">🃏 Valores das Cartas</h4>
+              <h4 class="font-semibold mb-2">🃏 Cards' values</h4>
               <ul class="text-sm text-gray-600 space-y-1">
-                <li>• Ás: 11 pontos</li>
-                <li>• 7: 10 pontos</li>
-                <li>• Rei: 4 pontos</li>
-                <li>• Valete: 3 pontos</li>
-                <li>• Rainha: 2 pontos</li>
-                <li>• Outras cartas: 0 pontos</li>
+                <li>• Ás: 11 points</li>
+                <li>• 7: 10 points</li>
+                <li>• King: 4 points</li>
+                <li>• Valet: 3 points</li>
+                <li>• Queen: 2 points</li>
+                <li>• Other cards: 0 points</li>
               </ul>
             </div>
             
@@ -100,7 +100,3 @@
 import GameModeSelector from '@/components/GameModeSelector.vue'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 </script>
-
-<style scoped>
-/* Optional: Add any custom styles here */
-</style>
