@@ -392,16 +392,18 @@ export const useGameStore = defineStore('game', () => {
     multiplayerGame.value = game
   }
 
+  const savingGameStart = ref(false)
+
   //Save the beginning game on the database
   const saveGameStart = async (gameData) => {
 
     // Check if game has already been saved
-    if (currentDbGameId.value) {
+    if (currentDbGameId.value || savingGameStart.value) {
       console.log('Game already saved with ID:', currentDbGameId.value)
       return { game: { id: currentDbGameId.value } }
       //return
     }
-    
+    savingGameStart.value = true
     try {
       const response = await apiStore.createGame({
         type: gameData.type,
@@ -423,7 +425,11 @@ export const useGameStore = defineStore('game', () => {
       return response
     } catch (error) {
       throw error 
+    } finally {
+      // Always clear the flag when done
+      savingGameStart.value = false
     }
+    
   }
 
   //Save the end game on the database, by updating the game

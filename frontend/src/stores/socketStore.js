@@ -161,7 +161,7 @@ export const useSocketStore = defineStore('socket', () => {
 
     //Save game start to database
     if (game.started && !game.game_over && !game.db_game_id) {
-
+      console.log(game)
       await gameStore.saveGameStart({
         id: game.id,
         type: game.game_type,
@@ -174,7 +174,7 @@ export const useSocketStore = defineStore('socket', () => {
 
     // Update ended game on the database
     if (game.game_over && game.complete && game.db_game_id) {
-
+      console.log(game)
       await gameStore.saveGameEnd({
         db_game_id: game.db_game_id,
         player1: game.player1,
