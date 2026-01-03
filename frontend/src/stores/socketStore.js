@@ -55,6 +55,35 @@ export const useSocketStore = defineStore('socket', () => {
     socket.emit('cancel-game', user)
   }
 
+  const syncMatchState = (game) => {
+    // Sync match state from backend
+    matchStore.is_match_mode = true
+    matchStore.match_type = game.game_type
+    matchStore.player1_id = game.player1
+    matchStore.player2_id = game.player2
+    matchStore.stake = game.stake
+    
+    // Sync marks and points from backend (DO NOT RECALCULATE)
+    matchStore.player1_marks = game.player1_marks
+    matchStore.player2_marks = game.player2_marks
+    matchStore.player1_total_points = game.player1_total_points
+    matchStore.player2_total_points = game.player2_total_points
+    
+    matchStore.current_game_number = game.current_game_number
+    matchStore.match_over = game.match_over
+    matchStore.match_status = game.match_over ? 'Ended' : 'Playing'
+    
+    if (game.match_winner) {
+      matchStore.winner_id = game.match_winner === 1 ? game.player1 : game.player2
+      matchStore.loser_id = game.match_winner === 1 ? game.player2 : game.player1
+    }
+    
+    // Sync games history if available
+    if (game.games_history) {
+      matchStore.games_played = game.games_history
+    }
+  } 
+
   //Function to handle game state changes
   const handleMatchGameState = async (game) => {
 
@@ -103,12 +132,9 @@ export const useSocketStore = defineStore('socket', () => {
         resigned_player: game.resigned_player || null
       })
 
-      const shouldContinue = await matchStore.processGameResult({
-        winner: game.winner,
-        points_player1: game.points_player1,
-        points_player2: game.points_player2,
-        is_draw: game.winner === 'draw'
-      })
+      syncMatchState(game)
+
+      await matchStore.updateMatchInDatabase(game.match_over)
 
       if (game.match_over) {
         console.log('Match has ended!')
@@ -160,6 +186,9 @@ export const useSocketStore = defineStore('socket', () => {
     // Only Player 1 saves to database
     if (!isPlayer1) {
       console.log('I am Player 2 - will NOT save to database')
+      if (game.is_match) {
+        syncMatchState(game)
+      }
       return
     }
 

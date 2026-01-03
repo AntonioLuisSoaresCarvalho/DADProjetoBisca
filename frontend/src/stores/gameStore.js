@@ -412,8 +412,8 @@ export const useGameStore = defineStore('game', () => {
     // Check if game has already been saved
     if (currentDbGameId.value) {
       console.log('Game already saved with ID:', currentDbGameId.value)
-      //return { game: { id: currentDbGameId.value } }
-      return
+      return { game: { id: currentDbGameId.value } }
+      //return
     }
     
     try {
@@ -438,8 +438,8 @@ export const useGameStore = defineStore('game', () => {
 
       return response
     } catch (error) {
-      console.error('❌ Error response:', error.response?.data)
-      console.error('❌ Error status:', error.response?.status)
+      console.error('Error response:', error.response?.data)
+      console.error('Error status:', error.response?.status)
       throw error 
     }
   }
@@ -486,7 +486,7 @@ export const useGameStore = defineStore('game', () => {
         resigned_player: gameData.resigned_player || null
       })
 
-      console.log('Game updated on the database:', response.game)
+      //console.log('Game updated on the database:', response.game)
       return response.game
     } catch (error) {
       console.error('Failed to update game:', error)

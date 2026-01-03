@@ -1,18 +1,7 @@
 <script setup>
 import { useFriendStore } from '@/stores/friendStore'
-import { computed } from 'vue'
 
 const friendStore = useFriendStore()
-
-// const emit = defineEmits(['invite-friend', 'view-profile'])
-
-// const handleInvite = (friend) => {
-//   emit('invite-friend', friend)
-// }
-
-// const handleViewProfile = (friend) => {
-//   emit('view-profile', friend)
-// }
 
 const handleRemove = (friendId) => {
   friendStore.removeFriend(friendId)
@@ -27,21 +16,19 @@ const getAvatarUrl = (filename) => {
 
 <template>
   <div class="bg-white rounded-lg shadow-md p-4 border border-gray-200">
-    <!-- Header -->
     <div class="flex justify-between items-center pb-3 mb-3 border-b-2 border-gray-200">
       <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-        🎮 Jogadores Recentes
+        Recent players
       </h3>
       <span class="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-bold">
         {{ friendStore.friendCount }}
       </span>
     </div>
 
-    <!-- Empty State -->
     <div v-if="friendStore.friendCount === 0" class="text-center py-8 px-4">
-      <p class="text-gray-600 mb-2">Ainda não jogaste com ninguém nesta sessão.</p>
+      <p class="text-gray-600 mb-2">You didn't played with anyone yet.</p>
       <p class="text-sm text-gray-400 italic">
-        Após um jogo, podes adicionar o teu adversário aqui!
+        After you play with with someone and added him on the list, he will appear here.
       </p>
     </div>
 
@@ -69,24 +56,7 @@ const getAvatarUrl = (filename) => {
           </div>
         </div>
 
-        <!-- Actions -->
-        <div class="flex gap-1">
-          <!-- <button 
-            @click="handleInvite(friend)"
-            class="w-9 h-9 flex items-center justify-center bg-white rounded-lg hover:bg-green-600 hover:text-white transition-colors border border-gray-300"
-            title="Convidar para jogar"
-          >
-            🎯
-          </button>
-          
-          <button 
-            @click="handleViewProfile(friend)"
-            class="w-9 h-9 flex items-center justify-center bg-white rounded-lg hover:bg-blue-600 hover:text-white transition-colors border border-gray-300"
-            title="Ver perfil"
-          >
-            👤
-          </button> -->
-          
+        <div class="flex gap-1">         
           <button 
             @click="handleRemove(friend.id)"
             class="w-9 h-9 flex items-center justify-center bg-white rounded-lg hover:bg-red-600 hover:text-white transition-colors border border-gray-300"
@@ -98,13 +68,12 @@ const getAvatarUrl = (filename) => {
       </div>
     </div>
 
-    <!-- Clear All Button -->
     <button 
       v-if="friendStore.friendCount > 0"
       @click="friendStore.clearAll()"
       class="w-full mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-semibold"
     >
-      Limpar Lista
+      Clear all friends
     </button>
   </div>
 </template>

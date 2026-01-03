@@ -12,20 +12,19 @@
       </router-link>
     </div>
     <div class="flex gap-4">
-      <router-link to="/statistics" class="hover:text-green-200 cursor-pointer ">Estatísticas</router-link>
       <template v-if="auth.user">
-        <router-link v-if="!auth.isAdmin" to="/friends" class="hover:text-green-200 cursor-pointer" >Friends</router-link>
+        <router-link v-if="!auth.isAdmin" to="/friends" class="hover:text-green-200 cursor-pointer">Friends</router-link>
         <router-link to="/profile" class="hover:text-green-200 cursor-pointer ">
           <span v-if="auth.user.nickname">{{ auth.user.nickname }}</span>
           <span v-else>{{ auth.user.name }}</span> 
         </router-link>
         <button @click="logout" class="hover:text-green-200 cursor-pointer">
-          Sair
+          Logout
         </button>
       </template>
       <template v-else>
-        <router-link to="/login" class="rounded hover:text-green-200 cursor-pointer ">Entrar</router-link>
-        <router-link to="/register" class="rounded hover:text-green-200 cursor-pointer ">Criar Conta</router-link>
+        <router-link to="/login" class="rounded hover:text-green-200 cursor-pointer ">Login</router-link>
+        <router-link to="/register" class="rounded hover:text-green-200 cursor-pointer ">Create Account</router-link>
       </template>
     </div>
   </nav>

@@ -20,7 +20,7 @@
           @click="$emit('close')"
           class="px-2 py-2 rounded hover:bg-green-600"
         >
-          🏠 Home
+          Home
         </router-link>
 
         <router-link
@@ -28,7 +28,7 @@
           @click="$emit('close')"
           class="px-2 py-2 rounded hover:bg-green-600"
         >
-          👤 Perfil
+          Profile
         </router-link>
 
         <router-link
@@ -37,7 +37,7 @@
           @click="$emit('close')"
           class="px-2 py-2 rounded hover:bg-green-600"
         >
-         🛡️ Admin Panel
+         Admin Panel
         </router-link>
 
         <!-- Dropdown History -->
@@ -46,7 +46,7 @@
             @click="toggleHistoryDropdown"
             class="flex items-center justify-between w-full px-2 py-2 rounded hover:bg-green-600 text-left"
           >
-            <span>📊 History</span>
+            <span>History</span>
             <span :class="['transform transition-transform', historyOpen ? 'rotate-180' : '']">▼</span>
           </button>
 
@@ -74,7 +74,7 @@
           @click="$emit('close')"
           class="px-2 py-2 rounded hover:bg-green-600"
         >
-          🏆 Leaderboard
+          Leaderboard
         </router-link>
 
 
@@ -84,7 +84,7 @@
           @click="$emit('close')"
           class="px-2 py-2 rounded hover:bg-green-600"
         >
-          🎮 Jogar
+          Play
         </router-link>
 
         <router-link
@@ -93,8 +93,9 @@
           @click="$emit('close')"
           class="px-2 py-2 rounded hover:bg-green-600"
         >
-          🪙 Purchase Coins
+          Purchase Coins
         </router-link>
+        <router-link to="/statistics" @click="$emit('close')" class="px-2 py-2 rounded hover:bg-green-600">Statistics</router-link>
 
       </nav>
     </aside>

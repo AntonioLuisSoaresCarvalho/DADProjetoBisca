@@ -12,15 +12,14 @@ import AdminView from "@/views/admin/AdminView.vue"
 import SinglePlayerView from "@/views/game/SinglePlayerPage.vue"
 import MultiplayerLobbyPage from "@/views/game/MultiplayerLobbyPage.vue"
 import MultiplayerGamePage from "@/views/game/MultiplayerGamePage.vue"
-
 import LeaderboardView from "@/views/leaderboard/LeaderboardView.vue";
 import GameHistoryView from "@/views/history/games/GameHistoryView.vue";
 import MatchHistoryView from "@/views/history/matches/MatchHistoryView.vue";
 import GameDetailsView from "@/views/history/games/GameDetailsView.vue";
 import MatchDetailsView from "@/views/history/matches/MatchDetailsView.vue";
 import PlayView from "@/views/game/StartGameView.vue"
-
 import FriendsPage from '@/views/user/FriendsPage.vue'
+import StatisticsView from '@/views/statistics/StatisticsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -42,35 +41,37 @@ const router = createRouter({
       path: '/play',
       name: 'Play',
       component: PlayView,
-      meta: { requiresAuth: true, title: 'Play - Choose Game Mode' }
+      meta: { requiresAuth: false, title: 'Play - Choose Game Mode'}
     },
     {
       path: '/games/singleplayer',
       name: 'SinglePlayer',
       component: SinglePlayerView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: false }
     },
     {
       path: '/lobby',
       name: 'Lobby',
       component: MultiplayerLobbyPage,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true , requirePlayer: true}
     },
     {
       path: '/multiplayer',
       name: 'Multiplayer',
       component: MultiplayerGamePage,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true , requirePlayer: true}
     },
 
     {
       path: '/leaderboard',
       component: LeaderboardView,
+      meta: { requiresAuth: false }
     },
     {
       path: '/statistics',
       name: 'statistics',
-      component: () => import('@/views/statistics/StatisticsView.vue'),
+      component: StatisticsView,
+      meta: { requiresAuth: false }
     },
 
     {
@@ -120,7 +121,7 @@ router.beforeEach(async (to) => {
   const auth = useAuthStore()
   const api = useApiStore()
 
-  // Load user profile if token exists but user not loaded
+  // Load user profile if token exists and is user not loaded
   if (api.token && !auth.user) {
     await auth.fetchProfile()
   }

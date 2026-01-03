@@ -1,4 +1,3 @@
-// stores/match.js
 import { defineStore } from 'pinia'
 import { useApiStore } from './api'
 
@@ -260,10 +259,12 @@ export const useMatchStore = defineStore('match', {
         this.winner_id = this.player2_id
         this.loser_id = this.player1_id
         this.player2_marks = 4
+        this.player1_marks = 0
       } else {
         this.winner_id = this.player1_id
         this.loser_id = this.player2_id
         this.player1_marks = 4
+        this.player2_marks = 0
       }
 
       // Saves match in database
@@ -291,10 +292,13 @@ export const useMatchStore = defineStore('match', {
           updateData.status = 'Ended'
           updateData.winner_user_id = this.winner_id
           updateData.loser_user_id = this.loser_id
-          updateData.ended_at = this.ended_at
+          updateData.ended_at = new Date().toISOString()
+          this.ended_at = updateData.ended_at
         }
 
         const response = await apiStore.updateMatch(this.db_match_id, updateData)
+        console.log('Match updated:', response)
+        return response
       } catch (error) {
         console.error('Failed to update match:', error)
       }
