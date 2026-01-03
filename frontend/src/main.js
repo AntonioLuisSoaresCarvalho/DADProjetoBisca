@@ -14,8 +14,8 @@ console.log('[main.js] ws connection', wsConnection)
 const app = createApp(App)
 
 app.provide('socket', io(wsConnection))
-app.provide('serverBaseURL', `http://${apiDomain}`)
-app.provide('apiBaseURL', `http://${apiDomain}/api`)
+app.provide('serverBaseURL', apiDomain)
+app.provide('apiBaseURL', `${apiDomain}/api`)
 
 app.use(createPinia())
 app.use(router)

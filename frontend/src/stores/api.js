@@ -299,7 +299,7 @@ export const useApiStore = defineStore("api", () => {
         getGlobalLeaderboard,
         updateMatch,
         updateGame,
-        createGame, 
+        createGame,
         createMatch,
         fetchPublicStatistics,
         fetchAdminStatistics
