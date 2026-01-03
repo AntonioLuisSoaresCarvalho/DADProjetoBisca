@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed,watch } from 'vue'
 
 export const useFriendStore = defineStore('friends', () => {
-  const sessionFriends = ref([])
+  const savedFriends = localStorage.getItem('sessionFriends')
+  const sessionFriends = ref(savedFriends ? JSON.parse(savedFriends) : [])
 
   const friendCount = computed(() => sessionFriends.value.length)
   
@@ -52,7 +53,16 @@ export const useFriendStore = defineStore('friends', () => {
   // Reset when logging out
   function $reset() {
     sessionFriends.value = []
+    localStorage.removeItem('sessionFriends')
   }
+
+  watch(
+    sessionFriends,
+    (newFriends) => {
+      localStorage.setItem('sessionFriends', JSON.stringify(newFriends))
+    },
+    { deep: true }
+  )
 
   return {
     sessionFriends,

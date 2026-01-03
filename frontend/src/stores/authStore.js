@@ -131,7 +131,8 @@ export const useAuthStore = defineStore("auth",{
             try {
                const apiStore = useApiStore();
                const res = await apiStore.deleteAccount(confirmation);
-               return {sucess : true , message : res.data.message}
+               this.clearAuth();
+               return {success : true , message : res.data.message}
             } catch (error) {
                 return {
                     success : false,
