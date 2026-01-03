@@ -422,11 +422,6 @@ export const useGameStore = defineStore('game', () => {
 
       return response
     } catch (error) {
-<<<<<<< HEAD
-      console.error('Error response:', error.response?.data)
-      console.error('Error status:', error.response?.status)
-=======
->>>>>>> 84245e786e97fa300636d3e199881954bde1cd3f
       throw error 
     }
   }
@@ -472,10 +467,6 @@ export const useGameStore = defineStore('game', () => {
         resigned_player: gameData.resigned_player || null
       })
 
-<<<<<<< HEAD
-      //console.log('Game updated on the database:', response.game)
-=======
->>>>>>> 84245e786e97fa300636d3e199881954bde1cd3f
       return response.game
     } catch (error) {
       toast.error('Failed to update game in database')
