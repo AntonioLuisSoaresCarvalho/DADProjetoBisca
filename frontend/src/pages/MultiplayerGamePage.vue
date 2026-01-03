@@ -336,7 +336,7 @@ onUnmounted(() => {
 <template>
     <div v-if="game" class="flex justify-center mt-10 px-4">
         <!-- Main Container with 2 columns -->
-        <div class="flex gap-6 w-full max-w-[1400px]">
+        <div class="flex gap-6 w-full max-w-[1400px] items-stretch">
 
             <!-- LEFT COLUMN: Game Area (Cards) -->
             <div class="flex-1 min-w-0">
@@ -499,9 +499,7 @@ onUnmounted(() => {
 
             <!-- RIGHT COLUMN: Chat Sidebar -->
             <div class="w-80 flex-shrink-0">
-                <div class="sticky top-4">
-                    <GameChat v-if="gameID" :gameId="gameID" />
-                </div>
+                <GameChat v-if="gameID" :gameId="gameID" style="height: 100%;" />
             </div>
 
         </div>

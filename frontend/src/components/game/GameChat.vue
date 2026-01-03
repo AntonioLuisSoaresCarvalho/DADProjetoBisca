@@ -54,7 +54,7 @@ watch(messages, () => {
 </script>
 
 <template>
-  <div class="flex flex-col bg-white rounded-lg border shadow-sm" style="height: 600px;">
+  <div class="flex flex-col bg-white rounded-lg border shadow-sm h-full">
     <!-- Header -->
     <div class="px-4 py-3 border-b bg-gray-50 rounded-t-lg">
       <h3 class="font-semibold text-gray-800">💬 Chat</h3>
@@ -63,8 +63,7 @@ watch(messages, () => {
     <!-- Messages Container -->
     <div
       ref="chatContainer"
-      class="flex-1 overflow-y-auto p-4 space-y-3 min-h-0"
-      style="min-height: 450px;">
+      class="flex-1 overflow-y-auto p-4 space-y-3">
 
       <div v-if="messages.length === 0" class="text-center text-gray-400 text-sm py-8">
         No messages yet. Say hi! 👋
