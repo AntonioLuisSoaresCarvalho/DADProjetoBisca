@@ -128,7 +128,7 @@ class GameHistoryController extends Controller
     {
         $user = Auth::user();
 
-        // Se houver playerId na query, use-o (admin vendo outro jogador)
+        // If there's playerId in query, use it (admin viewing another player)
         $perspectiveUserId = $request->query('playerId') ?? Auth::id();
         $perspectiveUserId = (int) $perspectiveUserId;
 
@@ -156,8 +156,14 @@ class GameHistoryController extends Controller
             ], 403);
         }
 
+        // Add perspective player info
+        $perspectivePlayer = $match->player1_user_id === $perspectiveUserId
+            ? $match->player1
+            : $match->player2;
+
         return response()->json([
-            'match' => $this->transformMatchForUser($match, $perspectiveUserId, true)
+            'match' => $this->transformMatchForUser($match, $perspectiveUserId, true),
+            'perspective_player' => $perspectivePlayer  // Add this!
         ]);
     }
 
