@@ -544,7 +544,7 @@ const joinGame = (game) => {
 
 // Show offer review modal (only for matches)
 const reviewOffer = (game) => {
-  if (!game.is_match) return // Safety check
+  if (!game.is_match) return
   selectedOffer.value = game
   showOfferModal.value = true
 }
@@ -585,7 +585,7 @@ const startGame = (game) => {
     return
   }
 
-  // For standalone games: just check player2 exists
+  // For games: just check player2 exists
   if (!game.is_match && !game.player2) {
     toast.warning('Wait for player 2 to join!')
     return
@@ -606,7 +606,6 @@ onMounted(() => {
     socketStore.emitJoin(authStore.currentUser)
   }
 
-  // Make sure socket event handlers are registered
   socketStore.handleGameEvents()
 
   setTimeout(() => {
@@ -659,7 +658,7 @@ onMounted(() => {
     socketStore.emitGetGames() // Refresh to show pending player
   })
 
-  // Listen for standalone game joins
+  // Listen for game joins
   socketStore.socket.on('player-joined', (data) => {
     console.log('[Lobby] Player joined standalone game:', data)
     const currentUser = authStore.currentUser?.id

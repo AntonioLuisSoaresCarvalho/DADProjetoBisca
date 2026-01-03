@@ -243,7 +243,6 @@ const loadGame = async () => {
     if (response.perspective_player) {
       perspectivePlayer.value = response.perspective_player
     } else {
-      // Fallback to current user if backend doesn't provide it
       perspectivePlayer.value = authStore.currentUser
     }
   } catch (error) {
@@ -253,7 +252,6 @@ const loadGame = async () => {
 
 const viewMatchDetails = (matchId) => {
   const query = {}
-  // CRITICAL: Preserve the playerId query parameter when navigating
   if (route.query.playerId) {
     query.playerId = route.query.playerId
   }
