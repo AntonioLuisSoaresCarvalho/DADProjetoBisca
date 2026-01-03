@@ -15,8 +15,7 @@
       <router-link to="/statistics" class="hover:text-green-200 cursor-pointer ">Estatísticas</router-link>
       <template v-if="auth.user">
         <router-link to="/profile" class="hover:text-green-200 cursor-pointer ">
-          <span v-if="auth.user.nickname">{{ auth.user.nickname }}</span>
-          <span v-else>{{ auth.user.name }}</span> 
+          {{ auth.user.nickname }}
         </router-link>
         <button @click="logout" class="hover:text-green-200 cursor-pointer">
           Sair

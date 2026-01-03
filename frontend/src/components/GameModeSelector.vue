@@ -2,7 +2,7 @@
   <div v-if="showSelector" class="flex justify-center items-center min-h-[60vh]">
     <Card class="w-[400px]">
       <CardHeader>
-        <CardTitle class="text-center text-2xl">🎮 Pick game mode</CardTitle>
+        <CardTitle class="text-center text-2xl">🎮 Escolher Modo de Jogo</CardTitle>
       </CardHeader>
       <CardContent class="flex flex-col gap-4">
         <!-- Singleplayer Button -->
@@ -13,31 +13,14 @@
           <div class="flex flex-col items-center">
             <span class="text-2xl mb-1">🤖</span>
             <span class="font-bold">Singleplayer</span>
-            <span class="text-xs opacity-80">Play against a Bot</span>
+            <span class="text-xs opacity-80">Jogar contra o Bot</span>
           </div>
         </Button>
 
         <!-- Singleplayer Options (only shown when clicked) -->
         <div v-if="showSingleplayerOptions" class="space-y-3 pl-4 border-l-2 border-gray-300">
           <div>
-            <label class="text-sm font-medium mb-2 block">Gameplay mode</label>
-            <div class="grid grid-cols-2 gap-2">
-              <Button 
-                @click="gameMode = 'game'"
-                :variant="gameMode === 'game' ? 'default' : 'outline'" 
-                size="sm">
-                Game
-              </Button>
-              <Button 
-                @click="gameMode = 'match'"
-                :variant="gameMode === 'match' ? 'default' : 'outline'" 
-                size="sm">
-                Match
-              </Button>
-            </div>
-          </div>
-          <div>
-            <label class="text-sm font-medium mb-2 block">Bisca Type</label>
+            <label class="text-sm font-medium mb-2 block">Tipo de Bisca</label>
             <div class="grid grid-cols-2 gap-2">
               <Button 
                 @click="singleplayerType = 3"
@@ -55,7 +38,7 @@
           </div>
 
           <Button @click="goToSingleplayer" class="w-full" size="sm">
-            Start Game →
+            Começar Jogo →
           </Button>
         </div>
 
@@ -67,7 +50,7 @@
           <div class="flex flex-col items-center">
             <span class="text-2xl mb-1">👥</span>
             <span class="font-bold">Multiplayer</span>
-            <span class="text-xs opacity-80">Play against other players</span>
+            <span class="text-xs opacity-80">Jogar contra outros jogadores</span>
           </div>
         </Button>
       </CardContent>
@@ -88,7 +71,6 @@ const route = useRoute()
 const showSelector = ref(true)
 const showSingleplayerOptions = ref(false)
 const singleplayerType = ref(3)
-const gameMode = ref('game')
 
 // Watch for route changes
 watch(
@@ -108,7 +90,7 @@ const goToSingleplayer = () => {
   showSelector.value = false
   router.push({
     name: 'SinglePlayer',
-    query: { type: singleplayerType.value,mode: gameMode.value }
+    query: { type: singleplayerType.value }
   })
 }
 

@@ -13,21 +13,15 @@ import {
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
 
 const props = defineProps({
-  title: { type: String, default: 'Visão Geral' },
-  subtitle: { type: String, default: 'Distribuição agregada da plataforma.' },
-  labels: { type: Array, required: true },
-  values: { type: Array, required: true },
-  colors: { 
-    type: Array, 
-    default: () => ['rgba(255,255,255,0.85)', 'rgba(255,255,255,0.70)', 'rgba(255,255,255,0.60)']
-  },
-  horizontal: { type: Boolean, default: false },
-  valuePrefix: { type: String, default: '' },
-  valueSuffix: { type: String, default: '' },
+  totalUsers: { type: Number, required: true },
+  totalGames: { type: Number, required: true },
+  totalFinished: { type: Number, required: true },
 })
 
 const canvasRef = ref(null)
 let chart = null
+
+const values = computed(() => [props.totalUsers, props.totalGames, props.totalFinished])
 
 const fmt = (n) => new Intl.NumberFormat('pt-PT').format(n)
 
@@ -38,58 +32,42 @@ const renderChart = () => {
   chart = new Chart(canvasRef.value, {
     type: 'bar',
     data: {
-      labels: props.labels,
+      labels: ['Utilizadores', 'Jogos', 'Partidas concluídas'],
       datasets: [
         {
-          label: props.title,
-          data: props.values,
+          label: 'Resumo',
+          data: values.value,
           borderRadius: 10,
           barThickness: 38,
           maxBarThickness: 46,
-          backgroundColor: props.colors,
+          // Colores discretos (no se mezclan con el verde)
+          backgroundColor: ['rgba(255,255,255,0.85)', 'rgba(255,255,255,0.70)', 'rgba(255,255,255,0.60)'],
         },
       ],
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
-      indexAxis: props.horizontal ? 'y' : 'x',
+      maintainAspectRatio: false, // ✅ para que respete la altura del contenedor
       plugins: {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: (ctx) => {
-              const value = props.horizontal ? ctx.parsed.x : ctx.parsed.y
-              return ` ${props.valuePrefix}${fmt(value)}${props.valueSuffix}`
-            },
+            label: (ctx) => ` ${fmt(ctx.parsed.y)}`,
           },
         },
       },
       scales: {
         x: {
-          beginAtZero: props.horizontal,
-          ticks: { 
-            color: 'rgba(255,255,255,0.85)', 
-            font: { weight: '600', size: props.horizontal ? 11 : 12 },
-            callback: props.horizontal ? (v) => fmt(v) : undefined,
-          },
-          grid: { 
-            display: props.horizontal,
-            color: props.horizontal ? 'rgba(255,255,255,0.10)' : undefined,
-          },
-          border: { display: false },
+          ticks: { color: 'rgba(255,255,255,0.85)', font: { weight: '600' } },
+          grid: { display: false },
         },
         y: {
-          beginAtZero: !props.horizontal,
+          beginAtZero: true,
           ticks: {
-            color: props.horizontal ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.65)',
-            font: { weight: props.horizontal ? '600' : '400', size: props.horizontal ? 11 : 12 },
-            callback: !props.horizontal ? (v) => fmt(v) : undefined,
+            color: 'rgba(255,255,255,0.65)',
+            callback: (v) => fmt(v),
           },
-          grid: { 
-            display: !props.horizontal,
-            color: !props.horizontal ? 'rgba(255,255,255,0.10)' : undefined,
-          },
+          grid: { color: 'rgba(255,255,255,0.10)' },
           border: { display: false },
         },
       },
@@ -100,9 +78,8 @@ const renderChart = () => {
 onMounted(renderChart)
 
 watch(
-  () => [props.labels, props.values, props.colors, props.horizontal],
-  () => renderChart(),
-  { deep: true }
+  () => values.value,
+  () => renderChart()
 )
 
 onBeforeUnmount(() => {
@@ -113,11 +90,12 @@ onBeforeUnmount(() => {
 <template>
   <section class="rounded-2xl border border-white/15 bg-white/10 p-6 shadow-sm backdrop-blur">
     <header class="mb-4">
-      <h2 class="text-lg font-bold text-white">{{ title }}</h2>
-      <p class="text-sm text-white/70">{{ subtitle }}</p>
+      <h2 class="text-lg font-bold text-white">Visão Geral</h2>
+      <p class="text-sm text-white/70">Distribuição agregada da plataforma.</p>
     </header>
 
-    <div class="h-80">
+    <!-- ✅ altura fija para que no se haga gigante -->
+    <div class="h-[320px]">
       <canvas ref="canvasRef"></canvas>
     </div>
   </section>

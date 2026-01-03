@@ -241,6 +241,10 @@ export const useApiStore = defineStore("api", () => {
         return response.data
     }
 
+    // ==========================================
+    // LEADERBOARD ENDPOINTS
+    // ==========================================
+
     const getPersonalStats = async (params = {}) => {
         const response = await apiClient.get(`/leaderboards/personal`, { params })
         return response.data
@@ -254,16 +258,6 @@ export const useApiStore = defineStore("api", () => {
             bandeiras: `${API_BASE_URL}/leaderboards/global/bandeiras`,
         }
         const response = await apiClient.get(endpoints[type], { params })
-        return response.data
-    }
-
-    const fetchPublicStatistics = async () => {
-        const response = await apiClient.get('/statistics')
-        return response.data
-    }
-
-    const fetchAdminStatistics = async () => {
-        const response = await apiClient.get(`/admin/statistics`,{params: { days: 30 }})
         return response.data
     }
 
@@ -303,8 +297,6 @@ export const useApiStore = defineStore("api", () => {
         updateMatch,
         updateGame,
         createGame, 
-        createMatch,
-        fetchPublicStatistics,
-        fetchAdminStatistics
+        createMatch
     }
 })
