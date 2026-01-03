@@ -22,19 +22,19 @@
       <div class="grid md:grid-cols-3 gap-10 mt-10">
 
         <div class="bg-white p-6 rounded-lg shadow border border-green-300 text-center">
-          <div class="text-4xl mb-3">🃏</div>
+          <div class="text-4xl mb-3"></div>
           <h3 class="font-bold text-xl mb-2 text-green-800">Cards</h3>
           <p class="text-sm">Traditional game played with a deck of 40 cards (without 8, 9 and 10).</p>
         </div>
 
         <div class="bg-white p-6 rounded-lg shadow border border-green-300 text-center">
-          <div class="text-4xl mb-3">⚔️</div>
+          <div class="text-4xl mb-3"></div>
           <h3 class="font-bold text-xl mb-2 text-green-800">Duel</h3>
           <p class="text-sm">Matches always between two players — simple and competitive.</p>
         </div>
 
         <div class="bg-white p-6 rounded-lg shadow border border-green-300 text-center">
-          <div class="text-4xl mb-3">🏆</div>
+          <div class="text-4xl mb-3"></div>
           <h3 class="font-bold text-xl mb-2 text-green-800">Victory</h3>
           <p class="text-sm">Earn points, win tricks, and dominate Bisca matches.</p>
         </div>
@@ -51,7 +51,7 @@
       <div class="grid md:grid-cols-3 gap-10  mx-auto">
 
         <div class="text-center bg-white p-6 rounded-lg shadow border border-green-300">
-          <div class="text-4xl mb-3">🧍</div>
+          <div class="text-4xl mb-3"></div>
           <h3 class="font-bold text-xl mb-2">Create Your Account</h3>
           <p class="text-sm">
             Register for free and receive 10 welcome coins!
@@ -59,7 +59,7 @@
         </div>
 
         <div class="text-center bg-white p-6 rounded-lg shadow border border-green-300">
-          <div class="text-4xl mb-3">🎮</div>
+          <div class="text-4xl mb-3"></div>
           <h3 class="font-bold text-xl mb-2">Choose How to Play</h3>
           <p class="text-sm">
             Play solo against the bot or challenge other online players.
@@ -67,7 +67,7 @@
         </div>
 
         <div class="text-center bg-white p-6 rounded-lg shadow border border-green-300">
-          <div class="text-4xl mb-3">⭐</div>
+          <div class="text-4xl mb-3"></div>
           <h3 class="font-bold text-xl mb-2">Climb the ranks</h3>
           <p class="text-sm">
             Accumulate victories and climb the global leaderboards!
@@ -83,22 +83,22 @@
       <div class="grid md:grid-cols-2 gap-8">
 
         <div class="bg-white p-6 rounded-lg shadow border border-green-300">
-          <h3 class="font-bold text-xl text-green-800 mb-2">✔ Single-player</h3>
+          <h3 class="font-bold text-xl text-green-800 mb-2">Single-player</h3>
           <p>Challenge the bot and train your strategy.</p>
         </div>
 
         <div class="bg-white p-6 rounded-lg shadow border border-green-300">
-          <h3 class="font-bold text-xl text-green-800 mb-2">✔ Multiplayer</h3>
+          <h3 class="font-bold text-xl text-green-800 mb-2">Multiplayer</h3>
           <p>Play in real-time against other players.</p>
         </div>
 
         <div class="bg-white p-6 rounded-lg shadow border border-green-300">
-          <h3 class="font-bold text-xl text-green-800 mb-2">✔ History and Statistics</h3>
+          <h3 class="font-bold text-xl text-green-800 mb-2">History and Statistics</h3>
           <p>Track your victories, capotes, and bandeiras.</p>
         </div>
 
         <div class="bg-white p-6 rounded-lg shadow border border-green-300">
-          <h3 class="font-bold text-xl text-green-800 mb-2">✔ Coin Economy</h3>
+          <h3 class="font-bold text-xl text-green-800 mb-2">Coin Economy</h3>
           <p>Earn, bet, and buy coins through the platform.</p>
         </div>
 
