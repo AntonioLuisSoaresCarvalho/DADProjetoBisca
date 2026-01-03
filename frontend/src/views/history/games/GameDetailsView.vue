@@ -26,7 +26,7 @@
             Retry
           </button>
           <button
-            @click="$router.go(-1)"
+            @click="goBack"
             class="px-6 py-3 bg-white text-green-700 font-semibold border border-green-300 rounded-xl hover:bg-green-50 transition"
           >
             Go Back
@@ -39,11 +39,18 @@
 
         <!-- Back Button -->
         <button
-          @click="$router.go(-1)"
+          @click="goBack"
           class="mb-6 px-5 py-2 bg-white border border-green-300 text-green-700 rounded-xl font-semibold hover:bg-green-50 transition flex items-center gap-2"
         >
           <span>←</span> Back
         </button>
+
+        <!-- Admin viewing indicator -->
+        <div v-if="viewingAsAdmin && perspectivePlayer" class="mb-6 bg-blue-100 border border-blue-300 rounded-xl p-4">
+          <p class="text-blue-800 font-semibold">
+            👤 Viewing as: <strong>{{ perspectivePlayer.nickname }}</strong> ({{ perspectivePlayer.name }})
+          </p>
+        </div>
 
         <!-- Header -->
         <h1 class="text-4xl font-extrabold text-white mb-8">Game Details</h1>
@@ -126,12 +133,12 @@
               >
                 <span class="font-semibold">Part of Match:</span>
 
-                <router-link
-                  :to="{ name: 'MatchDetails', params: { id: game.match_info.id } }"
+                <button
+                  @click="viewMatchDetails(game.match_info.id)"
                   class="text-green-700 font-semibold hover:underline"
                 >
                   View Match →
-                </router-link>
+                </button>
               </div>
             </div>
           </div>
@@ -140,15 +147,15 @@
           <div class="bg-white border border-green-300 rounded-2xl p-8 shadow-lg">
             <h3 class="text-2xl font-extrabold text-green-900 mb-6">Players & Score</h3>
 
-            <!-- You -->
+            <!-- Perspective Player (the one we're viewing as) -->
             <div class="p-5 bg-green-100 border border-green-300 rounded-xl flex justify-between items-center mb-6">
               <div class="flex items-center gap-4">
                 <img
-                  :src="getAvatarUrl(currentUser?.photo_avatar_filename)"
+                  :src="getAvatarUrl(perspectivePlayer?.photo_avatar_filename)"
                   class="w-16 h-16 rounded-full border-4 border-green-300 object-cover"
                 />
                 <div>
-                  <div class="font-bold text-green-900 text-lg">{{ currentUser?.nickname }}</div>
+                  <div class="font-bold text-green-900 text-lg">{{ perspectivePlayer?.nickname }}</div>
                   <div class="text-sm text-green-700">{{ viewingAsAdmin ? 'Player' : 'You' }}</div>
                 </div>
               </div>
@@ -165,11 +172,11 @@
             <div class="p-5 bg-gray-100 border border-green-300 rounded-xl flex justify-between items-center">
               <div class="flex items-center gap-4">
                 <img
-                  :src="getAvatarUrl(game.opponent.photo_avatar_filename)"
+                  :src="getAvatarUrl(game.opponent?.photo_avatar_filename)"
                   class="w-16 h-16 rounded-full border-4 border-green-300 object-cover"
                 />
                 <div>
-                  <div class="font-bold text-green-900 text-lg">{{ game.opponent.nickname }}</div>
+                  <div class="font-bold text-green-900 text-lg">{{ game.opponent?.nickname }}</div>
                   <div class="text-sm text-green-700">Opponent</div>
                 </div>
               </div>
@@ -197,54 +204,72 @@
     </div>
   </div>
 </template>
+
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useHistoryStore } from '@/stores/history'
 import { useAuthStore } from '@/stores/authStore'
-import { useApiStore } from '@/stores/api'
 
 const route = useRoute()
+const router = useRouter()
 const historyStore = useHistoryStore()
 const authStore = useAuthStore()
-const apiStore = useApiStore()
 
 const game = ref(null)
-const currentUser = ref(null)
+const perspectivePlayer = ref(null)
 const viewingAsAdmin = ref(false)
 
 onMounted(async () => {
-    // Check if admin is viewing another player's history
-    const playerId = route.query.playerId
-
-    if (playerId) {
-        // Admin viewing another player's game
-        viewingAsAdmin.value = true
-        try {
-            const playerResponse = await apiStore.getUser(playerId)
-            currentUser.value = playerResponse.data
-        } catch (error) {
-            console.error('Error loading player info:', error)
-            currentUser.value = authStore.currentUser
-        }
-    } else {
-        // Normal user viewing their own game
-        currentUser.value = authStore.currentUser
-    }
-
-    loadGame()
+  await loadGame()
 })
 
 const loadGame = async () => {
+  try {
     const gameId = route.params.id
     const playerId = route.query.playerId || null
-    const response = await historyStore.fetchGameDetails(gameId, playerId)
-    game.value = response
 
-    // If backend provides perspective_player, use it
-    if (response.perspective_player) {
-        currentUser.value = response.perspective_player
+    // Check if admin is viewing another player's history
+    if (playerId) {
+      viewingAsAdmin.value = true
     }
+
+    const response = await historyStore.fetchGameDetails(gameId, playerId)
+
+    // response is now the full object: { game: {...}, perspective_player: {...} }
+    game.value = response.game
+
+    // The backend now returns perspective_player in the response
+    if (response.perspective_player) {
+      perspectivePlayer.value = response.perspective_player
+    } else {
+      // Fallback to current user if backend doesn't provide it
+      perspectivePlayer.value = authStore.currentUser
+    }
+  } catch (error) {
+    console.error('Error loading game:', error)
+  }
+}
+
+const viewMatchDetails = (matchId) => {
+  const query = {}
+  // CRITICAL: Preserve the playerId query parameter when navigating
+  if (route.query.playerId) {
+    query.playerId = route.query.playerId
+  }
+  router.push({ name: 'MatchDetails', params: { id: matchId }, query })
+}
+
+const goBack = () => {
+  // If viewing as admin, go back to the player's history with playerId preserved
+  if (viewingAsAdmin.value && route.query.playerId) {
+    router.push({
+      name: 'GameHistory',
+      query: { playerId: route.query.playerId }
+    })
+  } else {
+    router.go(-1)
+  }
 }
 
 const formatDate = (dateString) => {
@@ -267,8 +292,8 @@ const formatDuration = (seconds) => {
 }
 
 const getAvatarUrl = (filename) => {
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-  if (!filename) return `${apiBaseUrl}/storage/photos_avatars//anonymous.png`;
-  return `${apiBaseUrl}/storage/photos_avatars/${filename}`;
-};
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+  if (!filename) return `${apiBaseUrl}/storage/photos_avatars/anonymous.png`
+  return `${apiBaseUrl}/storage/photos_avatars/${filename}`
+}
 </script>

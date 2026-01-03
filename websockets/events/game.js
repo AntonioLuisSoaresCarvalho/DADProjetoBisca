@@ -258,4 +258,28 @@ export const handleGameEvents = (io, socket) => {
             }, 2000)
         }
     })
+
+    // Chat messages
+    socket.on("send-chat-message", (gameID, message, user) => {
+        console.log(`[Chat] Message from ${user.name} in game ${gameID}`)
+        const game = getGameById(gameID)
+        if (!game) {
+            console.log('[Chat] Game not found!')
+            return
+        }
+        
+        // Add message to game's chat history
+        const chatMessage = {
+            id: Date.now(),
+            userId: user.id,
+            userName: user.name,
+            message: message,
+            timestamp: new Date().toISOString()
+        }
+        
+        game.chat_messages.push(chatMessage)
+        
+        // Broadcast to both players in the game room
+        io.to(`game-${gameID}`).emit('chat-message', chatMessage)
+    })
 }

@@ -65,9 +65,10 @@ export const createGame = (gameConfig, user) => {
         started: false,
         complete: false,
         endedAt: null,
-        round_in_progress: false
+        round_in_progress: false,
+        chat_messages: [],
     }
-
+    
     game.deck = shuffle(game.deck)
     games.set(currentGameID, game)
     return game
