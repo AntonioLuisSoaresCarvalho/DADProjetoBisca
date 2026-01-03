@@ -440,7 +440,7 @@ function endGame(game) {
  */
 function calculateMarks(winnerPoints) {
     if (winnerPoints === 120) {
-        return 4 // Vitória automática
+        return 4
     } else if (winnerPoints >= 91 && winnerPoints <= 119) {
         return 2
     } else if (winnerPoints >= 61 && winnerPoints <= 90) {
@@ -466,11 +466,10 @@ function processMatchResult(game) {
         timestamp: new Date().toISOString()
     }
 
-    // Accumulate total points
     game.player1_total_points += game.points_player1
     game.player2_total_points += game.points_player2
 
-    // Calculate marks (empate = sem marcas)
+    // Calcular marcas (empate = sem marcas)
     if (game.winner === 'draw') {
         console.log('Empate - sem marcas')
         gameRecord.marks_awarded = 0
@@ -478,7 +477,6 @@ function processMatchResult(game) {
         const winnerPoints = game.winner === 1 ? game.points_player1 : game.points_player2
         const marks = calculateMarks(winnerPoints)
         
-        // Award marks to winner
         if (game.winner === 1) {
             game.player1_marks += marks
             console.log(`Player 1 ganhou ${marks} marca(s)`)
