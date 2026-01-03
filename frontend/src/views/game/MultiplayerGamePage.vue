@@ -585,16 +585,18 @@ onUnmounted(() => {
                                 Tu: <span class="font-bold">{{ myPoints }}</span> pontos |
                                 Adversário: <span class="font-bold">{{ opponentPoints }}</span> pontos
                             </div>
-                            <div v-if="opponentInfo" class="bg-linear-to-r from-purple-50 to-indigo-50 p-6 rounded-lg border-2 border-purple-200">
+                            <div v-if="opponentInfo" class="bg-linear-to-r from-green-50 to-green-50 p-6 rounded-lg border-2 border-green-200">
                                 <p class="text-gray-700 mb-3 font-medium">
                                     Gostaste de jogar com este adversário?
                                 </p>
-                                <AddFriendButton 
-                                    :opponent="opponentInfo"
-                                    @added="handleFriendAdded"
-                                />
+                                <div class="flex justify-center">
+                                    <AddFriendButton 
+                                        :opponent="opponentInfo"
+                                        @added="handleFriendAdded"
+                                    />
+                                </div>
                             </div>
-                            <Button @click="backToLobby" variant="default">
+                            <Button @click="backToLobby" class="mt-3 bg-green-600" variant="default">
                                 ← Voltar ao Lobby
                             </Button>
                         </div>
@@ -620,13 +622,15 @@ onUnmounted(() => {
                                 <p class="text-gray-700 mb-3 font-medium">
                                     Gostaste de jogar este match?
                                 </p>
-                                <AddFriendButton 
-                                    :opponent="opponentInfo"
-                                    @added="handleFriendAdded"
-                                />
+                                <div class="flex justify-center">
+                                    <AddFriendButton 
+                                        :opponent="opponentInfo"
+                                        @added="handleFriendAdded"
+                                    />
+                                </div>
                             </div>
 
-                            <Button @click="backToLobby" variant="default">
+                            <Button @click="backToLobby" class="mt-3 bg-green-600" variant="default">
                                 ← Voltar ao Lobby
                             </Button>
                         </div>

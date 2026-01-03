@@ -41,12 +41,12 @@ class ProfileController extends Controller
 
         if($request->hasFile('photo_avatar')){
             if($user->photo_avatar_filename){
-                Storage::delete('storage/photos_avatars/' . $user->photo_avatar_filename);
+                Storage::disk('public')->delete('photos_avatars/' . $user->photo_avatar_filename);
             }
 
             $photo = $request->file('photo_avatar');
             $photo_filename =$photo->getClientOriginalName();
-            $photo->storeAs('storage/photos_avatars/', $photo_filename);
+            $photo->storeAs('photos_avatars', $photo_filename, 'public');
             $user->photo_avatar_filename = $photo_filename;
         }
 
@@ -86,9 +86,8 @@ class ProfileController extends Controller
             $user->update(['deleted_at' => now()]);
             $message = 'Account soft-deleted successfully';
         } else {
-            //$user->delete();
             if($user->photo_avatar_filename){
-                Storage::delete('storage/photos_avatars/' . $user->photo_avatar_filename );
+                Storage::disk('public')->delete('photos_avatars/' . $user->photo_avatar_filename);
             }
             $user->forceDelete();
             $message = 'Account permanently deleted';

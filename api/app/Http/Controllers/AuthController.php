@@ -23,7 +23,7 @@ class AuthController extends Controller
             'nickname' => 'required|string|max:50|unique:users,nickname',
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => 'required|string|min:3',
-            'photo_avatar' => 'nullable|image|mimes_jpeg,png,jpg,gif|max:2048',
+            'photo_avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         if($validated->fails()){
@@ -37,7 +37,7 @@ class AuthController extends Controller
         if($request->hasFile('photo_avatar')){
             $photo = $request->file('photo_avatar');
             $photo_filename = $photo->getClientOriginalName();
-            $photo->storeAs('storage/photos_avatars/', $photo_filename);
+            $photo->storeAs('photos_avatars', $photo_filename, 'public');
         }
 
         $user = User::create([

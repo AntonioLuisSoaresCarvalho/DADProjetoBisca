@@ -94,8 +94,9 @@ export const useApiStore = defineStore("api", () => {
     }
 
     const deleteAccount = async (confirmation) => {
-        await apiClient.delete(`/profile`,{data : {confirmation}});
+        const res = await apiClient.delete(`/profile`,{data : {confirmation}});
         clearAuth();
+        return res
     }
 
     const clearAuth = () => {
