@@ -153,16 +153,6 @@ watch(() => gameStore.game_over, (isOver) => {
 })
 
 function startNewGameOrMatch() {
-  if (isMatchMode.value) {
-    // Reset complete match
-    matchStore.resetMatch()
-    matchStore.startMatch(
-      gameType.value,
-      { id: authStore.user?.id || 1, name: authStore.user?.nickname || 'Player' },
-      { id: 'bot', name: 'Bot' },
-      matchStake.value
-    )
-  }
 
   // Start game
   gameStore.startGame(gameType.value, isMatchMode.value ? 'match' : 'game')
@@ -173,15 +163,6 @@ function startNewGameOrMatch() {
 }
 
 onMounted(() => {
-  if (isMatchMode.value) {
-    // Match Mode - start match
-    matchStore.startMatch(
-      gameType.value,
-      { id: authStore.user?.id || 1, name: authStore.user?.nickname || 'Player' },
-      { id: 'bot', name: 'Bot' },
-      matchStake.value
-    )
-  }
 
   // Start game with chosen type (3 or 9 cards)
   gameStore.startGame(gameType.value, isMatchMode.value ? 'match' : 'game')
@@ -208,7 +189,7 @@ onMounted(() => {
           </div>
           <div class="flex justify-between items-center text-xs text-green-800">
             <div>
-              <span class="font-bold">{{ matchStore.player1_name }}:</span>
+              <span class="font-bold">You:</span>
               <span class="text-lg ml-1">{{ marksDisplay?.marks1 }}</span>
               <span class="ml-2 text-gray-600">({{ matchStore.player1_total_points }} pts)</span>
             </div>
@@ -216,7 +197,7 @@ onMounted(() => {
               Game {{ matchStore.current_game_number }}
             </div>
             <div class="text-right">
-              <span class="font-bold">{{ matchStore.player2_name }}:</span>
+              <span class="font-bold">Bot:</span>
               <span class="text-lg ml-1">{{ marksDisplay?.marks2 }}</span>
               <span class="ml-2 text-gray-600">({{ matchStore.player2_total_points }} pts)</span>
             </div>
