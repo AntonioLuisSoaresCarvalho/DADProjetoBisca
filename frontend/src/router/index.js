@@ -10,8 +10,8 @@ import BuyCoinsView from '@/views/coins/BuyCoinsView.vue'
 import CoinHistoryView from '@/views/coins/CoinHistoryView.vue'
 import AdminView from "@/views/admin/AdminView.vue"
 import SinglePlayerView from "@/views/game/SinglePlayerPage.vue"
-import MultiplayerLobbyPage from "@/pages/MultiplayerLobbyPage.vue"
-import MultiplayerGamePage from "@/pages/MultiplayerGamePage.vue"
+import MultiplayerLobbyPage from "@/views/game/MultiplayerLobbyPage.vue"
+import MultiplayerGamePage from "@/views/game/MultiplayerGamePage.vue"
 
 import LeaderboardView from "@/views/leaderboard/LeaderboardView.vue";
 import GameHistoryView from "@/views/history/games/GameHistoryView.vue";

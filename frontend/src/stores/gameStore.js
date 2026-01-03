@@ -80,9 +80,43 @@ export const useGameStore = defineStore('game', () => {
     const a = array.slice()
     for (let i = a.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1))
-        ;[a[i], a[j]] = [a[j], a[i]]
+      ;[a[i], a[j]] = [a[j], a[i]]
     }
     return a
+  }
+
+  /**
+   * Verifica se é obrigatório seguir o naipe
+   * Retorna true quando não há mais cartas para comprar do baralho
+   */
+  function mustFollowSuit() {
+    return deck_index.value >= deck.value.length
+  }
+
+  /**
+   * Obtém as cartas válidas que um jogador pode jogar
+   * @param {Array} playerHand - Mão do jogador
+   * @param {Object} leadCard - Primeira carta jogada na rodada (ou null)
+   * @returns {Array} - Cartas que o jogador pode jogar
+   */
+  function getValidCards(playerHand, leadCard) {
+    // Se ainda há cartas no deck OU ninguém jogou ainda, todas as cartas são válidas
+    if (!mustFollowSuit() || !leadCard) {
+      return playerHand
+    }
+    
+    // Verificar se o jogador tem cartas do mesmo naipe da carta jogada
+    const sameSuitCards = playerHand.filter(card => card.suit === leadCard.suit)
+    
+    if (sameSuitCards.length > 0) {
+      // Tem cartas do mesmo naipe - DEVE jogar uma delas
+      console.log(`⚠️ Must follow suit: ${leadCard.suit}`)
+      return sameSuitCards
+    }
+    
+    // Não tem cartas do mesmo naipe - pode jogar qualquer carta
+    console.log(`✓ No cards of suit ${leadCard.suit} - can play any card`)
+    return playerHand
   }
 
   function startGame(type = 3, mode = 'game') {
@@ -97,7 +131,7 @@ export const useGameStore = defineStore('game', () => {
     trump_card.value = deck.value[deck.value.length - 1]
     trump_suit.value = trump_card.value.suit
 
-    // Deal 3 cards to each player
+    // Deal cards to each player
     hand_player1.value = deck.value.slice(0, type)
     hand_player2.value = deck.value.slice(type, type * 2)
     deck_index.value = type * 2 // Next card to draw
@@ -134,12 +168,36 @@ export const useGameStore = defineStore('game', () => {
   }
 
   function playCard(card, player) {
-    if (game_over.value) return false
-    if (turn_player.value !== player) return false
+    if (game_over.value) {
+      console.log('❌ Game is over')
+      return false
+    }
+    
+    if (turn_player.value !== player) {
+      console.log('❌ Not your turn')
+      return false
+    }
 
     const hand = player === 1 ? hand_player1.value : hand_player2.value
     const idx = hand.findIndex(c => c.id === card.id)
-    if (idx === -1) return false
+    
+    if (idx === -1) {
+      console.log('❌ Card not in hand')
+      return false
+    }
+
+    // ===== NOVA VALIDAÇÃO: Verificar regra de assistir =====
+    if (player === 1) { // Validação apenas para jogador humano
+      const leadCard = card_played_player2.value // Se o bot jogou primeiro
+      const validCards = getValidCards(hand, leadCard)
+      
+      if (!validCards.find(c => c.id === card.id)) {
+        console.log('❌ Invalid card! Must follow suit when possible.')
+        toast.error('Deve jogar uma carta do mesmo naipe!')
+        return false
+      }
+    }
+    // ======================================================
 
     // Remove card from hand
     hand.splice(idx, 1)
@@ -147,10 +205,10 @@ export const useGameStore = defineStore('game', () => {
     // Place card on table
     if (player === 1) {
       card_played_player1.value = card
-      console.log(`Player 1 played: ${card.name}`)
+      console.log(`✓ Player 1 played: ${card.name}`)
     } else {
       card_played_player2.value = card
-      console.log(`Player 2 (Bot) played: ${card.name}`)
+      console.log(`✓ Player 2 (Bot) played: ${card.name}`)
     }
 
     // Check if round is complete
@@ -263,31 +321,39 @@ export const useGameStore = defineStore('game', () => {
       return
     }
 
+    // ===== NOVA LÓGICA: Obter cartas válidas considerando a regra de assistir =====
+    const leadCard = card_played_player1.value
+    const validCards = getValidCards(hand, leadCard)
+
+    console.log(`🤖 Bot choosing from ${validCards.length} valid cards`)
+    // =============================================================================
+
     let chosen = null
 
     if (card_played_player1.value === null) {
-      // Bot is starting: play lowest non-trump card
-      const nonTrump = hand.filter(c => c.suit !== trump_suit.value)
-      const pool = nonTrump.length ? nonTrump : hand
+      // Bot is starting: play lowest non-trump card from valid cards
+      const nonTrump = validCards.filter(c => c.suit !== trump_suit.value)
+      const pool = nonTrump.length ? nonTrump : validCards
       chosen = pool.sort((a, b) => a.points - b.points)[0]
-      console.log('Bot is starting the round')
+      console.log('🤖 Bot is starting the round')
     } else {
-      // Bot is responding: try to win if possible
+      // Bot is responding: try to win if possible, mas apenas com cartas válidas
       const c1 = card_played_player1.value
-      const canWin = hand.filter(c => determineTrickWinner(c1, c) === 2)
+      const canWin = validCards.filter(c => determineTrickWinner(c1, c) === 2)
 
       if (canWin.length > 0) {
-        // Play weakest winning card
+        // Play weakest winning card from valid cards
         chosen = canWin.sort((a, b) => b.order - a.order)[0]
-        console.log('Bot trying to win the trick')
+        console.log('🤖 Bot trying to win the trick with valid card')
       } else {
-        // Can't win: play lowest point card
-        chosen = hand.sort((a, b) => a.points - b.points)[0]
-        console.log('Bot cannot win, playing lowest card')
+        // Can't win: play lowest point card from valid cards
+        chosen = validCards.sort((a, b) => a.points - b.points)[0]
+        console.log('🤖 Bot cannot win, playing lowest valid card')
       }
     }
 
     if (chosen) {
+      console.log(`🤖 Bot chose: ${chosen.name}`)
       playCard(chosen, 2)
     }
   }
@@ -373,7 +439,6 @@ export const useGameStore = defineStore('game', () => {
     // Atribui o currentDbGameId ao objeto game para uso nas condições
     game.db_game_id = currentDbGameId.value
 
-
     multiplayerGame.value = game
     console.log(`[Game] Multiplayer Game changed | round ${game.current_round}`)
   }
@@ -396,7 +461,7 @@ export const useGameStore = defineStore('game', () => {
 
       console.log('✅ [saveGameStart] Game saved to database:', response.game)
       
-       const gameId = response.game.id
+      const gameId = response.game.id
       currentDbGameId.value = gameId
       
       // Sync multiplayer game
@@ -411,12 +476,8 @@ export const useGameStore = defineStore('game', () => {
       console.error('❌ Error status:', error.response?.status)
       throw error 
     }
-}
+  }
 
-  /**
-   * Update game in database when it ends
-   * Called when game finishes (win/loss/draw/resignation)
-   */
   const saveGameEnd = async (gameData) => {
     try {
       const dbGameId = gameData.db_game_id
@@ -483,11 +544,10 @@ export const useGameStore = defineStore('game', () => {
     getGameResult,
     types_of_games,
     types_of_matches,
+    getValidCards,
+    mustFollowSuit,
 
-    // ----- ---------------------------- -----------
-    // ----- Added for multiplayer games: -----------
-    // ----- ---------------------------- -----------
-
+    // Multiplayer
     games,
     createGame,
     setGames,

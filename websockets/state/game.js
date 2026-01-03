@@ -30,8 +30,8 @@ export const createGame = (gameConfig, user) => {
         creator: user.id,
         player1: user.id,
         player2: null,
-        player2_pending: null, //Track pending player
-        offer_status: null, //null | 'pending' | 'accepted' | 'rejected'
+        player2_pending: null, // Track pending player
+        offer_status: null, // null | 'pending' | 'accepted' | 'rejected'
         
         // Match-specific fields
         is_match: gameConfig.mode === 'match',
@@ -129,21 +129,83 @@ export const cancelGamesByUser = (userId) => {
     return removedCount
 }
 
+/**
+ * Verifica se é obrigatório seguir o naipe
+ * Retorna true quando não há mais cartas para comprar do baralho
+ */
+function mustFollowSuit(game) {
+    return game.deck_index >= game.deck.length
+}
+
+/**
+ * Obtém as cartas válidas que um jogador pode jogar
+ * @param {Object} game - Estado do jogo
+ * @param {Array} playerHand - Mão do jogador
+ * @param {Object} leadCard - Primeira carta jogada na rodada (ou null)
+ * @returns {Array} - Cartas que o jogador pode jogar
+ */
+function getValidCards(game, playerHand, leadCard) {
+    // Se ainda há cartas no deck OU ninguém jogou ainda, todas as cartas são válidas
+    if (!mustFollowSuit(game) || !leadCard) {
+        return playerHand
+    }
+    
+    // Verificar se o jogador tem cartas do mesmo naipe da carta jogada
+    const sameSuitCards = playerHand.filter(card => card.suit === leadCard.suit)
+    
+    if (sameSuitCards.length > 0) {
+        // Tem cartas do mesmo naipe - DEVE jogar uma delas
+        console.log(`⚠️ Must follow suit: ${leadCard.suit}`)
+        return sameSuitCards
+    }
+    
+    // Não tem cartas do mesmo naipe - pode jogar qualquer carta
+    console.log(`✓ No cards of suit ${leadCard.suit} - can play any card`)
+    return playerHand
+}
+
 export function playCard(game, card, player) {
-    if (game.game_over) return false
-    if (game.turn_player !== player) return false
-    if (game.round_in_progress) return false
+    if (game.game_over) {
+        console.log('❌ Game is over')
+        return false
+    }
+    
+    if (game.turn_player !== player) {
+        console.log('❌ Not player turn')
+        return false
+    }
+    
+    if (game.round_in_progress) {
+        console.log('❌ Round in progress')
+        return false
+    }
 
     const hand = player === 1 ? game.hand_player1 : game.hand_player2
     const idx = hand.findIndex(c => c.id === card.id)
-    if (idx === -1) return false
+    
+    if (idx === -1) {
+        console.log('❌ Card not in hand')
+        return false
+    }
+
+    // ===== VALIDAÇÃO: Verificar regra de assistir =====
+    // Determinar qual carta foi jogada primeiro (se houver)
+    const leadCard = player === 1 ? game.card_played_player2 : game.card_played_player1
+    const validCards = getValidCards(game, hand, leadCard)
+    
+    // Verificar se a carta jogada está na lista de válidas
+    if (!validCards.find(c => c.id === card.id)) {
+        console.log(`❌ Invalid card! Must follow suit ${leadCard?.suit}`)
+        return false
+    }
+    // ==================================================
 
     hand.splice(idx, 1)
 
     if (player === 1) game.card_played_player1 = card
     else game.card_played_player2 = card
 
-    console.log(`Player ${player} played ${card.name}`)
+    console.log(`✓ Player ${player} played ${card.name}`)
 
     if (game.card_played_player1 && game.card_played_player2) {
         game.round_in_progress = true
@@ -477,3 +539,6 @@ function endMatch(game) {
     console.log(`Total Points: ${game.player1_total_points} - ${game.player2_total_points}`)
     console.log(`Payout: ${game.winner_payout} coins`)
 }
+
+// Export helper functions for validation
+export { mustFollowSuit, getValidCards }

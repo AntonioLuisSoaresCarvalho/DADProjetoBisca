@@ -7,7 +7,6 @@ import {
     CardTitle
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { computed, watch, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '@/stores/gameStore'
@@ -130,10 +129,12 @@ const opponentTotalPoints = computed(() => {
 
 const marksDisplay = computed(() => {
     if (!isMatch.value) return null
-    if (myMarks.value > 4){myMarks.value = 4}
-    if(opponentMarks.value > 4){opponentMarks.value = 4}
-    const myDisplay = '●'.repeat(myMarks.value) + '○'.repeat(4 - myMarks.value)
-    const oppDisplay = '●'.repeat(opponentMarks.value) + '○'.repeat(4 - opponentMarks.value)
+    let myMarksValue = myMarks.value
+    let opponentMarksValue = opponentMarks.value
+    if (myMarksValue > 4) myMarksValue = 4
+    if (opponentMarksValue > 4) opponentMarksValue = 4
+    const myDisplay = '●'.repeat(myMarksValue) + '○'.repeat(4 - myMarksValue)
+    const oppDisplay = '●'.repeat(opponentMarksValue) + '○'.repeat(4 - opponentMarksValue)
     return { my: myDisplay, opponent: oppDisplay }
 })
 
@@ -146,6 +147,48 @@ const lastGameMarks = computed(() => {
     const lastGame = game.value.games_history[game.value.games_history.length - 1]
     return lastGame.marks_awarded || 0
 })
+
+// ===== NOVOS COMPUTEDS PARA REGRA DE ASSISTIR =====
+
+const mustFollowSuitNow = computed(() => {
+    if (!game.value) return false
+    // Verifica se não há mais cartas no deck
+    const noMoreCards = game.value.deck_index >= game.value.deck?.length
+    // E se o adversário já jogou uma carta
+    const opponentPlayed = opponentCardPlayed.value !== null
+    return noMoreCards && opponentPlayed
+})
+
+const validCards = computed(() => {
+    if (!game.value || !myTurn.value || isGameOver.value) return []
+    
+    const hand = myHand.value
+    const leadCard = opponentCardPlayed.value
+    
+    // Se ainda há cartas no deck OU adversário não jogou, todas são válidas
+    if (!mustFollowSuitNow.value || !leadCard) {
+        return hand
+    }
+    
+    // Verificar se tem cartas do mesmo naipe
+    const sameSuitCards = hand.filter(card => card.suit === leadCard.suit)
+    
+    if (sameSuitCards.length > 0) {
+        // Tem cartas do mesmo naipe - DEVE jogar uma delas
+        console.log(`⚠️ Must follow suit: ${leadCard.suit}`)
+        return sameSuitCards
+    }
+    
+    // Não tem cartas do mesmo naipe - pode jogar qualquer
+    console.log(`✓ No cards of suit ${leadCard.suit} - can play any`)
+    return hand
+})
+
+const isCardValid = (card) => {
+    return validCards.value.some(c => c.id === card.id)
+}
+
+// ===================================================
 
 const gameWinnerText = computed(() => {
     if (!isGameOver.value) return ''
@@ -225,11 +268,23 @@ const timerColor = computed(() => {
 /* ------------------ METHODS ------------------ */
 
 const playCard = (card) => {
-    if (!myTurn.value || showGameResult.value) return
+    if (!myTurn.value || showGameResult.value) {
+        console.log('❌ Not your turn or game result showing')
+        return
+    }
+    
     if (!gameID.value) {
         console.error('[Game] Cannot play card - game ID is undefined')
         return
     }
+    
+    // VALIDAÇÃO: Verificar se carta é válida
+    if (!isCardValid(card)) {
+        console.log('❌ Invalid card! Must follow suit when possible.')
+        alert('⚠️ Deve jogar uma carta do mesmo naipe!')
+        return
+    }
+    
     socketStore.emitPlayCard(gameID.value, card, authStore.user)
 }
 
@@ -421,7 +476,7 @@ onUnmounted(() => {
                             <div class="flex justify-between items-center text-xs text-green-800">
                                 <div>
                                     <span class="font-bold">Tu:</span>
-                                    <span class="text-lg ml-1">{{ marksDisplay.my }}</span>
+                                    <span class="text-lg ml-1">{{ marksDisplay?.my }}</span>
                                     <span class="ml-2 text-gray-600">({{ myTotalPoints }} pts totais)</span>
                                 </div>
                                 <div class="text-center text-lg font-bold">
@@ -429,7 +484,7 @@ onUnmounted(() => {
                                 </div>
                                 <div class="text-right">
                                     <span class="font-bold">Adversário:</span>
-                                    <span class="text-lg ml-1">{{ marksDisplay.opponent }}</span>
+                                    <span class="text-lg ml-1">{{ marksDisplay?.opponent }}</span>
                                     <span class="ml-2 text-gray-600">({{ opponentTotalPoints }} pts totais)</span>
                                 </div>
                             </div>
@@ -457,6 +512,16 @@ onUnmounted(() => {
                             <div class="text-sm text-green-900 mt-1">
                                 (Cartas na mão: {{ myHand.length }})
                             </div>
+                            
+                            <!-- NOVO: Aviso sobre assistir -->
+                            <div v-if="mustFollowSuitNow" class="mt-3 p-2 bg-yellow-100 border border-yellow-400 rounded-lg">
+                                <div class="text-sm font-bold text-yellow-800 animate-pulse">
+                                    ⚠️ Deve seguir o naipe {{ opponentCardPlayed?.suit }}!
+                                </div>
+                                <div class="text-xs text-yellow-700">
+                                    Não há mais cartas no baralho
+                                </div>
+                            </div>
                         </div>
                     </CardHeader>
 
@@ -479,10 +544,12 @@ onUnmounted(() => {
 
                     <!-- Your hand -->
                     <CardFooter class="flex flex-col gap-4 items-center">
+                        <!-- MODIFICADO: Adicionar validCards -->
                         <CardHand
                             :key="roundKey"
                             :cards="myHand"
                             :disabled="!myTurn || isGameOver || showGameResult"
+                            :validCards="validCards"
                             @playCard="playCard"
                         />
 
@@ -575,3 +642,18 @@ onUnmounted(() => {
         </div>
     </div>
 </template>
+
+<style scoped>
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+</style>

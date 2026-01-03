@@ -69,10 +69,45 @@ const cardsDisabled = computed(() => {
          gameStore.card_played_player1 !== null  // Already played a card this round
 })
 
+// NOVO: Computed para obter cartas válidas
+const validCards = computed(() => {
+  if (cardsDisabled.value) return []
+  
+  // Se o bot jogou primeiro, pegar a carta dele
+  const leadCard = gameStore.card_played_player2
+  
+  // Verificar se a função existe antes de chamar
+  if (typeof gameStore.getValidCards === 'function') {
+    return gameStore.getValidCards(gameStore.hand_player1, leadCard)
+  }
+  
+  // Fallback: se a função não existe, retorna todas as cartas
+  return gameStore.hand_player1 || []
+})
+
+// NOVO: Computed para verificar se deve seguir o naipe
+const mustFollowSuitNow = computed(() => {
+  if (typeof gameStore.mustFollowSuit === 'function') {
+    return gameStore.mustFollowSuit() && gameStore.card_played_player2 !== null
+  }
+  return false
+})
+
+// NOVO: Função para verificar se carta específica é válida
+const isCardValid = (card) => {
+  return validCards.value.some(c => c.id === card.id)
+}
+
 function handleCardPlayed(card) {
   // Extra check - don't allow if card already played
   if (gameStore.card_played_player1 !== null) {
     console.log('Already played a card this round!')
+    return
+  }
+  
+  // Validar se a carta é válida
+  if (!isCardValid(card)) {
+    console.log('❌ Invalid card! Must follow suit when possible.')
     return
   }
   
@@ -174,7 +209,7 @@ onMounted(() => {
           <div class="flex justify-between items-center text-xs text-green-800">
             <div>
               <span class="font-bold">{{ matchStore.player1_name }}:</span> 
-              <span class="text-lg ml-1">{{ marksDisplay.marks1 }}</span>
+              <span class="text-lg ml-1">{{ marksDisplay?.marks1 }}</span>
               <span class="ml-2 text-gray-600">({{ matchStore.player1_total_points }} pts)</span>
             </div>
             <div class="text-center text-lg font-bold">
@@ -182,7 +217,7 @@ onMounted(() => {
             </div>
             <div class="text-right">
               <span class="font-bold">{{ matchStore.player2_name }}:</span> 
-              <span class="text-lg ml-1">{{ marksDisplay.marks2 }}</span>
+              <span class="text-lg ml-1">{{ marksDisplay?.marks2 }}</span>
               <span class="ml-2 text-gray-600">({{ matchStore.player2_total_points }} pts)</span>
             </div>
           </div>
@@ -213,6 +248,16 @@ onMounted(() => {
           <div class="text-sm text-green-900 mt-1">
             (Cartas na mão: {{ gameStore.hand_player1?.length || 0 }})
           </div>
+          
+          <!-- NOVO: Aviso sobre assistir -->
+          <div v-if="mustFollowSuitNow" class="mt-3 p-2 bg-yellow-100 border border-yellow-400 rounded-lg">
+            <div class="text-sm font-bold text-yellow-800">
+              ⚠️ Deve seguir o naipe {{ gameStore.card_played_player2?.suit }}!
+            </div>
+            <div class="text-xs text-yellow-700">
+              Não há mais cartas no baralho
+            </div>
+          </div>
         </div>
       </CardHeader>
 
@@ -239,12 +284,13 @@ onMounted(() => {
       </CardContent>
       
       <CardFooter class="flex flex-col items-center justify-center gap-4">
-          <CardHand
+        <!-- MODIFICADO: Passar validCards para CardHand -->
+        <CardHand
           :cards="gameStore.hand_player1"
           :disabled="cardsDisabled"
+          :validCards="validCards"
           @playCard="handleCardPlayed"
         />
-        
         
         <!-- Indicador de turno -->
         <div v-if="!gameStore.game_over && !showingGameResult" class="text-3xl font-bold">
@@ -259,13 +305,14 @@ onMounted(() => {
           </span>
         </div>
       </CardFooter>
-      </Card>
-      </div>
-      <Modal :show="showEndModal"
-            :title="modalTitle"
-            :text="modalText"
-            :buttonText="modalButton"
-            @close="startNewGameOrMatch">
+    </Card>
+  </div>
+  
+  <Modal :show="showEndModal"
+         :title="modalTitle"
+         :text="modalText"
+         :buttonText="modalButton"
+         @close="startNewGameOrMatch">
 
     <!-- MATCH -->
     <template v-if="isMatchMode">

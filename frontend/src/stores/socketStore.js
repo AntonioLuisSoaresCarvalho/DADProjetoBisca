@@ -317,7 +317,6 @@ export const useSocketStore = defineStore('socket', () => {
     emitPlayCard,
     emitContinueMatch,
     emitResignGame,
-    emitResignGame,
     emitChatMessage,
     handleChatEvents,
     joined,
