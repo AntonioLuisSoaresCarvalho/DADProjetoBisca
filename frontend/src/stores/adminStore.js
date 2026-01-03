@@ -1,8 +1,5 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
 import { useApiStore } from './api'
-
-const API_URL = 'http://localhost:8000/api/admin'
 
 export const useAdminStore = defineStore('admin', {
   state: () => ({

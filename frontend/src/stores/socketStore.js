@@ -55,6 +55,7 @@ export const useSocketStore = defineStore('socket', () => {
     socket.emit('cancel-game', user)
   }
 
+<<<<<<< HEAD
   const syncMatchState = (game) => {
     // Sync match state from backend
     matchStore.is_match_mode = true
@@ -85,7 +86,20 @@ export const useSocketStore = defineStore('socket', () => {
   } 
 
   //Function to handle game state changes
+=======
+>>>>>>> 84245e786e97fa300636d3e199881954bde1cd3f
   const handleMatchGameState = async (game) => {
+    console.log('[Match Mode] Processing game state...')
+    console.log('Current state:', {
+      db_match_id: matchStore.db_match_id,
+      game_started: game.started,
+      game_over: game.game_over,
+      is_match: game.is_match,
+      game_type: game.game_type,
+      player1: game.player1,
+      player2: game.player2,
+      stake: game.stake
+    })
 
     //Starts match
     if (!matchStore.db_match_id && game.is_match) {
@@ -201,7 +215,6 @@ export const useSocketStore = defineStore('socket', () => {
       await handleStandaloneGameState(game)
     }
   }
-  //================================================
 
   const handleGameEvents = () => {
     socket.on('games', (games) => {
@@ -216,24 +229,18 @@ export const useSocketStore = defineStore('socket', () => {
       await handleGameStateChange(game)
     })
 
-    // NEW: Handle player join request notification
     socket.on('player-join-request', (data) => {
       console.log(`[Socket] Player join request:`, data)
-      // Refresh games list to show pending player
       emitGetGames()
     })
 
-    // NEW: Handle offer acceptance
     socket.on('offer-accepted', (data) => {
       console.log(`[Socket] Offer accepted:`, data)
-      // Refresh games list to show accepted status
       emitGetGames()
     })
 
-    // NEW: Handle offer rejection
     socket.on('offer-rejected', (data) => {
       console.log(`[Socket] Offer rejected:`, data)
-      // Refresh games list to remove pending player
       emitGetGames()
     })
 
@@ -247,13 +254,12 @@ export const useSocketStore = defineStore('socket', () => {
     socket.emit('join-game', game.id, authStore.currentUser.id)
   }
 
-  // NEW: Accept offer
   const emitAcceptOffer = (gameID) => {
     console.log(`[Socket] Accepting offer for game ${gameID}`)
     socket.emit('accept-offer', gameID, authStore.currentUser.id)
   }
 
-  // NEW: Reject offer
+
   const emitRejectOffer = (gameID) => {
     console.log(`[Socket] Rejecting offer for game ${gameID}`)
     socket.emit('reject-offer', gameID, authStore.currentUser.id)
@@ -287,7 +293,6 @@ export const useSocketStore = defineStore('socket', () => {
   const handleChatEvents = () => {
     socket.on('chat-message', (message) => {
       console.log(`[Socket] Received chat message:`, message)
-      // The message will be handled by the component directly
     })
   }
 

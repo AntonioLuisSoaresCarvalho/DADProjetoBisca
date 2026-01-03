@@ -19,13 +19,10 @@ export const useGameStore = defineStore('game', () => {
   const points_player2 = ref(0)
   const winner = ref(null)
   const current_round = ref(0)
-  const total_rounds = ref(20)
   const round_starter = ref(null)
 
   const game_type = ref(9) // 3 ou 9
-  const game_mode = ref('game') // game ou match
-  const player1_id = ref(null)
-  const player2_id = ref(null)
+  const game_mode = ref('game') // 'game' ou 'match'
 
   const types_of_games = [3, 9]
   const types_of_matches = ['game', 'match']
@@ -85,6 +82,7 @@ export const useGameStore = defineStore('game', () => {
     return a
   }
 
+  // Verifica se é obrigatório seguir o naipe
   function mustFollowSuit() {
     return deck_index.value >= deck.value.length
   }
@@ -100,9 +98,11 @@ export const useGameStore = defineStore('game', () => {
     
     // If the player has cards of the same suit as the lead card, return them else return all cards
     if (sameSuitCards.length > 0) {
+      // Tem cartas do mesmo naipe - DEVE jogar uma delas
       return sameSuitCards
     }
     
+    // Não tem cartas do mesmo naipe - pode jogar qualquer carta
     return playerHand
   }
 
@@ -114,20 +114,20 @@ export const useGameStore = defineStore('game', () => {
     game_type.value = type
     game_mode.value = mode
 
-    //Set trump card
+    // Define o trunfo
     trump_card.value = deck.value[deck.value.length - 1]
     trump_suit.value = trump_card.value.suit
 
-    // Deal cards to each player
+    // Distribui cartas aos jogadores
     hand_player1.value = deck.value.slice(0, type)
     hand_player2.value = deck.value.slice(type, type * 2)
     deck_index.value = type * 2
 
-    // The player who starts the game is randomly chosen
+    // Define quem começa (50-50%)
     turn_player.value = Math.random() < 0.5 ? 1 : 2
     round_starter.value = turn_player.value
 
-    // Reset game state
+    // Reset ao estado do jogo
     current_round.value = 0
     points_player1.value = 0
     points_player2.value = 0
@@ -138,19 +138,15 @@ export const useGameStore = defineStore('game', () => {
   }
 
   function determineTrickWinner(card1, card2) {
-
-    //If cards are of the same suit
+    // Se tiverem o mesmo suit a maior carta ganha
     if (card1.suit === card2.suit) {
       return card1.order < card2.order ? 1 : 2
     }
 
-    // If Player 1's card is trump
     if (card1.suit === trump_suit.value) return 1
 
-    // If Player 2's card is trump
     if (card2.suit === trump_suit.value) return 2
-
-    // No trump: first player wins
+    // Se não se jogar trunfos e não forem do mesmo suit o player que começou a ronda ganha
     return round_starter.value
   }
 
@@ -167,36 +163,33 @@ export const useGameStore = defineStore('game', () => {
     const idx = hand.findIndex(c => c.id === card.id)
     
     if (idx === -1) {
-      console.log('That card is not in your hand!')
       return false
     }
 
-    if (player === 1) {
-      //If bot played first
-      const leadCard = card_played_player2.value
+    if (player === 1) { // Validação apenas para jogador humano
+      const leadCard = card_played_player2.value // Se o bot jogou primeiro
       const validCards = getValidCards(hand, leadCard)
       
       if (!validCards.find(c => c.id === card.id)) {
-        toast.error('Must play card of the same suit!')
         return false
       }
     }
 
-    // Remove card from the hand
+    // Remove carta da mão
     hand.splice(idx, 1)
 
-    // Place the card on table
+
     if (player === 1) {
       card_played_player1.value = card
     } else {
       card_played_player2.value = card
     }
 
-    // Check if round is complete
+    // Verifica se a ronda foi completa
     if (card_played_player1.value && card_played_player2.value) {
       resolveRound()
     } else {
-      // Switch turn to other player
+      // Troca o turno
       turn_player.value = player === 1 ? 2 : 1
     }
 
@@ -227,13 +220,12 @@ export const useGameStore = defineStore('game', () => {
   }
 
   function drawCards(winnerPlayer) {
-
-    // Check if there are cards left to draw
+    // Verifica se ainda existem cartas a pilha
     if (deck_index.value >= deck.value.length) {
       return
     }
 
-    // Winner draws first
+    // O vencedor da ultima ronda tira uma carta primeiro
     if (winnerPlayer === 1) {
       if (deck_index.value < deck.value.length) {
         hand_player1.value.push(deck.value[deck_index.value])
@@ -256,22 +248,21 @@ export const useGameStore = defineStore('game', () => {
   }
 
   function startNextRound(lastWinner) {
-
-    // Check if game is over (no cards left in both hands)
+    // Verifica se o jogo acabou(nenhum jogar tem cartas)
     if (hand_player1.value.length === 0 && hand_player2.value.length === 0) {
       endGame()
       return
     }
 
-    // Clear table
+    // Limpa a mesa
     card_played_player1.value = null
     card_played_player2.value = null
 
-    // Winner of last round starts next round
+    // Vencedor da ultima ronda começa
     turn_player.value = lastWinner
     round_starter.value = lastWinner
 
-    // If bot starts, trigger bot play
+    // Se for o bot a começar, dar trigger ao mesmo
     if (turn_player.value === 2) {
       setTimeout(() => botPlay(), 800)
     }
@@ -279,13 +270,11 @@ export const useGameStore = defineStore('game', () => {
 
   function botPlay() {
     if (game_over.value || turn_player.value !== 2) {
-      console.log(`Bot cannot play!`)
       return
     }
 
     const hand = hand_player2.value
     if (!hand.length) {
-      console.log('Bot has no cards!')
       return
     }
 
@@ -295,23 +284,20 @@ export const useGameStore = defineStore('game', () => {
     let chosen = null
 
     if (card_played_player1.value === null) {
-
-      //If the Bot is starting: play lowest non-trump card from valid cards
+      //Se o bot esta a começar: joga a carta mais baixa não trunfo das cartas válidas
       const nonTrump = validCards.filter(c => c.suit !== trump_suit.value)
       const pool = nonTrump.length ? nonTrump : validCards
       chosen = pool.sort((a, b) => a.points - b.points)[0]
-
     } else {
-      //If the Bot is responding,he tries to win if possible
+      //Bot tenta ganhar se possível, mas apenas com cartas válidas
       const c1 = card_played_player1.value
       const canWin = validCards.filter(c => determineTrickWinner(c1, c) === 2)
 
       if (canWin.length > 0) {
-        // Play weakest winning card from valid cards
+        // Jogar a carta mais baixa que dê para ganhar
         chosen = canWin.sort((a, b) => b.order - a.order)[0]
-
       } else {
-        // Can't win: play lowest point card from valid cards
+        // Se não consegue ganhar jogar a carta mais baixa
         chosen = validCards.sort((a, b) => a.points - b.points)[0]
       }
     }
@@ -425,8 +411,6 @@ export const useGameStore = defineStore('game', () => {
         began_at: new Date().toISOString(),
         status: 'Playing'
       })
-
-      console.log('Game saved to database:', response.game)
       
       const gameId = response.game.id
       currentDbGameId.value = gameId
@@ -438,8 +422,11 @@ export const useGameStore = defineStore('game', () => {
 
       return response
     } catch (error) {
+<<<<<<< HEAD
       console.error('Error response:', error.response?.data)
       console.error('Error status:', error.response?.status)
+=======
+>>>>>>> 84245e786e97fa300636d3e199881954bde1cd3f
       throw error 
     }
   }
@@ -450,7 +437,6 @@ export const useGameStore = defineStore('game', () => {
       const dbGameId = gameData.db_game_id
       
       if (!dbGameId) {
-        console.error('No database game with this ID found')
         return
       }
 
@@ -486,10 +472,13 @@ export const useGameStore = defineStore('game', () => {
         resigned_player: gameData.resigned_player || null
       })
 
+<<<<<<< HEAD
       //console.log('Game updated on the database:', response.game)
+=======
+>>>>>>> 84245e786e97fa300636d3e199881954bde1cd3f
       return response.game
     } catch (error) {
-      console.error('Failed to update game:', error)
+      toast.error('Failed to update game in database')
     }
   }
 

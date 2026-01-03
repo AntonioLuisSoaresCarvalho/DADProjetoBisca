@@ -105,7 +105,7 @@ export const useMatchStore = defineStore('match', {
     async startMatch(matchType = 9, player1, player2, stake = 3) {
 
       if (this.db_match_id) {
-        console.log('[MATCH] Match already exists in database')
+        console.log('[MATCH] Match already exists in database, skipping creation')
         return
       }
 
@@ -144,12 +144,9 @@ export const useMatchStore = defineStore('match', {
         })
 
         this.db_match_id = response.match.id
-        console.log('Match saved to database with ID:', this.db_match_id)
         return response.match
 
       } catch (error) {
-
-        console.error('Failed to save match to database:', error)
         throw error
       }
     },
@@ -180,7 +177,6 @@ export const useMatchStore = defineStore('match', {
 
       //If there is a draw
       if (is_draw) {
-        console.log('Tie -> No marks')
         gameRecord.marks_awarded = 0
 
       } else {
@@ -248,7 +244,6 @@ export const useMatchStore = defineStore('match', {
 
     //In case of resignation
     async forfeitMatch(playerId) {
-      console.log(`Jogador ${playerId} resigned from match`)
       
       this.match_status = 'Ended'
       this.match_over = true
@@ -274,7 +269,6 @@ export const useMatchStore = defineStore('match', {
     //Updates match in database
     async updateMatchInDatabase(isFinal = false) {
       if (!this.db_match_id) {
-        console.error('No database match with this ID found')
         return
       }
 
@@ -300,13 +294,12 @@ export const useMatchStore = defineStore('match', {
         console.log('Match updated:', response)
         return response
       } catch (error) {
-        console.error('Failed to update match:', error)
       }
     },
 
     //Reset match
     resetMatch() {
-      console.log('Resetting match...')
+      console.log('A dar reset match...')
       this.$reset()
     }
   }

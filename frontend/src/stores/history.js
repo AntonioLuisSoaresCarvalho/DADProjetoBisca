@@ -134,6 +134,7 @@ export const useHistoryStore = defineStore("history",{
         const params = playerId ? { playerId } : {}
         const response = await api.getMatchDetails(matchId, params)
         this.currentMatch = response.match
+        // Return the FULL response object, not just response.match
         return response 
       } catch (error) {
         this.matchesError = error.response?.data?.message || 'Failed to load match details'
