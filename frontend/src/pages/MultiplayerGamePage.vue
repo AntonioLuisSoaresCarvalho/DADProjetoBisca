@@ -501,7 +501,7 @@ onUnmounted(() => {
             <!-- RIGHT COLUMN: Chat Sidebar -->
             <div class="w-80 flex-shrink-0">
                 <div class="sticky top-4">
-                    <GameChat v-if="gameID" :gameId="gameID" style="height: 100%;"" />
+                    <GameChat v-if="gameID" :gameId="gameID" style="height: 100%;" />
                 </div>
             </div>
 
