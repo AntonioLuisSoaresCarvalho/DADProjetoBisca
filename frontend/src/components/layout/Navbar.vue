@@ -14,6 +14,7 @@
     <div class="flex gap-4">
       <router-link to="/statistics" class="hover:text-green-200 cursor-pointer ">Estatísticas</router-link>
       <template v-if="auth.user">
+        <router-link to="/friends" class="hover:text-green-200 cursor-pointer" >Friends</router-link>
         <router-link to="/profile" class="hover:text-green-200 cursor-pointer ">
           <span v-if="auth.user.nickname">{{ auth.user.nickname }}</span>
           <span v-else>{{ auth.user.name }}</span> 
@@ -39,7 +40,6 @@ const auth = useAuthStore()
 const socket = useSocketStore()
 
 
-// Define emit - THIS WAS MISSING!
 const emit = defineEmits(['toggleSidebar', 'cancelGames'])
 
 const handleLogoClick = () => {

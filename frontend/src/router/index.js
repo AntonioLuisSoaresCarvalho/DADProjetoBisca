@@ -20,6 +20,8 @@ import GameDetailsView from "@/views/history/games/GameDetailsView.vue";
 import MatchDetailsView from "@/views/history/matches/MatchDetailsView.vue";
 import PlayView from "@/views/game/StartGameView.vue"
 
+import FriendsPage from '@/views/user/FriendsPage.vue'
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -105,6 +107,12 @@ const router = createRouter({
       component: AdminView,
       meta: { requiresAuth: true, requiresAdmin: true }
     },
+      {
+      path: '/friends',
+      name: 'Friends',
+      component: FriendsPage,
+      meta: { requiresAuth: true,requirePlayer: true }
+    }
   ],
 })
 

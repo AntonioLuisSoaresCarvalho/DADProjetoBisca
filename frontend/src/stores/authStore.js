@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { useApiStore } from "./api";
+import { useFriendStore } from "./friendStore";
 
 export const useAuthStore = defineStore("auth",{
     state:() => ({
@@ -113,13 +114,16 @@ export const useAuthStore = defineStore("auth",{
         },
 
         async logout() {
+            const friendStore = useFriendStore();
             try {          
                 const apiStore = useApiStore();
                 await apiStore.logout();
-                this.clearAuth();
+                this.clearAuth();           
+                friendStore.$reset();
             } catch(error) {
                 console.error('Erro ao fazer logout:', error);
                 this.clearAuth();
+                friendStore.$reset();
             }
         },
 

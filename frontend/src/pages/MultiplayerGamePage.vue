@@ -13,19 +13,24 @@ import { useRouter } from 'vue-router'
 import { useGameStore } from '@/stores/gameStore'
 import { useSocketStore } from '@/stores/socketStore'
 import { useAuthStore } from '@/stores/authStore'
+import { useFriendStore } from '@/stores/friendStore'
+import { useApiStore } from '@/stores/api'
 import CardHand from '@/components/game/CardHand.vue'
 import CardPlayed from '@/components/game/CardPlayed.vue'
 import CardBack from '@/components/game/CardBack.vue'
-
+import AddFriendButton from '@/components/AddFriendButton.vue'
 import GameChat from '@/components/game/GameChat.vue'
 
 const router = useRouter()
 const gameStore = useGameStore()
 const socketStore = useSocketStore()
 const authStore = useAuthStore()
+const friendStore = useFriendStore()
+const opponentData = ref(null)
 
 const roundKey = ref(0)
 const showGameResult = ref(false)
+const friendAdded = ref(false)
 const turnTimer = ref(20)
 let timerInterval = null
 
@@ -43,6 +48,26 @@ const myPlayerNumber = computed(() => {
 })
 
 const opponentPlayerNumber = computed(() => myPlayerNumber.value === 1 ? 2 : 1)
+
+const opponentInfo = computed(() => {
+    if (!game.value) return null
+    
+    if (!opponentData.value) {
+        return {
+            id: null,
+            nickname: 'Adversário',
+            name: 'Adversário',
+            photo_avatar_filename: null
+        }
+    }
+    
+    return {
+        id: opponentData.value.id,
+        nickname: opponentData.value.nickname || 'Adversário',
+        name: opponentData.value.name || 'Adversário',
+        photo_avatar_filename: opponentData.value.photo_avatar_filename
+    }
+})
 
 const myTurn = computed(() => {
     if (!game.value) return false
@@ -238,6 +263,11 @@ const backToLobby = () => {
     router.push('/lobby')
 }
 
+const handleFriendAdded = (friend) => {
+    friendAdded.value = true
+    console.log(`${friend.nickname} adicionado à lista de amigos!`)
+}
+
 const startTimer = () => {
     stopTimer()
     turnTimer.value = 20
@@ -316,8 +346,28 @@ watch(
 
 /* ------------------ LIFECYCLE ------------------ */
 
-onMounted(() => {
+onMounted(async () => {
     console.log('[Game] Component mounted, game:', game.value)
+    if (game.value) {
+        const opponentId = opponentPlayerNumber.value === 1 
+            ? game.value.player1 
+            : game.value.player2
+        
+        try {
+            const api = useApiStore()
+            const response = await api.getUser(opponentId)
+            opponentData.value = response.data
+        } catch (error) {
+            console.error('Error fetching opponent data:', error)
+            // Set fallback data
+            opponentData.value = {
+                id: opponentId,
+                nickname: 'Adversário',
+                name: 'Adversário',
+                photo_avatar_filename: null
+            }
+        }
+    }
     if (myTurn.value && !isGameOver.value) {
         startTimer()
     }
@@ -468,6 +518,15 @@ onUnmounted(() => {
                                 Tu: <span class="font-bold">{{ myPoints }}</span> pontos |
                                 Adversário: <span class="font-bold">{{ opponentPoints }}</span> pontos
                             </div>
+                            <div v-if="opponentInfo" class="bg-linear-to-r from-purple-50 to-indigo-50 p-6 rounded-lg border-2 border-purple-200">
+                                <p class="text-gray-700 mb-3 font-medium">
+                                    Gostaste de jogar com este adversário?
+                                </p>
+                                <AddFriendButton 
+                                    :opponent="opponentInfo"
+                                    @added="handleFriendAdded"
+                                />
+                            </div>
                             <Button @click="backToLobby" variant="default">
                                 ← Voltar ao Lobby
                             </Button>
@@ -490,6 +549,16 @@ onUnmounted(() => {
                                 💰 Payout: {{ game.winner_payout || 0 }} moedas
                             </div>
 
+                            <div v-if="opponentInfo" class="bg-linear-to-r from-purple-50 to-indigo-50 p-6 rounded-lg border-2 border-purple-200">
+                                <p class="text-gray-700 mb-3 font-medium">
+                                    Gostaste de jogar este match?
+                                </p>
+                                <AddFriendButton 
+                                    :opponent="opponentInfo"
+                                    @added="handleFriendAdded"
+                                />
+                            </div>
+
                             <Button @click="backToLobby" variant="default">
                                 ← Voltar ao Lobby
                             </Button>
@@ -499,7 +568,7 @@ onUnmounted(() => {
             </div>
 
             <!-- RIGHT COLUMN: Chat Sidebar -->
-            <div class="w-80 flex-shrink-0">
+            <div class="w-80 shrink-0">
                 <GameChat v-if="gameID" :gameId="gameID" style="height: 100%;" />
             </div>
 
