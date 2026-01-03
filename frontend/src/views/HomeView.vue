@@ -3,74 +3,74 @@
 
     <section class="text-center bg-green-700 py-15 bg-linear-to-b text-white">
       <h1 class="text-5xl font-extrabold mb-4 drop-shadow-md">
-        Bem-vindo à Plataforma Bisca
+        Welcome to the Bisca Platform
       </h1>
 
       <p class="text-lg opacity-90 max-w-2xl mx-auto mb-8">
-        Joga Bisca de forma rápida, divertida e segura — sozinho ou contra outros jogadores online!
+        Play Bisca in a fun, quick, and secure way — alone or against other players online!
       </p>
     </section>
 
     <section class="py-16 px-6 mx-auto">
-      <h2 class="text-3xl font-bold text-white  text-center mb-10">O que é Bisca?</h2>
+      <h2 class="text-3xl font-bold text-white  text-center mb-10">What is Bisca?</h2>
 
       <p class="text-lg text-center text-white max-w-3xl mx-auto mb-8">
-        Bisca é um dos jogos de cartas portugueses mais populares. Fácil de aprender, rápido de jogar,
-        e cheio de estratégia — perfeito para desafiar amigos ou competir com jogadores online!
+        Bisca is one of the most popular Portuguese card games. Easy to learn, quick to play,
+        and full of strategy — perfect for challenging friends or competing with online players!
       </p>
 
       <div class="grid md:grid-cols-3 gap-10 mt-10">
 
         <div class="bg-white p-6 rounded-lg shadow border border-green-300 text-center">
           <div class="text-4xl mb-3">🃏</div>
-          <h3 class="font-bold text-xl mb-2 text-green-800">Cartas</h3>
-          <p class="text-sm">Jogo tradicional com baralho de 40 cartas (sem 8, 9 e 10).</p>
+          <h3 class="font-bold text-xl mb-2 text-green-800">Cards</h3>
+          <p class="text-sm">Traditional game played with a deck of 40 cards (without 8, 9 and 10).</p>
         </div>
 
         <div class="bg-white p-6 rounded-lg shadow border border-green-300 text-center">
           <div class="text-4xl mb-3">⚔️</div>
-          <h3 class="font-bold text-xl mb-2 text-green-800">Duelo</h3>
-          <p class="text-sm">Partidas sempre entre dois jogadores — simples e competitivo.</p>
+          <h3 class="font-bold text-xl mb-2 text-green-800">Duel</h3>
+          <p class="text-sm">Matches always between two players — simple and competitive.</p>
         </div>
 
         <div class="bg-white p-6 rounded-lg shadow border border-green-300 text-center">
           <div class="text-4xl mb-3">🏆</div>
-          <h3 class="font-bold text-xl mb-2 text-green-800">Vitória</h3>
-          <p class="text-sm">Ganha pontos, vence vazas e domina as partidas de Bisca.</p>
+          <h3 class="font-bold text-xl mb-2 text-green-800">Victory</h3>
+          <p class="text-sm">Earn points, win tricks, and dominate Bisca matches.</p>
         </div>
 
       </div>
     </section>
 
-    
+
     <section class="bg-green-900 py-16 px-6">
       <h2 class="text-3xl font-bold text-center text-white mb-10">
-        Como Funciona a Plataforma?
+        How Does the Platform Work?
       </h2>
 
       <div class="grid md:grid-cols-3 gap-10  mx-auto">
 
         <div class="text-center bg-white p-6 rounded-lg shadow border border-green-300">
           <div class="text-4xl mb-3">🧍</div>
-          <h3 class="font-bold text-xl mb-2">Cria a tua conta</h3>
+          <h3 class="font-bold text-xl mb-2">Create Your Account</h3>
           <p class="text-sm">
-            Regista-te gratuitamente e recebe 10 moedas de boas-vindas!
+            Register for free and receive 10 welcome coins!
           </p>
         </div>
 
         <div class="text-center bg-white p-6 rounded-lg shadow border border-green-300">
           <div class="text-4xl mb-3">🎮</div>
-          <h3 class="font-bold text-xl mb-2">Escolhe como jogar</h3>
+          <h3 class="font-bold text-xl mb-2">Choose How to Play</h3>
           <p class="text-sm">
-            Joga sozinho contra o bot ou desafia outros jogadores online.
+            Play solo against the bot or challenge other online players.
           </p>
         </div>
 
         <div class="text-center bg-white p-6 rounded-lg shadow border border-green-300">
           <div class="text-4xl mb-3">⭐</div>
-          <h3 class="font-bold text-xl mb-2">Sobe no ranking</h3>
+          <h3 class="font-bold text-xl mb-2">Climb the ranks</h3>
           <p class="text-sm">
-            Acumula vitórias e sobe nos leaderboards globais!
+            Accumulate victories and climb the global leaderboards!
           </p>
         </div>
 
@@ -78,28 +78,28 @@
     </section>
 
     <section class="py-16 px-6  mx-auto">
-      <h2 class="text-3xl font-bold text-white text-center mb-12">Funcionalidades</h2>
+      <h2 class="text-3xl font-bold text-white text-center mb-12">Functions</h2>
 
       <div class="grid md:grid-cols-2 gap-8">
 
         <div class="bg-white p-6 rounded-lg shadow border border-green-300">
           <h3 class="font-bold text-xl text-green-800 mb-2">✔ Single-player</h3>
-          <p>Desafia o bot e treina a tua estratégia.</p>
+          <p>Challenge the bot and train your strategy.</p>
         </div>
 
         <div class="bg-white p-6 rounded-lg shadow border border-green-300">
           <h3 class="font-bold text-xl text-green-800 mb-2">✔ Multiplayer</h3>
-          <p>Joga em tempo real contra outros jogadores.</p>
+          <p>Play in real-time against other players.</p>
         </div>
 
         <div class="bg-white p-6 rounded-lg shadow border border-green-300">
-          <h3 class="font-bold text-xl text-green-800 mb-2">✔ Histórico e Estatísticas</h3>
-          <p>Acompanha as tuas vitórias, capotes e bandeiras.</p>
+          <h3 class="font-bold text-xl text-green-800 mb-2">✔ History and Statistics</h3>
+          <p>Track your victories, capotes, and bandeiras.</p>
         </div>
 
         <div class="bg-white p-6 rounded-lg shadow border border-green-300">
-          <h3 class="font-bold text-xl text-green-800 mb-2">✔ Economia de Moedas</h3>
-          <p>Ganha, aposta e compra moedas através da plataforma.</p>
+          <h3 class="font-bold text-xl text-green-800 mb-2">✔ Coin Economy</h3>
+          <p>Earn, bet, and buy coins through the platform.</p>
         </div>
 
       </div>
@@ -107,17 +107,17 @@
 
      <template v-if="!auth.user">
         <section class="text-center py-16 bg-green-700 text-white">
-          <h2 class="text-3xl font-bold mb-4">Pronto para Começar?</h2>
+          <h2 class="text-3xl font-bold mb-4">Ready to start?</h2>
 
           <p class="opacity-90 mb-8">
-            Cria já a tua conta e entra no mundo competitivo da Bisca online.
+            Create your account now and enter the competitive world of online Bisca.
           </p>
 
           <router-link
             to="/register"
             class="px-10 py-3 bg-white text-green-700 rounded-lg font-semibold shadow hover:bg-green-100 transition"
           >
-            Criar Conta Gratuitamente
+            Create a Free Account
           </router-link>
         </section>
      </template>

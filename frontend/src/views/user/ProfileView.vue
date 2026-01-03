@@ -2,7 +2,7 @@
   <div class="p-6 bg-green-50 min-h-screen">
     <div class="max-w-4xl mx-auto">
       <!-- Header -->
-      <h1 class="text-3xl font-bold text-green-700 mb-6">👤 O Meu Perfil</h1>
+      <h1 class="text-3xl font-bold text-green-700 mb-6">My Profile</h1>
 
 
       <div class="bg-white rounded-lg shadow-md border border-green-300 p-6 mb-6">
@@ -33,17 +33,17 @@
                   v-if="isAdmin"
                   class="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-md text-sm font-semibold"
                 >
-                  🛡️ Administrador
+                  Administrator
                 </span>
                 <span
                   v-else
                   class="inline-block px-3 py-1 bg-purple-100 text-purple-800 rounded-md text-sm font-semibold"
                 >
-                  🎮 Jogador
+                  Player
                 </span>
               </p>
               <p v-if="isPlayer" class="mt-2 text-gray-600 text-lg">
-                💰 <strong>{{ user?.coins_balance || 0 }}</strong> moedas
+                <strong>{{ user?.coins_balance || 0 }}</strong> coins
               </p>
             </div>
           </div>
@@ -55,14 +55,14 @@
               @click="enableEditMode"
               class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-semibold"
             >
-              ✏️ Editar Perfil
+              Edit Profile
             </button>
             <button
               v-if="editMode"
               @click="cancelEdit"
               class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors font-semibold"
             >
-              Cancelar
+              Cancel
             </button>
           </div>
         </div>
@@ -70,17 +70,17 @@
 
       <!-- Edit Form -->
       <div v-if="editMode" class="bg-white rounded-lg shadow-md border border-green-300 p-6 mb-6">
-        <h3 class="text-xl font-bold text-gray-800 mb-4">Editar Informações do Perfil</h3>
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Edit Profile Information</h3>
 
         <form @submit.prevent="handleUpdate" class="space-y-4">
 
           <div>
-            <label for="name" class="block text-sm font-semibold text-gray-700 mb-1">Nome Completo</label>
+            <label for="name" class="block text-sm font-semibold text-gray-700 mb-1">Full Name</label>
             <input
               id="name"
               v-model="editForm.name"
               type="text"
-              placeholder="Seu nome completo"
+              placeholder="Your full name"
               :class="[
                 'w-full px-4 py-2 border-2 rounded-lg transition-colors',
                 errors.name ? 'border-red-500' : 'border-gray-300 focus:border-green-600 focus:outline-none'
@@ -96,7 +96,7 @@
               id="email"
               v-model="editForm.email"
               type="email"
-              placeholder="seu@email.com"
+              placeholder="your@email.com"
               :class="[
                 'w-full px-4 py-2 border-2 rounded-lg transition-colors',
                 errors.email ? 'border-red-500' : 'border-gray-300 focus:border-green-600 focus:outline-none'
@@ -112,7 +112,7 @@
               id="nickname"
               v-model="editForm.nickname"
               type="text"
-              placeholder="Seu nickname de jogo"
+              placeholder="Your Profile Nickname"
               :class="[
                 'w-full px-4 py-2 border-2 rounded-lg transition-colors',
                 errors.nickname ? 'border-red-500' : 'border-gray-300 focus:border-green-600 focus:outline-none'
@@ -124,13 +124,13 @@
 
           <div>
             <label for="password" class="block text-sm font-semibold text-gray-700 mb-1">
-              Nova Password (deixe vazio para manter a atual)
+              New Password (leave blank to keep the current one)
             </label>
             <input
               id="password"
               v-model="editForm.password"
               type="password"
-              placeholder="Mínimo 3 caracteres"
+              placeholder="Minimum 3 characters"
               :class="[
                 'w-full px-4 py-2 border-2 rounded-lg transition-colors',
                 errors.password ? 'border-red-500' : 'border-gray-300 focus:border-green-600 focus:outline-none'
@@ -141,7 +141,7 @@
 
 
           <div>
-            <label for="photo_avatar" class="block text-sm font-semibold text-gray-700 mb-1">Foto de Perfil</label>
+            <label for="photo_avatar" class="block text-sm font-semibold text-gray-700 mb-1">Profile Photo</label>
             <input
               id="photo_avatar"
               type="file"
@@ -169,19 +169,19 @@
             :disabled="loading"
             class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all font-semibold"
           >
-            <span v-if="loading">A atualizar...</span>
-            <span v-else>💾 Guardar Alterações</span>
+            <span v-if="loading">Updating...</span>
+            <span v-else>Save Changes</span>
           </button>
         </form>
       </div>
 
       <!-- Display Mode -->
       <div v-else class="bg-white rounded-lg shadow-md border border-green-300 p-6 mb-6">
-        <h3 class="text-xl font-bold text-gray-800 mb-4">Informações do Perfil</h3>
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Profile Information</h3>
 
         <div class="space-y-3">
           <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-            <span class="text-gray-600 font-medium">Nome Completo:</span>
+            <span class="text-gray-600 font-medium">Full Name:</span>
             <span class="text-gray-800 font-semibold">{{ user?.name }}</span>
           </div>
           <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
@@ -193,15 +193,15 @@
             <span class="text-gray-800 font-semibold">{{ user?.nickname }}</span>
           </div>
           <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-            <span class="text-gray-600 font-medium">Tipo de Conta:</span>
-            <span class="text-gray-800 font-semibold">{{ isAdmin ? 'Administrador' : 'Jogador' }}</span>
+            <span class="text-gray-600 font-medium">Account Type:</span>
+            <span class="text-gray-800 font-semibold">{{ isAdmin ? 'Administrator' : 'Player' }}</span>
           </div>
           <div v-if="isPlayer" class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-            <span class="text-gray-600 font-medium">Saldo de Moedas:</span>
-            <span class="text-gray-800 font-semibold">{{ user?.coins_balance || 0 }} moedas</span>
+            <span class="text-gray-600 font-medium">Coin Balance:</span>
+            <span class="text-gray-800 font-semibold">{{ user?.coins_balance || 0 }} coins</span>
           </div>
           <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-            <span class="text-gray-600 font-medium">Membro Desde:</span>
+            <span class="text-gray-600 font-medium">Member Since:</span>
             <span class="text-gray-800 font-semibold">{{ formatDate(user?.created_at) }}</span>
           </div>
         </div>
