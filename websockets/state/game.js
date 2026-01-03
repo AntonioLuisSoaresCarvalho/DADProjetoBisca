@@ -226,63 +226,89 @@ export function continueMatch(game) {
     return true
 }
 
+function sumPoints(cards = []) {
+    return cards.reduce((sum, card) => sum + (card.points || 0), 0)
+}
+
+
 export function resignGame(game, player) {
     if (game.game_over) return false
-    
+
     console.log(`[Game] Player ${player} resigned!`)
-    
-    // Calculate points from resigning player's hand
-    const resigningHand = player === 1 ? game.hand_player1 : game.hand_player2
-    const handPoints = resigningHand.reduce((sum, card) => sum + (card.points || 0), 0)
-    
-    console.log(`[Game] Resigning player had ${handPoints} points in hand`)
-    
-    // Award hand points to the opponent
-    if (player === 1) {
-        game.points_player2 += handPoints
+
+    const winner = player === 1 ? 2 : 1
+
+    // ===== FUNÇÃO AUXILIAR =====
+    const sumPoints = (cards = []) =>
+        cards.reduce((sum, card) => sum + (card.points || 0), 0)
+
+    // ===== CALCULAR TODOS OS PONTOS RESTANTES =====
+
+    // Pontos das mãos
+    const handP1Points = sumPoints(game.hand_player1)
+    const handP2Points = sumPoints(game.hand_player2)
+
+    // Pontos das cartas ainda no deck (game pile)
+    const remainingDeckCards = game.deck.slice(game.deck_index)
+    const deckPoints = sumPoints(remainingDeckCards)
+
+    const remainingPoints =
+        handP1Points +
+        handP2Points +
+        deckPoints
+
+    console.log(`[Game] Remaining points awarded: ${remainingPoints}`)
+
+    // Atribuir TODOS os pontos ao jogador vencedor
+    if (winner === 1) {
+        game.points_player1 += remainingPoints
     } else {
-        game.points_player1 += handPoints
+        game.points_player2 += remainingPoints
     }
-    
-    // Set winner (opponent of resigning player)
-    game.winner = player === 1 ? 2 : 1
-    game.resigned_player = player
-    
-    // Clear hands
+
+    // ===== LIMPAR ESTADO DO JOGO =====
     game.hand_player1 = []
     game.hand_player2 = []
-    
-    // Mark game as over and complete
+    game.deck_index = game.deck.length
+
+    // ===== FINALIZAR JOGO =====
+    game.winner = winner
+    game.resigned_player = player
     game.game_over = true
     game.complete = true
     game.endedAt = new Date()
-    
-    // If it's a match, resigning player loses the entire match (4-0)
+
+    console.log(`[Game] Player ${winner} wins by resignation`)
+    console.log(`[Game] Final Score: P1=${game.points_player1} P2=${game.points_player2}`)
+
+    // ===== MATCH MODE =====
     if (game.is_match) {
-        console.log('[Match] Player resigned - instant match loss!')
-        if (player === 1) {
-            game.player2_marks = 4
-            game.player1_marks = 0
-        } else {
+        console.log('[Match] Player resigned - instant match loss')
+
+        if (winner === 1) {
             game.player1_marks = 4
             game.player2_marks = 0
+        } else {
+            game.player2_marks = 4
+            game.player1_marks = 0
         }
+
         game.match_over = true
-        game.match_winner = player === 1 ? 2 : 1
-        
-        // Calculate payout
+        game.match_winner = winner
+
+        // Calcular payout
         const totalStake = game.stake * 2
         const platformCommission = 1
         game.winner_payout = totalStake - platformCommission
-        
-        console.log(`[Match] Instant match loss by resignation`)
-        console.log(`[Match] Winner: Player ${game.match_winner}`)
+
+        console.log(`[Match] Winner: Player ${winner}`)
         console.log(`[Match] Final Marks: ${game.player1_marks} - ${game.player2_marks}`)
         console.log(`[Match] Payout: ${game.winner_payout} coins`)
     }
-    
+
     return true
 }
+
 
 export function removeGame(gameID) {
     const deleted = games.delete(gameID)
