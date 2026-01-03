@@ -33,7 +33,7 @@ class Game extends Model
         'is_draw' => 'boolean',
     ];
 
-    // 🔗 Relações
+    //Relações
     public function match()
     {
         return $this->belongsTo(GameMatch::class, 'match_id');

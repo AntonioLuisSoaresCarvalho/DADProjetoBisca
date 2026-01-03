@@ -117,7 +117,7 @@ export const useMatchStore = defineStore('match', {
      */
     async startMatch(matchType = 9, player1, player2, stake = 3) {
       if (this.db_match_id) {
-        console.log('⚠️ [MATCH] Match already exists in database, skipping creation')
+        console.log('[MATCH] Match already exists in database, skipping creation')
         return
       }
       const apiStore = useApiStore()
@@ -161,12 +161,8 @@ export const useMatchStore = defineStore('match', {
         })
 
         this.db_match_id = response.match.id
-        console.log('✅ Match saved to database with ID:', this.db_match_id)
         return response.match
       } catch (error) {
-        console.error('❌ Failed to save match to database:', error)
-        console.error('❌ Validation errors:', error.response?.data?.errors) // ADD THIS
-        console.error('❌ Full response:', error.response?.data) // ADD THIS
         throw error
       }
     },
@@ -203,7 +199,6 @@ export const useMatchStore = defineStore('match', {
 
       // Se foi empate, não dá marcas
       if (is_draw) {
-        console.log(`   🤝 Empate - sem marcas`)
         gameRecord.marks_awarded = 0
       } else {
         // Calcula marcas baseado nos pontos do vencedor
@@ -213,12 +208,8 @@ export const useMatchStore = defineStore('match', {
         // Atribui as marcas ao vencedor
         if (winner === 1) {
           this.player1_marks += marks
-          console.log(`   ✅ ${this.player1_name} ganhou ${marks} marca(s)`)
-          console.log(`   📈 Marcas: ${this.player1_marks}/4`)
         } else {
           this.player2_marks += marks
-          console.log(`   ✅ ${this.player2_name} ganhou ${marks} marca(s)`)
-          console.log(`   📈 Marcas: ${this.player2_marks}/4`)
         }
 
         gameRecord.marks_awarded = marks
@@ -248,13 +239,13 @@ export const useMatchStore = defineStore('match', {
      */
     calculateMarks(winnerPoints) {
       if (winnerPoints === 120) {
-        console.log(`   🏁 BANDEIRA! (120 pontos)`)
+        console.log("BANDEIRA! (120 pontos)")
         return 4 // Bandeira - vitória automática do match
       } else if (winnerPoints >= 91 && winnerPoints <= 119) {
-        console.log(`   💪 Capote! (${winnerPoints} pontos)`)
+        console.log(`Capote! (${winnerPoints} pontos)`)
         return 2 // Capote
       } else if (winnerPoints >= 61 && winnerPoints <= 90) {
-        console.log(`   ✓ Risca (${winnerPoints} pontos)`)
+        console.log(`Risca (${winnerPoints} pontos)`)
         return 1 // Risca/Moca
       }
       return 0
@@ -272,16 +263,10 @@ export const useMatchStore = defineStore('match', {
       if (this.player1_marks >= 4) {
         this.winner_id = this.player1_id
         this.loser_id = this.player2_id
-        console.log(`🏆 ${this.player1_name} VENCEU O MATCH!`)
       } else {
         this.winner_id = this.player2_id
         this.loser_id = this.player1_id
-        console.log(`🏆 ${this.player2_name} VENCEU O MATCH!`)
       }
-
-      console.log(`   Marcas finais: ${this.player1_marks} - ${this.player2_marks}`)
-      console.log(`   Pontos totais: ${this.player1_total_points} - ${this.player2_total_points}`)
-      console.log(`   💰 Payout: ${this.winnerPayout} moedas`)
       
       // Guarda o match no servidor
       await this.updateMatchInDatabase(true)
@@ -293,7 +278,6 @@ export const useMatchStore = defineStore('match', {
      * @param {number|string} playerId - ID do jogador que desistiu
      */
     async forfeitMatch(playerId) {
-      console.log(`❌ Jogador ${playerId} desistiu do match`)
       
       this.match_status = 'ended'
       this.match_over = true
@@ -310,8 +294,6 @@ export const useMatchStore = defineStore('match', {
         this.player1_marks = 4
       }
 
-      console.log(`   🏆 Vencedor por desistência: ${this.winner_id === this.player1_id ? this.player1_name : this.player2_name}`)
-
       await this.updateMatchInDatabase(true)
     },
 
@@ -320,7 +302,6 @@ export const useMatchStore = defineStore('match', {
      */
     async updateMatchInDatabase(isFinal = false) {
       if (!this.db_match_id) {
-        console.error('❌ No database match ID found')
         return
       }
 
@@ -342,9 +323,7 @@ export const useMatchStore = defineStore('match', {
         }
 
         const response = await apiStore.updateMatch(this.db_match_id, updateData)
-        console.log('✅ Match updated in database:', response.match)
       } catch (error) {
-        console.error('❌ Failed to update match:', error)
       }
     },
 
@@ -352,7 +331,7 @@ export const useMatchStore = defineStore('match', {
      * Reset do match
      */
     resetMatch() {
-      console.log('🔄 A resetar match...')
+      console.log('A resetar match...')
       this.$reset()
     }
   }

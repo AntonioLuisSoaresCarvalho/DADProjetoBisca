@@ -19,13 +19,10 @@ export const useGameStore = defineStore('game', () => {
   const points_player2 = ref(0)
   const winner = ref(null)
   const current_round = ref(0)
-  const total_rounds = ref(20)
   const round_starter = ref(null)
 
   const game_type = ref(9) // 3 ou 9
   const game_mode = ref('game') // 'game' ou 'match'
-  const player1_id = ref(null)
-  const player2_id = ref(null)
 
   const types_of_games = [3, 9]
   const types_of_matches = ['game', 'match']
@@ -85,20 +82,12 @@ export const useGameStore = defineStore('game', () => {
     return a
   }
 
-  /**
-   * Verifica se é obrigatório seguir o naipe
-   * Retorna true quando não há mais cartas para comprar do baralho
-   */
+  // Verifica se é obrigatório seguir o naipe
   function mustFollowSuit() {
     return deck_index.value >= deck.value.length
   }
 
-  /**
-   * Obtém as cartas válidas que um jogador pode jogar
-   * @param {Array} playerHand - Mão do jogador
-   * @param {Object} leadCard - Primeira carta jogada na rodada (ou null)
-   * @returns {Array} - Cartas que o jogador pode jogar
-   */
+
   function getValidCards(playerHand, leadCard) {
     // Se ainda há cartas no deck OU ninguém jogou ainda, todas as cartas são válidas
     if (!mustFollowSuit() || !leadCard) {
@@ -110,12 +99,10 @@ export const useGameStore = defineStore('game', () => {
     
     if (sameSuitCards.length > 0) {
       // Tem cartas do mesmo naipe - DEVE jogar uma delas
-      console.log(`⚠️ Must follow suit: ${leadCard.suit}`)
       return sameSuitCards
     }
     
     // Não tem cartas do mesmo naipe - pode jogar qualquer carta
-    console.log(`✓ No cards of suit ${leadCard.suit} - can play any card`)
     return playerHand
   }
 
@@ -127,20 +114,20 @@ export const useGameStore = defineStore('game', () => {
     game_type.value = type
     game_mode.value = mode
 
-    // Set trump card (last card in deck)
+    // Define o trunfo
     trump_card.value = deck.value[deck.value.length - 1]
     trump_suit.value = trump_card.value.suit
 
-    // Deal cards to each player
+    // Distribui cartas aos jogadores
     hand_player1.value = deck.value.slice(0, type)
     hand_player2.value = deck.value.slice(type, type * 2)
     deck_index.value = type * 2 // Next card to draw
 
-    // Random first player
+    // Define quem começa (50-50%)
     turn_player.value = Math.random() < 0.5 ? 1 : 2
     round_starter.value = turn_player.value
 
-    // Reset game state
+    // Reset ao estado do jogo
     current_round.value = 0
     points_player1.value = 0
     points_player2.value = 0
@@ -148,33 +135,27 @@ export const useGameStore = defineStore('game', () => {
     card_played_player2.value = null
     game_over.value = false
     winner.value = null
-
-    console.log(`Game started! Bisca de ${type} | Mode: ${mode}`)
-    console.log(`Game started! Player ${turn_player.value} goes first`)
-    console.log(`Trump card: ${trump_card.value.name}`)
   }
 
   function determineTrickWinner(card1, card2) {
-    // Same suit: higher rank wins (lower order = higher rank)
+    // Se tiverem o mesmo suit a maior carta ganha
     if (card1.suit === card2.suit) {
       return card1.order < card2.order ? 1 : 2
     }
-    // Player 1's card is trump
+
     if (card1.suit === trump_suit.value) return 1
-    // Player 2's card is trump
+
     if (card2.suit === trump_suit.value) return 2
-    // No trump: first player wins
+    // Se não se jogar trunfos e não forem do mesmo suit o player que começou a ronda ganha
     return round_starter.value
   }
 
   function playCard(card, player) {
     if (game_over.value) {
-      console.log('❌ Game is over')
       return false
     }
     
     if (turn_player.value !== player) {
-      console.log('❌ Not your turn')
       return false
     }
 
@@ -182,42 +163,34 @@ export const useGameStore = defineStore('game', () => {
     const idx = hand.findIndex(c => c.id === card.id)
     
     if (idx === -1) {
-      console.log('❌ Card not in hand')
       return false
     }
 
-    // ===== NOVA VALIDAÇÃO: Verificar regra de assistir =====
     if (player === 1) { // Validação apenas para jogador humano
       const leadCard = card_played_player2.value // Se o bot jogou primeiro
       const validCards = getValidCards(hand, leadCard)
       
       if (!validCards.find(c => c.id === card.id)) {
-        console.log('❌ Invalid card! Must follow suit when possible.')
-        toast.error('Deve jogar uma carta do mesmo naipe!')
         return false
       }
     }
-    // ======================================================
 
-    // Remove card from hand
+    // Remove carta da mão
     hand.splice(idx, 1)
 
-    // Place card on table
+
     if (player === 1) {
       card_played_player1.value = card
-      console.log(`✓ Player 1 played: ${card.name}`)
     } else {
       card_played_player2.value = card
-      console.log(`✓ Player 2 (Bot) played: ${card.name}`)
     }
 
-    // Check if round is complete
+    // Verifica se a ronda foi completa
     if (card_played_player1.value && card_played_player2.value) {
       resolveRound()
     } else {
-      // Switch turn to other player
+      // Troca o turno
       turn_player.value = player === 1 ? 2 : 1
-      console.log(`Turn switched to Player ${turn_player.value}`)
     }
 
     return true
@@ -228,8 +201,6 @@ export const useGameStore = defineStore('game', () => {
     const c2 = card_played_player2.value
     if (!c1 || !c2) return
 
-    console.log(`Resolving round ${current_round.value + 1}...`)
-
     const winnerPlayer = determineTrickWinner(c1, c2)
     const totalPoints = (c1.points || 0) + (c2.points || 0)
 
@@ -238,9 +209,6 @@ export const useGameStore = defineStore('game', () => {
     } else {
       points_player2.value += totalPoints
     }
-
-    console.log(`Player ${winnerPlayer} wins the round! (+${totalPoints} points)`)
-    console.log(`Score: P1=${points_player1.value} P2=${points_player2.value}`)
 
     current_round.value++
 
@@ -252,58 +220,50 @@ export const useGameStore = defineStore('game', () => {
   }
 
   function drawCards(winnerPlayer) {
-    // Check if there are cards left to draw
+    // Verifica se ainda existem cartas a pilha
     if (deck_index.value >= deck.value.length) {
       console.log('No more cards to draw')
       return
     }
 
-    // Winner draws first
+    // O vencedor da ultima ronda tira uma carta primeiro
     if (winnerPlayer === 1) {
       if (deck_index.value < deck.value.length) {
         hand_player1.value.push(deck.value[deck_index.value])
-        console.log(`Player 1 draws: ${deck.value[deck_index.value].name}`)
         deck_index.value++
       }
       if (deck_index.value < deck.value.length) {
         hand_player2.value.push(deck.value[deck_index.value])
-        console.log(`Player 2 draws: ${deck.value[deck_index.value].name}`)
         deck_index.value++
       }
     } else {
       if (deck_index.value < deck.value.length) {
         hand_player2.value.push(deck.value[deck_index.value])
-        console.log(`Player 2 draws: ${deck.value[deck_index.value].name}`)
         deck_index.value++
       }
       if (deck_index.value < deck.value.length) {
         hand_player1.value.push(deck.value[deck_index.value])
-        console.log(`Player 1 draws: ${deck.value[deck_index.value].name}`)
         deck_index.value++
       }
     }
   }
 
   function startNextRound(lastWinner) {
-    // Check if game is over (no cards left in both hands)
+    // Verifica se o jogo acabou(nenhum jogar tem cartas)
     if (hand_player1.value.length === 0 && hand_player2.value.length === 0) {
       endGame()
       return
     }
 
-    // Clear table
+    // Limpa a mesa
     card_played_player1.value = null
     card_played_player2.value = null
 
-    // Winner of last round starts next round
+    // Vencedor da ultima ronda começa
     turn_player.value = lastWinner
     round_starter.value = lastWinner
 
-    console.log(`Starting round ${current_round.value + 1}`)
-    console.log(`Player ${turn_player.value} starts this round`)
-    console.log(`Cards in deck: ${deck.value.length - deck_index.value}`)
-
-    // If bot starts, trigger bot play
+    // Se for o bot a começar, dar trigger ao mesmo
     if (turn_player.value === 2) {
       setTimeout(() => botPlay(), 800)
     }
@@ -311,49 +271,39 @@ export const useGameStore = defineStore('game', () => {
 
   function botPlay() {
     if (game_over.value || turn_player.value !== 2) {
-      console.log(`Bot cannot play: game_over=${game_over.value}, turn=${turn_player.value}`)
       return
     }
 
     const hand = hand_player2.value
     if (!hand.length) {
-      console.log('Bot has no cards!')
       return
     }
 
-    // ===== NOVA LÓGICA: Obter cartas válidas considerando a regra de assistir =====
     const leadCard = card_played_player1.value
     const validCards = getValidCards(hand, leadCard)
-
-    console.log(`🤖 Bot choosing from ${validCards.length} valid cards`)
-    // =============================================================================
 
     let chosen = null
 
     if (card_played_player1.value === null) {
-      // Bot is starting: play lowest non-trump card from valid cards
+      //Se o bot esta a começar: joga a carta mais baixa não trunfo das cartas válidas
       const nonTrump = validCards.filter(c => c.suit !== trump_suit.value)
       const pool = nonTrump.length ? nonTrump : validCards
       chosen = pool.sort((a, b) => a.points - b.points)[0]
-      console.log('🤖 Bot is starting the round')
     } else {
-      // Bot is responding: try to win if possible, mas apenas com cartas válidas
+      //Bot tenta ganhar se possível, mas apenas com cartas válidas
       const c1 = card_played_player1.value
       const canWin = validCards.filter(c => determineTrickWinner(c1, c) === 2)
 
       if (canWin.length > 0) {
-        // Play weakest winning card from valid cards
+        // Jogar a carta mais baixa que dê para ganhar
         chosen = canWin.sort((a, b) => b.order - a.order)[0]
-        console.log('🤖 Bot trying to win the trick with valid card')
       } else {
-        // Can't win: play lowest point card from valid cards
+        // Se não consegue ganhar jogar a carta mais baixa
         chosen = validCards.sort((a, b) => a.points - b.points)[0]
-        console.log('🤖 Bot cannot win, playing lowest valid card')
       }
     }
 
     if (chosen) {
-      console.log(`🤖 Bot chose: ${chosen.name}`)
       playCard(chosen, 2)
     }
   }
@@ -458,8 +408,6 @@ export const useGameStore = defineStore('game', () => {
         began_at: new Date().toISOString(),
         status: 'Playing'
       })
-
-      console.log('✅ [saveGameStart] Game saved to database:', response.game)
       
       const gameId = response.game.id
       currentDbGameId.value = gameId
@@ -471,9 +419,6 @@ export const useGameStore = defineStore('game', () => {
 
       return response
     } catch (error) {
-      console.error('❌ [saveGameStart] Failed to save game start:', error)
-      console.error('❌ Error response:', error.response?.data)
-      console.error('❌ Error status:', error.response?.status)
       throw error 
     }
   }
@@ -483,7 +428,6 @@ export const useGameStore = defineStore('game', () => {
       const dbGameId = gameData.db_game_id
       
       if (!dbGameId) {
-        console.error('❌ No database game ID found')
         return
       }
 
@@ -515,10 +459,8 @@ export const useGameStore = defineStore('game', () => {
         resigned_player: gameData.resigned_player || null
       })
 
-      console.log('✅ Game end saved to database:', response.game)
       return response.game
     } catch (error) {
-      console.error('❌ Failed to save game end:', error)
       toast.error('Failed to update game in database')
     }
   }

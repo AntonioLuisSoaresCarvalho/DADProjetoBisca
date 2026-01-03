@@ -69,7 +69,7 @@ export const useHistoryStore = defineStore("history",{
         const response = await api.getGameDetails(gameId, params)
         this.currentGame = response.game
         // Return the FULL response object, not just response.game
-        return response  // ← Changed from response.game
+        return response 
       } catch (error) {
         this.gamesError = error.response?.data?.message || 'Failed to load game details'
         console.error('Error fetching game details:', error)
@@ -138,7 +138,7 @@ export const useHistoryStore = defineStore("history",{
         const response = await api.getMatchDetails(matchId, params)
         this.currentMatch = response.match
         // Return the FULL response object, not just response.match
-        return response  // ← Changed from response.match
+        return response 
       } catch (error) {
         this.matchesError = error.response?.data?.message || 'Failed to load match details'
         console.error('Error fetching match details:', error)

@@ -35,7 +35,7 @@ class GameMatch extends Model
         'ended_at' => 'datetime',
     ];
 
-    // 🔗 Relações
+    //Relações
     public function games()
     {
         return $this->hasMany(Game::class, 'match_id');
