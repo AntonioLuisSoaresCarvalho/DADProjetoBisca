@@ -106,7 +106,7 @@ const opponentTotalPoints = computed(() => {
 const marksDisplay = computed(() => {
     if (!isMatch.value) return null
     if (myMarks.value > 4){myMarks.value = 4}
-    if(opponentMarks.value > 4){opponentMarks.value = 4} 
+    if(opponentMarks.value > 4){opponentMarks.value = 4}
     const myDisplay = '●'.repeat(myMarks.value) + '○'.repeat(4 - myMarks.value)
     const oppDisplay = '●'.repeat(opponentMarks.value) + '○'.repeat(4 - opponentMarks.value)
     return { my: myDisplay, opponent: oppDisplay }
@@ -500,9 +500,7 @@ onUnmounted(() => {
 
             <!-- RIGHT COLUMN: Chat Sidebar -->
             <div class="w-80 flex-shrink-0">
-                <div class="sticky top-4">
-                    <GameChat v-if="gameID" :gameId="gameID" style="height: 100%;" />
-                </div>
+                <GameChat v-if="gameID" :gameId="gameID" style="height: 100%;" />
             </div>
 
         </div>
