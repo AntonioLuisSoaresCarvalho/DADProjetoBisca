@@ -103,7 +103,8 @@ const opponentTotalPoints = computed(() => {
 
 const marksDisplay = computed(() => {
     if (!isMatch.value) return null
-    if (myMarks.value > 4 || opponentMarks.value > 4) return 4
+    if (myMarks.value > 4){myMarks.value = 4}
+    if(opponentMarks.value > 4){opponentMarks.value = 4} 
     const myDisplay = '●'.repeat(myMarks.value) + '○'.repeat(4 - myMarks.value)
     const oppDisplay = '●'.repeat(opponentMarks.value) + '○'.repeat(4 - opponentMarks.value)
     return { my: myDisplay, opponent: oppDisplay }
@@ -154,7 +155,7 @@ const gameWinnerText = computed(() => {
     } else if (marks === 1) {
         return isWinner ? '✓ RISCA! +1 marca' : '○ Perdeste - Adversário +1 marca'
     } else {
-        return isWinner ? '○ Ganhaste mas sem marcas' : '○ Perdeste - Sem marcas'
+        return isWinner ? '○ Ganhaste o jogo' : '○ Perdeste o jogo'
     }
 })
 

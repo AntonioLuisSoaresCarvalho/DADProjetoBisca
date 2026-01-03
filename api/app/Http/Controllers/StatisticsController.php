@@ -34,7 +34,7 @@ class StatisticsController extends Controller
 
     private function getRecentActivityPublic()
     {
-        // Games played in last 7 days (anonymized)
+        // Games played in last 7 days
         $last7Days = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::today()->subDays($i);
