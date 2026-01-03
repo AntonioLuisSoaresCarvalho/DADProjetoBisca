@@ -203,10 +203,6 @@ export const useApiStore = defineStore("api", () => {
         return response.data
     }
 
-    // ==========================================
-    // HISTORY ENDPOINTS
-    // ==========================================
-
     const getUserGames = async (params = {}) => {
         const response = await apiClient.get(`/history/games`, { params })
         return response.data
@@ -303,7 +299,7 @@ export const useApiStore = defineStore("api", () => {
         getGlobalLeaderboard,
         updateMatch,
         updateGame,
-        createGame, 
+        createGame,
         createMatch,
         fetchPublicStatistics,
         fetchAdminStatistics

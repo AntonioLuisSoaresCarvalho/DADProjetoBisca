@@ -68,7 +68,7 @@ export const useSocketStore = defineStore('socket', () => {
       stake: game.stake
     })
 
-    // 1. Start match if not already started
+    //Starts match
     if (!matchStore.db_match_id && game.is_match) {
 
       try {
@@ -78,23 +78,16 @@ export const useSocketStore = defineStore('socket', () => {
           game.player2,
           game.stake
         )
-
-        console.log('[Match] Match created with ID:', matchStore.db_match_id)
       } catch (error) {
-        console.error('[Match] Failed to create match:', error)
-        console.error('Error details:', error.response?.data)
+        console.error('Failed to create match:', error)
       }
     }
-    else {
-      console.log('CONDITION NOT MET - Match not created because:')
-      if (matchStore.db_match_id) console.log('db_match_id already exists:', matchStore.db_match_id)
-      if (!game.started) console.log('game.started is false')
-      if (game.game_over) console.log('game.game_over is true')
+    else {  
+      if (matchStore.db_match_id) console.log('DB_MATCH_ID already exists:', matchStore.db_match_id)
     }
 
-    // 2. Save individual game start within the match
+    // Save each game of the match to the database
     if (game.started && !game.game_over && !game.db_game_id) {
-      console.log(`[Match Game ${game.current_game_number}] Saving game start...`)
 
       await gameStore.saveGameStart({
         id: game.id,
@@ -105,12 +98,10 @@ export const useSocketStore = defineStore('socket', () => {
         began_at: new Date().toISOString()
       })
 
-      console.log('[Match Game] Game start saved')
     }
 
-    // 3. Save game end and process match result
+    // Update ended game on the database
     if (game.game_over && game.db_game_id) {
-      console.log(`[Match Game ${game.current_game_number}] Game ended, saving results...`)
 
       await gameStore.saveGameEnd({
         db_game_id: game.db_game_id,
@@ -122,8 +113,6 @@ export const useSocketStore = defineStore('socket', () => {
         resigned_player: game.resigned_player || null
       })
 
-      console.log('[Match Game] Game end saved')
-
       const shouldContinue = await matchStore.processGameResult({
         winner: game.winner,
         points_player1: game.points_player1,
@@ -131,13 +120,9 @@ export const useSocketStore = defineStore('socket', () => {
         is_draw: game.winner === 'draw'
       })
 
-      console.log(`[Match] Game result processed. Continue: ${shouldContinue}`)
-
       if (game.match_over) {
-        console.log('[Match] Match has ended!')
-        console.log(`Winner: Player ${game.match_winner}`)
-        console.log(`Marks: ${game.player1_marks} - ${game.player2_marks}`)
-        console.log(`Payout: ${game.winner_payout} coins`)
+        console.log('Match has ended!')
+        console.log(`   Winner: Player ${game.match_winner}`)
       }
     }
   }
@@ -147,9 +132,8 @@ export const useSocketStore = defineStore('socket', () => {
    */
   const handleStandaloneGameState = async (game) => {
 
-    // 1. Save game start
+    //Save game start to database
     if (game.started && !game.game_over && !game.db_game_id) {
-      console.log('[Standalone] Saving game start')
 
       await gameStore.saveGameStart({
         id: game.id,
@@ -159,13 +143,10 @@ export const useSocketStore = defineStore('socket', () => {
         match_id: null,
         began_at: new Date().toISOString()
       })
-
-      console.log('[Standalone] Game start saved')
     }
 
-    // 2. Save game end
+    // Update ended game on the database
     if (game.game_over && game.complete && game.db_game_id) {
-      console.log('[Standalone] Game ended, saving results')
 
       await gameStore.saveGameEnd({
         db_game_id: game.db_game_id,
@@ -177,9 +158,8 @@ export const useSocketStore = defineStore('socket', () => {
         resigned_player: game.resigned_player || null
       })
 
-      console.log('[Standalone] Game end saved')
-      console.log(`Winner: ${game.winner === 'draw' ? 'Draw' : 'Player ' + game.winner}`)
-      console.log(`Score: ${game.points_player1} - ${game.points_player2}`)
+      console.log('Game ended')
+      console.log(`   Winner: ${game.winner === 'draw' ? 'Draw' : 'Player ' + game.winner}`)
     }
   }
 
@@ -187,17 +167,17 @@ export const useSocketStore = defineStore('socket', () => {
     const currentUserId = authStore.currentUser?.id
     const isPlayer1 = currentUserId === game.player1
 
-
-    // Only Player 1 saves to database to avoid duplicates
+    // Only Player 1 saves to database
     if (!isPlayer1) {
+      console.log('I am Player 2 - will NOT save to database')
       return
     }
 
-    //MATCH MODE
+    //if players are in a match
     if (game.is_match) {
       await handleMatchGameState(game)
     }
-    //STANDALONE GAME MODE
+    //if players are in a standalone game
     else {
       await handleStandaloneGameState(game)
     }

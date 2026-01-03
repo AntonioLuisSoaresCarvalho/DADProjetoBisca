@@ -14,10 +14,6 @@ export const useAdminStore = defineStore('admin', {
   }),
 
   actions: {
-    /**
-     * Fetch all users
-     */
-    
     async fetchUsers(filters) {
       const api = useApiStore()
       this.loading = true
@@ -38,15 +34,11 @@ export const useAdminStore = defineStore('admin', {
       }
     },
 
-    /**
-     * Block a user
-     */
     async blockUser(userId) {
       const api = useApiStore()
       try {
         const response = await api.blockUser(userId)
         
-        // Update user in list
         const userIndex = this.users.findIndex(u => u.id === userId)
         if (userIndex !== -1) {
           this.users[userIndex].blocked = true
@@ -64,9 +56,6 @@ export const useAdminStore = defineStore('admin', {
       }
     },
 
-    /**
-     * Unblock a user
-     */
     async unblockUser(userId) {
       const api = useApiStore()
       try {
@@ -90,9 +79,6 @@ export const useAdminStore = defineStore('admin', {
       }
     },
 
-    /**
-     * Create a new administrator
-     */
     async createAdmin(adminData) {
       const api = useApiStore()
       try {
@@ -118,7 +104,6 @@ export const useAdminStore = defineStore('admin', {
       try {
         const response = await api.restoreUser(userId)
         
-        // Reload users after restore
         await this.fetchUsers(this.currentUserFilters)
         
         return {
@@ -136,16 +121,12 @@ export const useAdminStore = defineStore('admin', {
       }
     },
 
-    /**
-     * Delete a user
-     */
     async deleteUser(userId) {
       const api = useApiStore()
       this.loading = true
       try {
         const response = await api.deleteUser(userId)
         
-        // Instead of filtering out, reload the entire list to get updated data (including deleted_at)
         await this.fetchUsers(this.currentUserFilters)
         
         return {
@@ -162,9 +143,6 @@ export const useAdminStore = defineStore('admin', {
       }
     },
 
-    /**
-     * Fetch all transactions
-     */
     async fetchTransactions(filters) {
       const api = useApiStore()
       this.loading = true
@@ -184,9 +162,6 @@ export const useAdminStore = defineStore('admin', {
       }
     },
 
-    /**
-     * Fetch all games
-     */
     async fetchGames(filters) {
       const api = useApiStore()
       this.loading = true
@@ -206,9 +181,6 @@ export const useAdminStore = defineStore('admin', {
       }
     },
 
-    /**
-     * Fetch platform statistics
-     */
     async fetchStatistics() {
       const api = useApiStore()
       this.loading = true

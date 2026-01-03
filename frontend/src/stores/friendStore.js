@@ -17,12 +17,11 @@ export const useFriendStore = defineStore('friends', () => {
 
   function addFriend(user) {
     if (!user || !user.id) {
-      console.error('Invalid user object')
+      console.error('Invalid user')
       return false
     }
 
     if (sessionFriends.value.find(f => f.id === user.id)) {
-      console.log('User already in friend list')
       return false
     }
 

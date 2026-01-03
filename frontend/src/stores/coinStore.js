@@ -14,7 +14,6 @@ export const useCoinStore = defineStore('coinStore', {
   }),
 
   getters: {
-    // Retorna o saldo atual do utilizador (vem do userStore)
     balance: (state) => {
       const authStore = useAuthStore()
       return authStore.user?.coins_balance ?? 0
@@ -69,11 +68,9 @@ export const useCoinStore = defineStore('coinStore', {
       try {
         const purchase = await api.purchaseCoins(formData)
 
-        // Atualiza a lista local de compras e transações
         this.purchases.unshift(purchase.data)
         await this.fetchTransactions()
 
-        // Atualiza o saldo no userStore
         const authStore = useAuthStore()
         await authStore.fetchProfile()
 

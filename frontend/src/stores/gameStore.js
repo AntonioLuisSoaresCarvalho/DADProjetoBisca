@@ -87,16 +87,16 @@ export const useGameStore = defineStore('game', () => {
     return deck_index.value >= deck.value.length
   }
 
-
   function getValidCards(playerHand, leadCard) {
-    // Se ainda há cartas no deck OU ninguém jogou ainda, todas as cartas são válidas
+    // If there are still cards in the deck or no one has played yet, all cards are valid
     if (!mustFollowSuit() || !leadCard) {
       return playerHand
     }
     
-    // Verificar se o jogador tem cartas do mesmo naipe da carta jogada
+    // Verify if the player has cards of the same suit as the lead card
     const sameSuitCards = playerHand.filter(card => card.suit === leadCard.suit)
     
+    // If the player has cards of the same suit as the lead card, return them else return all cards
     if (sameSuitCards.length > 0) {
       // Tem cartas do mesmo naipe - DEVE jogar uma delas
       return sameSuitCards
@@ -110,7 +110,7 @@ export const useGameStore = defineStore('game', () => {
     const newDeck = shuffle(generateDeck())
     deck.value = newDeck
 
-    // Guarda o tipo e modo do jogo
+    //Set game parameters
     game_type.value = type
     game_mode.value = mode
 
@@ -121,7 +121,7 @@ export const useGameStore = defineStore('game', () => {
     // Distribui cartas aos jogadores
     hand_player1.value = deck.value.slice(0, type)
     hand_player2.value = deck.value.slice(type, type * 2)
-    deck_index.value = type * 2 // Next card to draw
+    deck_index.value = type * 2
 
     // Define quem começa (50-50%)
     turn_player.value = Math.random() < 0.5 ? 1 : 2
@@ -222,7 +222,6 @@ export const useGameStore = defineStore('game', () => {
   function drawCards(winnerPlayer) {
     // Verifica se ainda existem cartas a pilha
     if (deck_index.value >= deck.value.length) {
-      console.log('No more cards to draw')
       return
     }
 
@@ -322,6 +321,7 @@ export const useGameStore = defineStore('game', () => {
     console.log('Game Over!')
     console.log(`Final Score: P1=${points_player1.value} P2=${points_player2.value}`)
     console.log(`Winner: ${winner.value}`)
+    console.clear()
   }
 
   function getGameResult() {
@@ -334,7 +334,7 @@ export const useGameStore = defineStore('game', () => {
   }
 
   // ----- ---------------------------- -----------
-  // ----- Added for multiplayer games: -----------
+  // ----- MULTPLAYER GAME SECTION -----------
   // ----- ---------------------------- -----------
 
   const games = ref([])
@@ -360,7 +360,6 @@ export const useGameStore = defineStore('game', () => {
 
   const setGames = (newGames) => {
     games.value = newGames
-    console.log(`[Game] Games changed | game count ${games.value.length}`)
   }
 
   const myGames = computed(() => {
@@ -374,29 +373,33 @@ export const useGameStore = defineStore('game', () => {
   const multiplayerGame = ref({})
 
   const setMultiplayerGame = (game) => {
+    // If this is a match game, check if it's a new game
     if (game.is_match) {
       if (game.current_game_number > previousGameNumber.value) {
         currentDbGameId.value = null
         previousGameNumber.value = game.current_game_number
       }
     } else {
-      // For standalone games - clear the currentDbGameId
+      // if it's a standalone game ,it will clear the currentDbGameId
       if (multiplayerGame.value && multiplayerGame.value.id !== game.id) {
         currentDbGameId.value = null
       }
     }
     
-    // Atribui o currentDbGameId ao objeto game para uso nas condições
+    // Assign currentDbGameId to the game
     game.db_game_id = currentDbGameId.value
 
     multiplayerGame.value = game
-    console.log(`[Game] Multiplayer Game changed | round ${game.current_round}`)
   }
 
+  //Save the beginning game on the database
   const saveGameStart = async (gameData) => {
+
+    // Check if game has already been saved
     if (currentDbGameId.value) {
-      console.log('⚠️ Game already saved with ID:', currentDbGameId.value)
-      return { game: { id: currentDbGameId.value } }
+      console.log('Game already saved with ID:', currentDbGameId.value)
+      //return { game: { id: currentDbGameId.value } }
+      return
     }
     
     try {
@@ -423,6 +426,7 @@ export const useGameStore = defineStore('game', () => {
     }
   }
 
+  //Save the end game on the database, by updating the game
   const saveGameEnd = async (gameData) => {
     try {
       const dbGameId = gameData.db_game_id
@@ -437,13 +441,17 @@ export const useGameStore = defineStore('game', () => {
       let isDraw = false
 
       if (gameData.resigned_player) {
-        // Resignation case
+
+        //Check which player resigned
         const resignedIsPlayer1 = gameData.resigned_player === 1
         winnerUserId = resignedIsPlayer1 ? gameData.player2 : gameData.player1
         loserUserId = resignedIsPlayer1 ? gameData.player1 : gameData.player2
+
       } else if (gameData.winner === 'draw') {
+        // Game ended in a draw
         isDraw = true
       } else {
+        // Game ended with a winner
         winnerUserId = gameData.winner === 1 ? gameData.player1 : gameData.player2
         loserUserId = gameData.winner === 1 ? gameData.player2 : gameData.player1
       }
