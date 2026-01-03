@@ -1,82 +1,28 @@
 <script setup>
-import { reactive, ref, onMounted, computed } from 'vue'
+import { onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
-import { useApiStore } from '@/stores/api'
+import { useStatisticsStore } from '@/stores/statisticsStore'
+import StatisticsBarChart from '@/components/StatisticsBarChart.vue'
 
-const loading = ref(true)
-const updatedAt = ref(null)
+const authStore = useAuthStore()
+const statsStore = useStatisticsStore()
 
-const stats = reactive({
-  platform: {
-    total_registered_players: 0,
-    total_games_played: 0,
-    total_matches_played: 0,
-    games_today: 0,
-    games_this_week: 0,
-  },
-  recent_activity: [],
-  admin: {
-    timeSeries: {},
-    breakdowns: {}
+const isAdmin = computed(() => authStore.isAdmin)
+
+
+const recentActivityChartData = computed(() => {
+  const activity = statsStore.recent_activity || []
+  return {
+    labels: activity.map(day => {
+      const date = new Date(day.date)
+      return date.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' })
+    }),
+    values: activity.map(day => day.games),
   }
 })
 
-const authStore = useAuthStore()
-const apiStore = useApiStore()
-const isAdmin = computed(() => authStore.isAdmin)
-
 const loadStats = async () => {
-  try {
-    loading.value = true
-    
-    // Load public stats
-    const res = await fetch('http://127.0.0.1:8000/api/statistics')
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const data = await res.json()
-
-    // Public stats
-    if (data.platform) {
-      stats.platform = data.platform
-    }
-    if (data.recent_activity) {
-      stats.recent_activity = data.recent_activity
-    }
-
-    // Load admin stats if user is admin
-    if (isAdmin.value) {
-      const token = apiStore.token
-      console.log('Admin token:', token)
-      const adminRes = await fetch('http://127.0.0.1:8000/api/admin/statistics?days=30', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      })
-      console.log('Admin response status:', adminRes.status)
-      if (adminRes.ok) {
-        const adminData = await adminRes.json()
-        if (adminData.timeSeries) {
-          stats.admin.timeSeries = adminData.timeSeries
-        }
-        if (adminData.breakdowns) {
-          stats.admin.breakdowns = adminData.breakdowns
-        }
-        console.log('Admin stats loaded:', adminData)
-      } else {
-        const errText = await adminRes.text()
-        console.error('Admin stats failed:', adminRes.status, errText)
-      }
-    }
-
-    updatedAt.value = new Date()
-    console.log('Public stats loaded:', data)
-  } catch (e) {
-    console.error('Error loading stats:', e)
-  } finally {
-    loading.value = false
-  }
+  await statsStore.loadStats(isAdmin.value)
 }
 
 onMounted(loadStats)
@@ -89,28 +35,29 @@ onMounted(loadStats)
       <p class="mt-2 text-white/80">
         Resumo de métricas agregadas da plataforma Bisca (anonimizadas).
       </p>
-      <p v-if="updatedAt" class="mt-2 text-xs text-white/60">
-        Última atualização: {{ updatedAt.toLocaleString() }}
+      <p v-if="statsStore.updatedAt" class="mt-2 text-xs text-white/60">
+        Última atualização: {{ statsStore.updatedAt.toLocaleString() }}
       </p>
     </div>
 
     <!-- PUBLIC STATS: Key Metrics -->
     <div class="grid grid-cols-1 gap-6 md:grid-cols-3 mb-8">
       <div class="rounded-2xl border border-white/15 bg-white/10 p-6 shadow-sm backdrop-blur hover:bg-white/15 transition">
-        <p class="text-sm text-white/70">Utilizadores Registados</p>
-        <p class="mt-2 text-4xl font-extrabold text-white">{{ stats.platform.total_registered_players }}</p>
+        <p class="text-sm text-white/70">Players found</p>
+        <p class="mt-2 text-4xl font-extrabold text-white">{{ statsStore.platform.total_registered_players }}</p>
       </div>
 
       <div class="rounded-2xl border border-white/15 bg-white/10 p-6 shadow-sm backdrop-blur hover:bg-white/15 transition">
-        <p class="text-sm text-white/70">Jogos Totais</p>
-        <p class="mt-2 text-4xl font-extrabold text-white">{{ stats.platform.total_games_played }}</p>
+        <p class="text-sm text-white/70">Total games on the platform</p>
+        <p class="mt-2 text-4xl font-extrabold text-white">{{ statsStore.platform.total_games_played }}</p>
       </div>
 
       <div class="rounded-2xl border border-white/15 bg-white/10 p-6 shadow-sm backdrop-blur hover:bg-white/15 transition">
-        <p class="text-sm text-white/70">Partidas Concluídas</p>
-        <p class="mt-2 text-4xl font-extrabold text-white">{{ stats.platform.total_matches_played }}</p>
+        <p class="text-sm text-white/70">Total matches on the platform</p>
+        <p class="mt-2 text-4xl font-extrabold text-white">{{ statsStore.platform.total_matches_played }}</p>
       </div>
     </div>
+    
 
     <!-- Recent Activity: Text/Table -->
     <div class="rounded-2xl border border-white/15 bg-white/10 p-6 backdrop-blur mb-8">
@@ -123,12 +70,23 @@ onMounted(loadStats)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="day in stats.recent_activity" :key="day.date" class="border-b border-white/10 hover:bg-white/5">
+          <tr v-for="day in statsStore.recent_activity" :key="day.date" class="border-b border-white/10 hover:bg-white/5">
             <td class="py-2 px-2">{{ new Date(day.date).toLocaleDateString('pt-PT') }}</td>
             <td class="py-2 px-2 text-right font-semibold">{{ day.games }}</td>
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="mb-8">
+      <StatisticsBarChart
+        title="Atividade Recente"
+        subtitle="Jogos realizados nos últimos 7 dias"
+        :labels="recentActivityChartData.labels"
+        :values="recentActivityChartData.values"
+        :colors="['rgba(255,255,255,0.85)', 'rgba(255,255,255,0.80)', 'rgba(255,255,255,0.75)', 'rgba(255,255,255,0.70)', 'rgba(255,255,255,0.65)', 'rgba(255,255,255,0.60)', 'rgba(255,255,255,0.55)']"
+        value-suffix=" jogos"
+      />
     </div>
 
     <!-- ADMIN ONLY: Detailed Breakdowns -->
@@ -142,8 +100,8 @@ onMounted(loadStats)
 
       <!-- Admin: Top Players -->
       <div class="mb-8">
-        <h3 class="text-lg font-semibold text-white mb-4">Top Jogadores (últimos dias)</h3>
-        <table v-if="stats.admin.breakdowns?.topPlayersByGames?.length" class="w-full text-white text-sm">
+        <h3 class="text-lg font-semibold text-white mb-4">Top Jogadores (últimos {{ statsStore.admin.range.days }} dias)</h3>
+        <table v-if="statsStore.admin.breakdowns?.topPlayersByGames?.length" class="w-full text-white text-sm">
           <thead>
             <tr class="border-b border-white/20">
               <th class="text-left py-2 px-2">Nickname</th>
@@ -152,20 +110,21 @@ onMounted(loadStats)
             </tr>
           </thead>
           <tbody>
-            <tr v-for="player in stats.admin.breakdowns.topPlayersByGames" :key="player.user_id" class="border-b border-white/10 hover:bg-white/5">
+            <tr v-for="player in statsStore.admin.breakdowns.topPlayersByGames" :key="player.user_id" class="border-b border-white/10 hover:bg-white/5">
               <td class="py-2 px-2 font-semibold">{{ player.nickname }}</td>
               <td class="py-2 px-2">{{ player.name }}</td>
               <td class="py-2 px-2 text-right">{{ player.games }}</td>
             </tr>
           </tbody>
         </table>
+        
         <p v-else class="text-white/60">Sem dados disponíveis</p>
       </div>
 
       <!-- Admin: Top Purchasers -->
       <div class="mb-8">
-        <h3 class="text-lg font-semibold text-white mb-4">Top Compradores (últimos dias)</h3>
-        <table v-if="stats.admin.breakdowns?.topPurchasers?.length" class="w-full text-white text-sm">
+        <h3 class="text-lg font-semibold text-white mb-4">Top Compradores (últimos {{ statsStore.admin.range.days }} dias)</h3>
+        <table v-if="statsStore.admin.breakdowns?.topPurchasers?.length" class="w-full text-white text-sm">
           <thead>
             <tr class="border-b border-white/20">
               <th class="text-left py-2 px-2">Nickname</th>
@@ -175,7 +134,7 @@ onMounted(loadStats)
             </tr>
           </thead>
           <tbody>
-            <tr v-for="buyer in stats.admin.breakdowns.topPurchasers" :key="buyer.user_id" class="border-b border-white/10 hover:bg-white/5">
+            <tr v-for="buyer in statsStore.admin.breakdowns.topPurchasers" :key="buyer.user_id" class="border-b border-white/10 hover:bg-white/5">
               <td class="py-2 px-2 font-semibold">{{ buyer.nickname }}</td>
               <td class="py-2 px-2">{{ buyer.name }}</td>
               <td class="py-2 px-2 text-right">{{ buyer.purchases }}</td>
@@ -192,9 +151,9 @@ onMounted(loadStats)
       <button
         class="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-green-800 hover:bg-white/90 disabled:opacity-60"
         @click="loadStats"
-        :disabled="loading"
+        :disabled="statsStore.loading"
       >
-        {{ loading ? 'A atualizar...' : 'Atualizar' }}
+        {{ statsStore.loading ? 'A atualizar...' : 'Atualizar' }}
       </button>
     </div>
   </section>
