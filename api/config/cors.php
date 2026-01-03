@@ -14,6 +14,7 @@ return [
     'allowed_origins' => [
         'http://localhost:5173',
         'http://127.0.0.1:5173',
+        'http://web-dad-group-27-172.22.21.253.sslip.io'
     ],
 
     'allowed_origins_patterns' => [],
