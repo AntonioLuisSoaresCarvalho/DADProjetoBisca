@@ -232,82 +232,61 @@ function sumPoints(cards = []) {
 
 
 export function resignGame(game, player) {
-    if (game.game_over) return false
+    if (game.game_over || game.match_over) return false
 
     console.log(`[Game] Player ${player} resigned!`)
 
     const winner = player === 1 ? 2 : 1
 
-    // ===== FUNÇÃO AUXILIAR =====
+    // ===== Award ALL remaining points to winner =====
     const sumPoints = (cards = []) =>
         cards.reduce((sum, card) => sum + (card.points || 0), 0)
 
-    // ===== CALCULAR TODOS OS PONTOS RESTANTES =====
-
-    // Pontos das mãos
-    const handP1Points = sumPoints(game.hand_player1)
-    const handP2Points = sumPoints(game.hand_player2)
-
-    // Pontos das cartas ainda no deck (game pile)
-    const remainingDeckCards = game.deck.slice(game.deck_index)
-    const deckPoints = sumPoints(remainingDeckCards)
-
     const remainingPoints =
-        handP1Points +
-        handP2Points +
-        deckPoints
+        sumPoints(game.hand_player1) +
+        sumPoints(game.hand_player2) +
+        sumPoints(game.deck.slice(game.deck_index))
 
-    console.log(`[Game] Remaining points awarded: ${remainingPoints}`)
-
-    // Atribuir TODOS os pontos ao jogador vencedor
     if (winner === 1) {
         game.points_player1 += remainingPoints
     } else {
         game.points_player2 += remainingPoints
     }
 
-    // ===== LIMPAR ESTADO DO JOGO =====
+    // ===== Finalize game =====
     game.hand_player1 = []
     game.hand_player2 = []
     game.deck_index = game.deck.length
 
-    // ===== FINALIZAR JOGO =====
     game.winner = winner
     game.resigned_player = player
     game.game_over = true
     game.complete = true
+    game.ended_by_resign = true
     game.endedAt = new Date()
 
     console.log(`[Game] Player ${winner} wins by resignation`)
-    console.log(`[Game] Final Score: P1=${game.points_player1} P2=${game.points_player2}`)
 
     // ===== MATCH MODE =====
     if (game.is_match) {
-        console.log('[Match] Player resigned - instant match loss')
+        console.log('[Match] Match ended by resignation')
 
-        if (winner === 1) {
-            game.player1_marks = 4
-            game.player2_marks = 0
-        } else {
-            game.player2_marks = 4
-            game.player1_marks = 0
-        }
+        game.player1_marks = winner === 1 ? 4 : 0
+        game.player2_marks = winner === 2 ? 4 : 0
 
         game.match_over = true
         game.match_winner = winner
 
-        // Calcular payout
         const totalStake = game.stake * 2
         const platformCommission = 1
         game.winner_payout = totalStake - platformCommission
 
-        console.log(`[Match] Winner: Player ${winner}`)
         console.log(`[Match] Final Marks: ${game.player1_marks} - ${game.player2_marks}`)
-        console.log(`[Match] Payout: ${game.winner_payout} coins`)
     }
 
     return true
 }
+
 
 
 export function removeGame(gameID) {
@@ -447,6 +426,12 @@ function drawCards(game, winnerPlayer) {
 }
 
 function endGame(game) {
+    //Game already finished by resign
+    if (game.ended_by_resign) {
+        console.log('[Game] Skipping endGame — already ended by resignation')
+        return
+    }
+
     game.game_over = true
 
     if (game.points_player1 > game.points_player2) {
@@ -461,7 +446,7 @@ function endGame(game) {
     console.log(`Final Score: P1=${game.points_player1} P2=${game.points_player2}`)
     console.log(`Winner: ${game.winner === 'draw' ? 'Draw' : 'Player ' + game.winner}`)
 
-    // Process match if this is match mode
+    // Only process match if NOT resigned
     if (game.is_match) {
         processMatchResult(game)
     } else {
@@ -469,6 +454,7 @@ function endGame(game) {
         game.endedAt = new Date()
     }
 }
+
 
 /**
  * Calcula as marcas baseado nos pontos do vencedor
@@ -495,6 +481,10 @@ function calculateMarks(winnerPoints) {
 }
 
 function processMatchResult(game) {
+    if (game.match_over || game.ended_by_resign) {
+        console.log('[Match] Skipping processMatchResult — match already ended')
+        return
+    }
     console.log('[Match] Processing game result...')
     
     const gameRecord = {
