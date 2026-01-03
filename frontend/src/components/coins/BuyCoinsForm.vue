@@ -4,16 +4,16 @@
     class="bg-white shadow-md border border-green-300 rounded-lg p-6 w-full max-w-md"
   >
     <h2 class="text-2xl font-bold text-green-700 mb-4 text-center">
-      Comprar Moedas
+      Buy Coins
     </h2>
 
     <div class="mb-3">
-      <label class="block text-green-700 mb-1">Método de pagamento</label>
+      <label class="block text-green-700 mb-1">Payment Method</label>
       <select
         v-model="form.payment_type"
         class="w-full p-2 border border-green-400 rounded"
       >
-        <option value="">Selecione...</option>
+        <option value="">Select...</option>
         <option value="MBWAY">MBWAY</option>
         <option value="PAYPAL">PAYPAL</option>
         <option value="IBAN">IBAN</option>
@@ -23,7 +23,7 @@
     </div>
 
     <div class="mb-3">
-      <label class="block text-green-700 mb-1">Referência</label>
+      <label class="block text-green-700 mb-1">Reference</label>
       <input
         v-model="form.payment_reference"
         type="text"
@@ -35,17 +35,17 @@
     </div>
 
     <div class="mb-3">
-      <label class="block text-green-700 mb-1">Valor (€)</label>
+      <label class="block text-green-700 mb-1">Ammount (€)</label>
       <input
         v-model.number="form.euros"
         type="number"
         min="1"
         max="99"
         class="w-full p-2 border border-green-400 rounded"
-        placeholder="Entre 1 e 99"
+        placeholder="Between 1 and 99"
       />
       <p class="text-xs text-green-600 mt-1">
-        Recebe {{ form.euros || 0 }} × 10 = <strong>{{ coinsToReceive }}</strong> moedas.
+        Receive {{ form.euros || 0 }} × 10 = <strong>{{ coinsToReceive }}</strong> coins.
       </p>
     </div>
 
@@ -57,8 +57,8 @@
       :disabled="loading"
       class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
     >
-      <span v-if="!loading">Confirmar Compra</span>
-      <span v-else>A processar...</span>
+      <span v-if="!loading">Confirm Purchase</span>
+      <span v-else>Processing...</span>
     </button>
   </form>
 </template>

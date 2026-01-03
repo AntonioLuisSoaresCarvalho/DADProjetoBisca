@@ -5,51 +5,51 @@
         <CardHeader>
           <CardTitle class="text-lg">Create New Game</CardTitle>
           <p class="text-sm text-gray-600 flex items-center gap-2 mt-1">
-            <span>Your balance: <span class="font-bold">{{ userCoins }} 💰</span></span>
+            <span>Your balance: <span class="font-bold">{{ userCoins }}</span></span>
             <span v-if="!hasEnoughCoins" class="text-red-500">
               (Need {{ gameCost - userCoins }} more for this game)
             </span>
             <span v-else class="text-green-500">
-              ✅ Sufficient balance
+              Sufficient balance
             </span>
           </p>
         </CardHeader>
         <CardContent class="space-y-4">
           <!-- Game Type Selection -->
           <div>
-            <label class="text-sm font-medium mb-2 block">Escolher Tipo de Jogo</label>
+            <label class="text-sm font-medium mb-2 block">Choose Game Mode</label>
             <div class="grid grid-cols-2 gap-3">
-              <Button 
-                v-for="type in gameStore.types_of_games" 
-                :key="type" 
+              <Button
+                v-for="type in gameStore.types_of_games"
+                :key="type"
                 @click="selectedType = type"
-                :variant="selectedType === type ? 'default' : 'outline'" 
+                :variant="selectedType === type ? 'default' : 'outline'"
                 class="h-auto py-4 px-3">
-                <span class="font-semibold text-base">Bisca de {{ type }}</span>
+                <span class="font-semibold text-base">Bisca of {{ type }}</span>
               </Button>
             </div>
           </div>
 
           <!-- Mode Selection (Game vs Match) -->
           <div>
-            <label class="text-sm font-medium mb-2 block">Modo de Jogo</label>
+            <label class="text-sm font-medium mb-2 block">Game Mode</label>
             <div class="grid grid-cols-2 gap-3">
-              <Button 
+              <Button
                 @click="selectedMode = 'game'"
-                :variant="selectedMode === 'game' ? 'default' : 'outline'" 
+                :variant="selectedMode === 'game' ? 'default' : 'outline'"
                 class="h-auto py-4 px-3">
                 <div class="flex flex-col items-center">
-                  <span class="font-semibold text-base">🎮 Jogo</span>
-                  <span class="text-xs mt-1">Uma partida única (2 coins)</span>
+                  <span class="font-semibold text-base">Game</span>
+                  <span class="text-xs mt-1">Single match (2 coins)</span>
                 </div>
               </Button>
-              <Button 
+              <Button
                 @click="selectedMode = 'match'"
-                :variant="selectedMode === 'match' ? 'default' : 'outline'" 
+                :variant="selectedMode === 'match' ? 'default' : 'outline'"
                 class="h-auto py-4 px-3">
                 <div class="flex flex-col items-center">
-                  <span class="font-semibold text-base">🏆 Match</span>
-                  <span class="text-xs mt-1">Primeiro a 4 marcas (stake: 3-100)</span>
+                  <span class="font-semibold text-base">Match</span>
+                  <span class="text-xs mt-1">First to 4 marks (stake: 3-100)</span>
                 </div>
               </Button>
             </div>
@@ -58,19 +58,19 @@
           <!-- Stake Selection (only for matches) -->
           <div v-if="selectedMode === 'match'">
             <label class="text-sm font-medium mb-2 block">
-              Stake (Moedas)
+              Stake (Coins)
               <span class="text-xs text-gray-500 ml-1">min: 3, max: {{ maxStakeAllowed }}</span>
             </label>
-            
+
             <!-- Range slider -->
             <div class="mb-4">
               <div class="flex items-center justify-between mb-2">
                 <span class="text-sm text-gray-600">Select stake:</span>
                 <span class="font-bold text-blue-600">{{ selectedStake }} coins</span>
               </div>
-              
-              <input 
-                v-model.number="selectedStake" 
+
+              <input
+                v-model.number="selectedStake"
                 type="range"
                 min="3"
                 :max="maxStakeAllowed"
@@ -79,7 +79,7 @@
                 :class="{ 'opacity-50 cursor-not-allowed': maxStakeAllowed < 3 }"
                 :disabled="maxStakeAllowed < 3"
               />
-              
+
               <div class="flex justify-between text-xs text-gray-500 mt-1 px-1">
                 <span>3</span>
                 <span>{{ Math.round(maxStakeAllowed / 4) }}</span>
@@ -94,10 +94,10 @@
               <div class="text-xs text-gray-600 mb-2">Or enter custom amount:</div>
               <div class="flex items-center gap-2">
                 <div class="relative flex-1">
-                  <input 
-                    v-model.number="selectedStake" 
-                    type="number" 
-                    min="3" 
+                  <input
+                    v-model.number="selectedStake"
+                    type="number"
+                    min="3"
                     :max="maxStakeAllowed"
                     class="w-full px-4 py-3 border rounded-lg text-center text-lg font-semibold"
                     :class="{
@@ -109,7 +109,7 @@
                     :disabled="maxStakeAllowed < 3"
                   />
                 </div>
-                <Button 
+                <Button
                   @click="selectedStake = maxStakeAllowed"
                   variant="outline"
                   size="sm"
@@ -128,20 +128,18 @@
                   <div class="text-xs text-gray-600 mb-1">Total pot</div>
                   <div class="text-2xl font-bold text-blue-700">
                     {{ selectedStake * 2 }}
-                    <span class="text-lg">💰</span>
                   </div>
-                  <div class="text-xs text-gray-500">({{ selectedStake }} × 2 players)</div>
+                  <div class="text-xs text-gray-500">({{ selectedStake }} x 2 players)</div>
                 </div>
                 <div class="text-center">
                   <div class="text-xs text-gray-600 mb-1">Winner receives</div>
                   <div class="text-2xl font-bold text-green-700">
                     {{ (selectedStake * 2) - 1 }}
-                    <span class="text-lg">💰</span>
                   </div>
                   <div class="text-xs text-gray-500">(commission: 1 coin)</div>
                 </div>
               </div>
-              
+
               <div class="mt-3 pt-3 border-t border-blue-200 text-center">
                 <div class="text-xs text-gray-600">
                   Platform commission: <span class="font-medium">1 coin</span> per match
@@ -152,7 +150,6 @@
             <!-- Validation messages -->
             <div v-if="!isValidStake || selectedStake > userCoins" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
               <div class="flex items-start">
-                <span class="text-red-500 mr-2 mt-0.5">⚠️</span>
                 <div class="text-sm text-red-700">
                   <div v-if="selectedStake > userCoins" class="font-medium">
                     Insufficient balance for this stake
@@ -169,20 +166,18 @@
                 </div>
               </div>
             </div>
-            
+
             <div v-else-if="selectedStake === userCoins" class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
               <div class="flex items-start">
-                <span class="text-amber-600 mr-2 mt-0.5">💡</span>
                 <div class="text-sm text-amber-700">
                   <div class="font-medium">Using your entire balance</div>
                   <div>If you lose, you'll need to purchase more coins to play again.</div>
                 </div>
               </div>
             </div>
-            
+
             <div v-else-if="selectedStake >= userCoins * 0.7" class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <div class="flex items-start">
-                <span class="text-blue-600 mr-2 mt-0.5">📊</span>
                 <div class="text-sm text-blue-700">
                   <div class="font-medium">High stake percentage</div>
                   <div>You're using {{ Math.round((selectedStake / userCoins) * 100) }}% of your balance</div>
@@ -191,9 +186,9 @@
             </div>
           </div>
 
-          <Button 
-            @click="createNewGame" 
-            class="w-full" 
+          <Button
+            @click="createNewGame"
+            class="w-full"
             :disabled="hasWaitingGame || !hasEnoughCoins">
             {{ hasWaitingGame ? 'Waiting for opponent...' : 'Create Game' }}
           </Button>
@@ -206,38 +201,37 @@
           <CardTitle class="text-lg">Waiting for Opponent...</CardTitle>
         </CardHeader>
         <CardContent class="space-y-4">
-          <div 
-            class="bg-blue-50 p-4 rounded-lg flex items-center justify-between" 
+          <div
+            class="bg-blue-50 p-4 rounded-lg flex items-center justify-between"
             v-for="game in gameStore.myGames.filter(g => !g.complete && !g.started)"
             :key="game.id">
             <div class="flex-1">
               <div class="flex items-center gap-2">
-                <div class="animate-pulse text-3xl">⏳</div>
                 <Badge variant="outline">Bisca de {{ game.game_type }}</Badge>
                 <Badge :variant="game.is_match ? 'default' : 'secondary'">
-                  {{ game.is_match ? '🏆 Match' : '🎮 Game' }}
+                  {{ game.is_match ? 'Match' : 'Game' }}
                 </Badge>
                 <Badge v-if="game.is_match" variant="outline">
-                  Stake: {{ game.stake }} 💰
+                  Stake: {{ game.stake }}
                 </Badge>
-                
+
                 <!-- Show different badges based on game type and status -->
-                <Badge v-if="game.is_match && game.player2_pending && game.offer_status === 'pending'" 
-                       variant="outline" 
+                <Badge v-if="game.is_match && game.player2_pending && game.offer_status === 'pending'"
+                       variant="outline"
                        class="bg-yellow-50 border-yellow-300">
-                  🔍 Player reviewing offer...
+                  Player reviewing offer...
                 </Badge>
-                
-                <Badge v-if="game.is_match && game.player2 && game.offer_status === 'accepted'" 
-                       variant="outline" 
+
+                <Badge v-if="game.is_match && game.player2 && game.offer_status === 'accepted'"
+                       variant="outline"
                        class="bg-green-50 border-green-300">
-                  ✅ Player 2 accepted!
+                  Player 2 accepted!
                 </Badge>
-                
-                <Badge v-if="!game.is_match && game.player2" 
-                       variant="outline" 
+
+                <Badge v-if="!game.is_match && game.player2"
+                       variant="outline"
                        class="bg-green-50 border-green-300">
-                  ✅ Player 2 joined!
+                  Player 2 joined!
                 </Badge>
               </div>
             </div>
@@ -246,10 +240,10 @@
               <Button @click="cancelGame(game)" variant="outline" size="sm">
                 Cancel Game
               </Button>
-              <Button 
-                v-if="(game.is_match && game.player2 && game.offer_status === 'accepted') || (!game.is_match && game.player2)" 
+              <Button
+                v-if="(game.is_match && game.player2 && game.offer_status === 'accepted') || (!game.is_match && game.player2)"
                 @click="startGame(game)"
-                variant="default" 
+                variant="default"
                 size="sm">
                 Start Game
               </Button>
@@ -268,14 +262,13 @@
         </CardHeader>
         <CardContent>
           <div v-if="gameStore.availableGames.length === 0" class="text-center py-8 text-gray-500">
-            <div class="text-4xl mb-2">🎮</div>
             <p>No games available</p>
             <p class="text-sm mt-1">Create a new game to get started!</p>
           </div>
 
           <div v-else class="space-y-4">
-            <div 
-              v-for="game in gameStore.availableGames" 
+            <div
+              v-for="game in gameStore.availableGames"
               :key="game.id"
               class="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
               <div class="flex-1">
@@ -283,35 +276,35 @@
                   <span class="font-medium">Game #{{ game.id }}</span>
                   <Badge variant="outline">Bisca de {{ game.game_type }}</Badge>
                   <Badge :variant="game.is_match ? 'default' : 'secondary'">
-                    {{ game.is_match ? '🏆 Match' : '🎮 Game' }}
+                    {{ game.is_match ? 'Match' : 'Game' }}
                   </Badge>
                   <Badge v-if="game.is_match" variant="outline">
-                    Stake: {{ game.stake }} 💰
+                    Stake: {{ game.stake }}
                   </Badge>
-                  
+
                   <!-- Show reviewing badge ONLY for matches -->
-                  <Badge v-if="game.is_match && game.offer_status === 'pending' && game.player2_pending === authStore.currentUser?.id" 
-                         variant="outline" 
+                  <Badge v-if="game.is_match && game.offer_status === 'pending' && game.player2_pending === authStore.currentUser?.id"
+                         variant="outline"
                          class="bg-yellow-50 border-yellow-300">
-                    ⏳ You're reviewing...
+                    You're reviewing...
                   </Badge>
                 </div>
               </div>
-              
+
               <!-- Review button - ONLY for matches with pending status -->
               <div v-if="game.is_match && game.player2_pending === authStore.currentUser?.id && game.offer_status === 'pending'">
                 <Button @click="reviewOffer(game)" size="sm" variant="default" class="animate-pulse">
                   Review Offer
                 </Button>
               </div>
-              
+
               <!-- Join button - for games without player2 or pending -->
               <div v-else-if="!game.player2_pending && !game.player2">
                 <Button @click="joinGame(game)" size="sm">
                   Join Game
                 </Button>
               </div>
-              
+
               <!-- Waiting badge -->
               <div v-else>
                 <Badge variant="outline" class="bg-gray-100">
@@ -325,7 +318,7 @@
     </div>
 
     <!-- Offer Review Modal - ONLY for matches -->
-    <div v-if="showOfferModal && selectedOffer && selectedOffer.is_match" 
+    <div v-if="showOfferModal && selectedOffer && selectedOffer.is_match"
          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
          @click.self="showOfferModal = false">
       <Card class="w-full max-w-md m-4">
@@ -334,70 +327,68 @@
         </CardHeader>
         <CardContent class="space-y-4">
           <div class="text-center py-4">
-            <div class="text-6xl mb-4">🏆</div>
             <h3 class="text-2xl font-bold mb-2">Match Invitation</h3>
           </div>
-          
+
           <div class="space-y-3 bg-gray-50 p-4 rounded-lg">
             <div class="flex justify-between items-center">
               <span class="text-gray-600">Game Type:</span>
               <Badge variant="outline">Bisca de {{ selectedOffer.game_type }}</Badge>
             </div>
-            
+
             <div class="flex justify-between items-center">
               <span class="text-gray-600">Mode:</span>
-              <Badge variant="default">🏆 Match (First to 4 marks)</Badge>
+              <Badge variant="default">Match (First to 4 marks)</Badge>
             </div>
-            
+
             <div class="flex justify-between items-center border-t pt-3">
               <span class="text-gray-600 font-medium">Your Stake:</span>
               <span class="text-2xl font-bold text-blue-600">
-                {{ selectedOffer.stake }} 💰
+                {{ selectedOffer.stake }}
               </span>
             </div>
           </div>
-          
+
           <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div class="text-sm text-blue-800">
-              <div class="font-medium mb-2">💡 Match Details:</div>
+              <div class="font-medium mb-2">Match Details:</div>
               <ul class="space-y-1 text-xs">
-                <li>• First player to reach 4 marks wins</li>
-                <li>• Winner receives: <strong>{{ (selectedOffer.stake * 2) - 1 }} coins</strong></li>
-                <li>• Total pot: {{ selectedOffer.stake * 2 }} coins (1 coin commission)</li>
+                <li>First player to reach 4 marks wins</li>
+                <li>Winner receives: <strong>{{ (selectedOffer.stake * 2) - 1 }} coins</strong></li>
+                <li>Total pot: {{ selectedOffer.stake * 2 }} coins (1 coin commission)</li>
               </ul>
             </div>
           </div>
-          
+
           <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
             <div class="flex items-start gap-2">
-              <span class="text-amber-600">⚠️</span>
               <div class="text-sm text-amber-800">
                 <div class="font-medium">Balance Check:</div>
                 <div class="mt-1">
                   Your balance: <strong>{{ authStore.coinsBalance }} coins</strong>
-                  <div v-if="authStore.hasEnoughCoins(selectedOffer.stake)" 
+                  <div v-if="authStore.hasEnoughCoins(selectedOffer.stake)"
                        class="text-green-600 font-medium mt-1">
-                    ✅ Sufficient balance
+                    Sufficient balance
                   </div>
                   <div v-else class="text-red-600 font-medium mt-1">
-                    ❌ Insufficient balance - Need {{ selectedOffer.stake - authStore.coinsBalance }} more coins
+                    Insufficient balance - Need {{ selectedOffer.stake - authStore.coinsBalance }} more coins
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </CardContent>
-        
+
         <CardContent class="flex gap-3 pt-0">
-          <Button 
-            @click="rejectOffer" 
-            variant="outline" 
+          <Button
+            @click="rejectOffer"
+            variant="outline"
             class="flex-1">
             Decline
           </Button>
-          <Button 
-            @click="acceptOffer" 
-            variant="default" 
+          <Button
+            @click="acceptOffer"
+            variant="default"
             class="flex-1"
             :disabled="!authStore.hasEnoughCoins(selectedOffer.stake)">
             Accept & Join
@@ -480,7 +471,7 @@ const createNewGame = () => {
     toast.error('You must be logged in to create a game')
     return
   }
-  
+
   if (hasWaitingGame.value) {
     toast.warning('You already have a waiting game. Cancel it first.')
     return
@@ -490,18 +481,18 @@ const createNewGame = () => {
     toast.error(`Insufficient coins! You need ${gameCost.value} but only have ${userCoins.value}.`)
     return
   }
-  
+
   if (selectedMode.value === 'match') {
     if (selectedStake.value < 3 || selectedStake.value > 100) {
       toast.error('Stake must be between 3 and 100 coins')
       return
     }
-    
+
     if (selectedStake.value > userCoins.value) {
       toast.error(`Cannot stake ${selectedStake.value} coins. You only have ${userCoins.value}.`)
       return
     }
-    
+
     if (selectedStake.value > maxStakeAllowed.value) {
       toast.error(`Maximum stake allowed is ${maxStakeAllowed.value} coins based on your balance`)
       return
@@ -512,13 +503,13 @@ const createNewGame = () => {
     toast.error('You need at least 2 coins to create a standalone game')
     return
   }
-  
+
   const gameConfig = {
     type: selectedType.value,
     mode: selectedMode.value,
     stake: selectedMode.value === 'match' ? selectedStake.value : null
   }
-  
+
   try {
     const newGame = gameStore.createGame(gameConfig)
     console.log('[Lobby] New game created:', newGame)
@@ -536,14 +527,14 @@ const refreshGamesList = () => {
 
 const joinGame = (game) => {
   const requiredCoins = game.is_match ? game.stake : 2
-  
+
   if (!authStore.hasEnoughCoins(requiredCoins)) {
     toast.error(`You need ${requiredCoins} coins to join this game. You only have ${authStore.coinsBalance}.`)
     return
   }
-  
+
   socketStore.emitJoinGame(game)
-  
+
   if (game.is_match) {
     toast.info('Reviewing match offer...')
   } else {
@@ -561,29 +552,29 @@ const reviewOffer = (game) => {
 // Accept the offer
 const acceptOffer = () => {
   if (!selectedOffer.value) return
-  
+
   const requiredCoins = selectedOffer.value.stake
-  
+
   if (!authStore.hasEnoughCoins(requiredCoins)) {
     toast.error('Insufficient balance to accept this offer')
     return
   }
-  
+
   socketStore.emitAcceptOffer(selectedOffer.value.id)
   showOfferModal.value = false
   selectedOffer.value = null
-  
+
   toast.success('Offer accepted! Waiting for host to start the game.')
 }
 
 // Reject the offer
 const rejectOffer = () => {
   if (!selectedOffer.value) return
-  
+
   socketStore.emitRejectOffer(selectedOffer.value.id)
   showOfferModal.value = false
   selectedOffer.value = null
-  
+
   toast.info('Offer declined. Looking for other games...')
 }
 
@@ -593,13 +584,13 @@ const startGame = (game) => {
     toast.warning('Wait for player 2 to accept the offer!')
     return
   }
-  
+
   // For standalone games: just check player2 exists
   if (!game.is_match && !game.player2) {
     toast.warning('Wait for player 2 to join!')
     return
   }
-  
+
   socketStore.emitStartGame(game)
   gameStore.multiplayerGame = game
   router.push({ name: 'Multiplayer', query: { gameId: game.id } })
@@ -614,10 +605,10 @@ onMounted(() => {
   if (authStore.currentUser && !socketStore.joined) {
     socketStore.emitJoin(authStore.currentUser)
   }
-  
+
   // Make sure socket event handlers are registered
   socketStore.handleGameEvents()
-  
+
   setTimeout(() => {
     socketStore.emitGetGames()
   }, 100)
@@ -634,18 +625,18 @@ onMounted(() => {
       })
     }
   })
-  
+
   // Listen for offer events with toasts
   socketStore.socket.on('offer-accepted', (data) => {
     console.log('[Lobby] Offer accepted:', data)
     toast.success('Player 2 accepted the offer! You can now start the game.')
     socketStore.emitGetGames() // Refresh to show updated state
   })
-  
+
   socketStore.socket.on('offer-rejected', (data) => {
     console.log('[Lobby] Offer rejected:', data)
     const currentUser = authStore.currentUser?.id
-    
+
     if (data.player2 === currentUser) {
       toast.info('You declined the offer')
     } else {
@@ -653,12 +644,12 @@ onMounted(() => {
     }
     socketStore.emitGetGames() // Refresh to show updated state
   })
-  
+
   // Listen for join requests
   socketStore.socket.on('player-join-request', (data) => {
     console.log('[Lobby] Player join request:', data)
     const currentUser = authStore.currentUser?.id
-    
+
     if (data.gameID) {
       const game = gameStore.games.find(g => g.id === data.gameID)
       if (game && game.creator === currentUser) {
@@ -667,12 +658,12 @@ onMounted(() => {
     }
     socketStore.emitGetGames() // Refresh to show pending player
   })
-  
-  // NEW: Listen for standalone game joins
+
+  // Listen for standalone game joins
   socketStore.socket.on('player-joined', (data) => {
     console.log('[Lobby] Player joined standalone game:', data)
     const currentUser = authStore.currentUser?.id
-    
+
     if (data.gameID) {
       const game = gameStore.games.find(g => g.id === data.gameID)
       if (game && game.creator === currentUser) {

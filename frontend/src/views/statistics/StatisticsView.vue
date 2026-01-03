@@ -33,12 +33,12 @@ onMounted(loadStats)
 <template>
   <section class="py-10">
     <div class="mb-6">
-      <h1 class="text-4xl font-extrabold text-white">Estatísticas</h1>
+      <h1 class="text-4xl font-extrabold text-white">Statistics</h1>
       <p class="mt-2 text-white/80">
-        Resumo de métricas agregadas da plataforma Bisca (anonimizadas).
+        Summary of aggregated metrics from the Bisca platform (anonymized).
       </p>
       <p v-if="statsStore.updatedAt" class="mt-2 text-xs text-white/60">
-        Última atualização: {{ statsStore.updatedAt.toLocaleString() }}
+        Last updated: {{ statsStore.updatedAt.toLocaleString() }}
       </p>
     </div>
 
@@ -59,16 +59,16 @@ onMounted(loadStats)
         <p class="mt-2 text-4xl font-extrabold text-white">{{ statsStore.platform.total_matches_played }}</p>
       </div>
     </div>
-    
+
 
     <!-- Recent Activity: Text/Table -->
     <div class="rounded-2xl border border-white/15 bg-white/10 p-6 backdrop-blur mb-8">
-      <h2 class="text-xl font-bold text-white mb-4">Atividade Recente (últimos 7 dias)</h2>
+      <h2 class="text-xl font-bold text-white mb-4">Recent Activity (last 7 days)</h2>
       <table class="w-full text-white">
         <thead>
           <tr class="border-b border-white/20">
-            <th class="text-left py-2 px-2">Data</th>
-            <th class="text-right py-2 px-2">Jogos</th>
+            <th class="text-left py-2 px-2">Date</th>
+            <th class="text-right py-2 px-2">Games</th>
           </tr>
         </thead>
         <tbody>
@@ -82,12 +82,12 @@ onMounted(loadStats)
 
     <div class="mb-8">
       <StatisticsBarChart
-        title="Atividade Recente"
-        subtitle="Jogos realizados nos últimos 7 dias"
+        title="Recent Activity"
+        subtitle="Games played in the last 7 days"
         :labels="recentActivityChartData.labels"
         :values="recentActivityChartData.values"
-        :colors="['rgba(255,255,255,0.85)', 'rgba(255,255,255,0.80)', 'rgba(255,255,255,0.75)', 'rgba(255,255,255,0.70)', 'rgba(255,255,255,0.65)', 'rgba(255,255,255,0.60)', 'rgba(255,255,255,0.55)']"
-        value-suffix=" jogos"
+        :colors="['rgba(255,255,255,0.85)', 'rgba(255,255,255,0.80)', 'rgba(255,255,255,0.75)', 'rgba(255,255,255,0.70)', 'rgba(255,255,255,0.65)', 'rgba(255,255,255,0.60)', 'rgba(255,255,255,0.60)']"
+        value-suffix=" games"
       />
     </div>
 
@@ -112,26 +112,26 @@ onMounted(loadStats)
             @change="loadStats"
             class="bg-green-500 text-white border border-green/20 rounded-lg px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-green-500 hover:bg-green/15 transition"
           >
-            <option value="7">7 dias</option>
-            <option value="14">14 dias</option>
-            <option value="30">30 dias</option>
-            <option value="60">60 dias</option>
-            <option value="90">90 dias</option>
-            <option value="180">180 dias</option>
-            <option value="365">365 dias</option>
+            <option value="7">7 days</option>
+            <option value="14">14 days</option>
+            <option value="30">30 days</option>
+            <option value="60">60 days</option>
+            <option value="90">90 days</option>
+            <option value="180">180 days</option>
+            <option value="365">365 days</option>
           </select>
         </div>
       </div>
 
       <!-- Admin: Top Players -->
       <div class="mb-8">
-        <h3 class="text-lg font-semibold text-white mb-4">Top Jogadores (últimos {{ statsStore.admin.range.days }} dias)</h3>
+        <h3 class="text-lg font-semibold text-white mb-4">Top Players (last {{ statsStore.admin.range.days }} days)</h3>
         <table v-if="statsStore.admin.breakdowns?.topPlayersByGames?.length" class="w-full text-white text-sm">
           <thead>
             <tr class="border-b border-white/20">
               <th class="text-left py-2 px-2">Nickname</th>
-              <th class="text-left py-2 px-2">Nome</th>
-              <th class="text-right py-2 px-2">Jogos</th>
+              <th class="text-left py-2 px-2">Name</th>
+              <th class="text-right py-2 px-2">Games</th>
             </tr>
           </thead>
           <tbody>
@@ -142,19 +142,19 @@ onMounted(loadStats)
             </tr>
           </tbody>
         </table>
-        
-        <p v-else class="text-white/60">Sem dados disponíveis</p>
+
+        <p v-else class="text-white/60">No data available</p>
       </div>
 
       <!-- Admin: Top Purchasers -->
       <div class="mb-8">
-        <h3 class="text-lg font-semibold text-white mb-4">Top Compradores (últimos {{ statsStore.admin.range.days }} dias)</h3>
+        <h3 class="text-lg font-semibold text-white mb-4">Top Purchasers (last {{ statsStore.admin.range.days }} days)</h3>
         <table v-if="statsStore.admin.breakdowns?.topPurchasers?.length" class="w-full text-white text-sm">
           <thead>
             <tr class="border-b border-white/20">
               <th class="text-left py-2 px-2">Nickname</th>
-              <th class="text-left py-2 px-2">Nome</th>
-              <th class="text-right py-2 px-2">Compras</th>
+              <th class="text-left py-2 px-2">Name</th>
+              <th class="text-right py-2 px-2">Purchases</th>
               <th class="text-right py-2 px-2">Total €</th>
             </tr>
           </thead>
@@ -167,7 +167,7 @@ onMounted(loadStats)
             </tr>
           </tbody>
         </table>
-        <p v-else class="text-white/60">Sem dados disponíveis</p>
+        <p v-else class="text-white/60">No data available</p>
       </div>
     </div>
 
@@ -178,7 +178,7 @@ onMounted(loadStats)
         @click="loadStats"
         :disabled="statsStore.loading"
       >
-        {{ statsStore.loading ? 'A atualizar...' : 'Atualizar' }}
+        {{ statsStore.loading ? 'Updating...' : 'Update' }}
       </button>
     </div>
   </section>

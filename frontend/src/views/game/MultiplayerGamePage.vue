@@ -56,16 +56,16 @@ const opponentInfo = computed(() => {
     if (!opponentData.value) {
         return {
             id: null,
-            nickname: 'Adversário',
-            name: 'Adversário',
+            nickname: 'Opponent',
+            name: 'Opponent',
             photo_avatar_filename: null
         }
     }
 
     return {
         id: opponentData.value.id,
-        nickname: opponentData.value.nickname || 'Adversário',
-        name: opponentData.value.name || 'Adversário',
+        nickname: opponentData.value.nickname || 'Opponent',
+        name: opponentData.value.name || 'Opponent',
         photo_avatar_filename: opponentData.value.photo_avatar_filename
     }
 })
@@ -150,13 +150,13 @@ const lastGameMarks = computed(() => {
     return lastGame.marks_awarded || 0
 })
 
-// ===== NOVOS COMPUTEDS PARA REGRA DE ASSISTIR =====
+// Follow suit rule computeds
 
 const mustFollowSuitNow = computed(() => {
     if (!game.value) return false
-    // Verifica se não há mais cartas no deck
+    // Check if there are no more cards in the deck
     const noMoreCards = game.value.deck_index >= game.value.deck?.length
-    // E se o adversário já jogou uma carta
+    // And if opponent has already played a card
     const opponentPlayed = opponentCardPlayed.value !== null
     return noMoreCards && opponentPlayed
 })
@@ -167,30 +167,28 @@ const validCards = computed(() => {
     const hand = myHand.value
     const leadCard = opponentCardPlayed.value
 
-    // Se ainda há cartas no deck OU adversário não jogou, todas são válidas
+    // If there are still cards in the deck OR opponent hasn't played, all cards are valid
     if (!mustFollowSuitNow.value || !leadCard) {
         return hand
     }
 
-    // Verificar se tem cartas do mesmo naipe
+    // Check if player has cards of the same suit
     const sameSuitCards = hand.filter(card => card.suit === leadCard.suit)
 
     if (sameSuitCards.length > 0) {
-        // Tem cartas do mesmo naipe - DEVE jogar uma delas
-        console.log(`⚠️ Must follow suit: ${leadCard.suit}`)
+        // Has cards of the same suit - MUST play one of them
+        console.log(`Must follow suit: ${leadCard.suit}`)
         return sameSuitCards
     }
 
-    // Não tem cartas do mesmo naipe - pode jogar qualquer
-    console.log(`✓ No cards of suit ${leadCard.suit} - can play any`)
+    // Doesn't have cards of the same suit - can play any
+    console.log(`No cards of suit ${leadCard.suit} - can play any`)
     return hand
 })
 
 const isCardValid = (card) => {
     return validCards.value.some(c => c.id === card.id)
 }
-
-// ===================================================
 
 const gameWinnerText = computed(() => {
     if (!isGameOver.value) return ''
@@ -200,61 +198,61 @@ const gameWinnerText = computed(() => {
         const resignedPlayer = game.value.resigned_player
         if (resignedPlayer === myPlayerNumber.value) {
             if (isMatch.value) {
-                return '🏳️ DESISTISTE! Perdeste o Match 4-0'
+                return 'RESIGNED! You lost the Match 4-0'
             }
-            return '🏳️ Desististe! Perdeste o jogo'
+            return 'You resigned! You lost the game'
         } else {
             if (isMatch.value) {
-                return '🎉 Adversário desistiu! Ganhaste o Match 4-0!'
+                return 'Opponent resigned! You won the Match 4-0!'
             }
-            return '🎉 Adversário desistiu! Ganhaste!'
+            return 'Opponent resigned! You won!'
         }
     }
 
     const winner = game.value.winner
 
     if (winner === 'draw') {
-        return '🤝 Empate - Sem marcas!'
+        return 'Draw - No goals scored!'
     }
 
     const marks = lastGameMarks.value
     const isWinner = winner === myPlayerNumber.value
 
     if (marks === 4) {
-        return isWinner ? '🏁 BANDEIRA! Vitória automática!' : '😱 BANDEIRA! Perdeste!'
+        return isWinner ? 'BANDEIRA! Automatic victory!' : 'BANDEIRA! You lost!'
     } else if (marks === 2) {
-        return isWinner ? '💪 CAPOTE! +2 marcas!' : '😔 CAPOTE! Adversário +2 marcas'
+        return isWinner ? 'CAPOTE! +2 marks!' : 'CAPOTE! Opponent +2 marks'
     } else if (marks === 1) {
-        return isWinner ? '✓ RISCA! +1 marca' : '○ Perdeste - Adversário +1 marca'
+        return isWinner ? 'RISCA! +1 mark' : 'You lost - Opponent +1 mark'
     } else {
-        return isWinner ? '○ Ganhaste o jogo' : '○ Perdeste o jogo'
+        return isWinner ? 'You won the game' : 'You lost the game'
     }
 })
 
 const matchWinnerText = computed(() => {
     if (!isMatchOver.value) return ''
     const winner = game.value.match_winner
-    if (winner === myPlayerNumber.value) return '🏆 VENCESTE O MATCH!'
-    return '😔 Perdeste o Match'
+    if (winner === myPlayerNumber.value) return 'YOU WON THE MATCH!'
+    return 'You lost the match'
 })
 
 const gamesHistoryFormatted = computed(() => {
     if (!game.value?.games_history) return []
     return game.value.games_history.map(g => {
-        const winnerName = g.winner === myPlayerNumber.value ? 'Tu' : 'Adversário'
-        let description = `Jogo ${g.game_number}: `
+        const winnerName = g.winner === myPlayerNumber.value ? 'You' : 'Opponent'
+        let description = `Game ${g.game_number}: `
 
         if (g.is_draw) {
-            description += `Empate (${g.points_player1}-${g.points_player2}) - Sem marcas`
+            description += `Draw (${g.points_player1}-${g.points_player2}) - No marks`
         } else {
             const marks = g.marks_awarded
             let marksText = ''
-            if (marks === 4) marksText = 'BANDEIRA (4 marcas)'
-            else if (marks === 2) marksText = 'CAPOTE (2 marcas)'
-            else if (marks === 1) marksText = 'RISCA (1 marca)'
-            else marksText = 'Sem marcas'
+            if (marks === 4) marksText = 'BANDEIRA (4 marks)'
+            else if (marks === 2) marksText = 'CAPOTE (2 marks)'
+            else if (marks === 1) marksText = 'RISCA (1 mark)'
+            else marksText = 'No marks'
 
-            description += `${winnerName} ganhou ${marksText} (${g.points_player1}-${g.points_player2})`
+            description += `${winnerName} won ${marksText} (${g.points_player1}-${g.points_player2})`
         }
 
         return { ...g, description }
@@ -271,7 +269,7 @@ const timerColor = computed(() => {
 
 const playCard = (card) => {
     if (!myTurn.value || showGameResult.value) {
-        console.log('❌ Not your turn or game result showing')
+        console.log('Not your turn or game result showing')
         return
     }
 
@@ -280,10 +278,10 @@ const playCard = (card) => {
         return
     }
 
-    // VALIDAÇÃO: Verificar se carta é válida
+    // VALIDATION: Check if card is valid
     if (!isCardValid(card)) {
-        console.log('❌ Invalid card! Must follow suit when possible.')
-        alert('⚠️ Deve jogar uma carta do mesmo naipe!')
+        console.log('Invalid card! Must follow suit when possible.')
+        alert('You must play a card of the same suit!')
         return
     }
 
@@ -293,12 +291,12 @@ const playCard = (card) => {
 const resignGame = () => {
     if (isGameOver.value || !gameID.value) return
 
-    let confirmMessage = 'Tens a certeza que queres desistir?'
+    let confirmMessage = 'Are you sure you want to resign?'
 
     if (isMatch.value) {
-        confirmMessage = '⚠️ ATENÇÃO: Desistir num MATCH significa perder AUTOMATICAMENTE 4-0!\n\nTens a certeza absoluta que queres desistir?'
+        confirmMessage = 'ATTENTION: Resigning from a MATCH means losing AUTOMATICALLY 4-0!\n\nAre you absolutely sure you want to resign?'
     } else {
-        confirmMessage = 'Tens a certeza que queres desistir? Vais perder este jogo!'
+        confirmMessage = 'Are you sure you want to resign? You will lose this game!'
     }
 
     const confirmed = confirm(confirmMessage)
@@ -322,7 +320,7 @@ const backToLobby = () => {
 
 const handleFriendAdded = (friend) => {
     friendAdded.value = true
-    console.log(`${friend.nickname} adicionado à lista de amigos!`)
+    console.log(`${friend.nickname} added to friends list!`)
 }
 
 const startTimer = () => {
@@ -409,7 +407,7 @@ watch(
       // New game started - let chat resize after render
       nextTick(() => {
         setTimeout(() => {
-          console.log('🎮 New game detected, ID:', newId)
+          console.log('New game detected, ID:', newId)
         }, 300)
       })
     }
@@ -434,8 +432,8 @@ onMounted(async () => {
             // Set fallback data
             opponentData.value = {
                 id: opponentId,
-                nickname: 'Adversário',
-                name: 'Adversário',
+                nickname: 'Opponent',
+                name: 'Opponent',
                 photo_avatar_filename: null
             }
         }
@@ -467,42 +465,42 @@ onUnmounted(() => {
                     <CardHeader>
                         <div class="flex justify-between items-center">
                             <CardTitle class="text-center text-3xl font-bold flex-1">
-                                {{ isMatch ? 'Match Multiplayer' : 'Jogo Multiplayer' }} - Bisca de {{ game.game_type }}
+                                {{ isMatch ? 'Multiplayer Match' : 'Multiplayer Game' }} - Bisca of {{ game.game_type }}
                             </CardTitle>
                             <Button
                                 v-if="!isGameOver && !isMatchOver"
                                 @click="resignGame"
                                 variant="destructive"
                                 size="sm">
-                                🏳️ Desistir
+                                Resign
                             </Button>
                         </div>
 
                         <!-- Timer Display -->
                         <div v-if="myTurn && !isGameOver && !isMatchOver" class="text-center mt-2">
                             <div :class="['text-2xl', timerColor]">
-                                ⏱️ {{ turnTimer }}s
+                                {{ turnTimer }}s
                             </div>
                         </div>
 
                         <!-- Match Info -->
                         <div v-if="isMatch" class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3 mt-5">
                             <div class="text-md text-center font-bold text-green-900 mb-1">
-                                Match - Primeiro a 4 marcas vence | Stake: {{ game.stake }} moedas
+                                Match - First to 4 marks wins | Stake: {{ game.stake }} coins
                             </div>
                             <div class="flex justify-between items-center text-xs text-green-800">
                                 <div>
-                                    <span class="font-bold">Tu:</span>
+                                    <span class="font-bold">You:</span>
                                     <span class="text-lg ml-1">{{ marksDisplay?.my }}</span>
-                                    <span class="ml-2 text-gray-600">({{ myTotalPoints }} pts totais)</span>
+                                    <span class="ml-2 text-gray-600">({{ myTotalPoints }} total points)</span>
                                 </div>
                                 <div class="text-center text-lg font-bold">
-                                    Jogo {{ game.current_game_number || 1 }}
+                                    Game {{ game.current_game_number || 1 }}
                                 </div>
                                 <div class="text-right">
-                                    <span class="font-bold">Adversário:</span>
+                                    <span class="font-bold">Opponent:</span>
                                     <span class="text-lg ml-1">{{ marksDisplay?.opponent }}</span>
-                                    <span class="ml-2 text-gray-600">({{ opponentTotalPoints }} pts totais)</span>
+                                    <span class="ml-2 text-gray-600">({{ opponentTotalPoints }} total points)</span>
                                 </div>
                             </div>
                         </div>
@@ -510,7 +508,7 @@ onUnmounted(() => {
                         <!-- Current Game Info -->
                         <div class="bg-white backdrop-blur-md rounded-xl p-4 text-center shadow-md border border-white/30 mt-3">
                             <div class="text-xl font-bold mb-2">
-                                Ronda
+                                Round
                                 <span :class="game.current_round > 15 ? 'text-red-500' : 'text-black'">
                                     {{ game.current_round || 0 }}
                                 </span>
@@ -521,22 +519,22 @@ onUnmounted(() => {
                                 <span class="font-semibold capitalize">{{ game.trump_card?.suit || 'N/A' }}</span>
                             </div>
                             <div class="text-base text-green-900">
-                                <span class="font-semibold">Tu:</span> {{ myPoints }} pontos
+                                <span class="font-semibold">You:</span> {{ myPoints }} points
                             </div>
                             <div class="text-base text-green-900">
-                                <span class="font-semibold">Adversário:</span> {{ opponentPoints }} pontos
+                                <span class="font-semibold">Opponent:</span> {{ opponentPoints }} points
                             </div>
                             <div class="text-sm text-green-900 mt-1">
-                                (Cartas na mão: {{ myHand.length }})
+                                (Cards in hand: {{ myHand.length }})
                             </div>
 
-                            <!-- NOVO: Aviso sobre assistir -->
+                            <!-- Follow suit warning -->
                             <div v-if="mustFollowSuitNow" class="mt-3 p-2 bg-yellow-100 border border-yellow-400 rounded-lg">
                                 <div class="text-sm font-bold text-yellow-800 animate-pulse">
-                                    ⚠️ Deve seguir o naipe {{ opponentCardPlayed?.suit }}!
+                                    You must follow suit: {{ opponentCardPlayed?.suit }}!
                                 </div>
                                 <div class="text-xs text-yellow-700">
-                                    Não há mais cartas no baralho
+                                    There are no more cards in the deck
                                 </div>
                             </div>
                         </div>
@@ -551,17 +549,16 @@ onUnmounted(() => {
                     <CardContent class="flex justify-center gap-20">
                         <div class="flex flex-col items-center gap-2">
                             <CardPlayed :card="myCardPlayed" :key="roundKey" />
-                            <span class="text-xl font-semibold">Tu</span>
+                            <span class="text-xl font-semibold">You</span>
                         </div>
                         <div class="flex flex-col items-center gap-2">
                             <CardPlayed :card="opponentCardPlayed" :key="roundKey" />
-                            <span class="text-xl font-semibold text-red-700">Adversário</span>
+                            <span class="text-xl font-semibold text-red-700">Opponent</span>
                         </div>
                     </CardContent>
 
                     <!-- Your hand -->
                     <CardFooter class="flex flex-col gap-4 items-center">
-                        <!-- MODIFICADO: Adicionar validCards -->
                         <CardHand
                             :key="roundKey"
                             :cards="myHand"
@@ -576,20 +573,20 @@ onUnmounted(() => {
                                 {{ gameWinnerText }}
                             </div>
                             <div class="text-lg">
-                                Tu: {{ myPoints }} | Adversário: {{ opponentPoints }}
+                                You: {{ myPoints }} | Opponent: {{ opponentPoints }}
                             </div>
                             <div class="text-sm text-gray-600 mt-2">
-                                A iniciar próximo jogo...
+                                Starting next game...
                             </div>
                         </div>
 
                         <!-- Turn indicator -->
                         <div v-if="!isGameOver && !showGameResult" class="text-3xl font-bold">
                             <span v-if="myTurn" class="text-green-600">
-                                É a tua vez!
+                                It's your turn!
                             </span>
                             <span v-else class="text-orange-600">
-                                Adversário a jogar...
+                                Opponent is playing...
                             </span>
                         </div>
 
@@ -599,12 +596,12 @@ onUnmounted(() => {
                                 {{ gameWinnerText }}
                             </div>
                             <div class="text-lg text-gray-700 mb-3">
-                                Tu: <span class="font-bold">{{ myPoints }}</span> pontos |
-                                Adversário: <span class="font-bold">{{ opponentPoints }}</span> pontos
+                                You: <span class="font-bold">{{ myPoints }}</span> points |
+                                Opponent: <span class="font-bold">{{ opponentPoints }}</span> points
                             </div>
                             <div v-if="opponentInfo" class="bg-linear-to-r from-green-50 to-green-50 p-6 rounded-lg border-2 border-green-200">
                                 <p class="text-gray-700 mb-3 font-medium">
-                                    Gostaste de jogar com este adversário?
+                                    Did you enjoy playing with this opponent?
                                 </p>
                                 <div class="flex justify-center">
                                     <AddFriendButton
@@ -614,7 +611,7 @@ onUnmounted(() => {
                                 </div>
                             </div>
                             <Button @click="backToLobby" class="mt-3 bg-green-600" variant="default">
-                                ← Voltar ao Lobby
+                                Back to Lobby
                             </Button>
                         </div>
 
@@ -624,20 +621,20 @@ onUnmounted(() => {
                                 {{ matchWinnerText }}
                             </div>
                             <div class="text-lg mb-2">
-                                <span class="font-bold">Tu:</span> {{ myMarks }} marcas
+                                <span class="font-bold">You:</span> {{ myMarks }} marks
                                 <span class="mx-2">|</span>
-                                <span class="font-bold">Adversário:</span> {{ opponentMarks }} marcas
+                                <span class="font-bold">Opponent:</span> {{ opponentMarks }} marks
                             </div>
                             <div class="text-sm text-gray-600 mb-2">
-                                Total de pontos: {{ myTotalPoints }} - {{ opponentTotalPoints }}
+                                Total points: {{ myTotalPoints }} - {{ opponentTotalPoints }}
                             </div>
                             <div class="text-lg font-semibold text-green-600 mb-3">
-                                💰 Payout: {{ game.winner_payout || 0 }} moedas
+                                Payout: {{ game.winner_payout || 0 }} coins
                             </div>
 
                             <div v-if="opponentInfo" class="bg-linear-to-r from-purple-50 to-indigo-50 p-6 rounded-lg border-2 border-purple-200">
                                 <p class="text-gray-700 mb-3 font-medium">
-                                    Gostaste de jogar este match?
+                                    Did you enjoy playing this match?
                                 </p>
                                 <div class="flex justify-center">
                                     <AddFriendButton
@@ -648,7 +645,7 @@ onUnmounted(() => {
                             </div>
 
                             <Button @click="backToLobby" class="mt-3 bg-green-600" variant="default">
-                                ← Voltar ao Lobby
+                                Back to Lobby
                             </Button>
                         </div>
                     </CardFooter>

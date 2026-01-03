@@ -209,22 +209,22 @@
 
       <!-- Quick Links -->
       <div class="bg-white rounded-lg shadow-md border border-green-300 p-6 mb-6">
-        <h3 class="text-xl font-bold text-gray-800 mb-4">Links Rápidos</h3>
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Quick Links</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <router-link
             v-if="isPlayer"
             to="/coins"
             class="block p-4 bg-gray-50 rounded-lg text-green-600 font-semibold text-center hover:bg-green-600 hover:text-white transition-colors"
           >
-            💰 Gerir Moedas
+            Manage Coins
           </router-link>
         </div>
       </div>
 
       <div class="bg-white rounded-lg shadow-md border-2 border-red-500 p-6">
-        <h3 class="text-xl font-bold text-red-600 mb-2">⚠️ Zona de Perigo</h3>
+        <h3 class="text-xl font-bold text-red-600 mb-2">Danger Zone</h3>
         <p class="text-gray-600 mb-4">
-          Uma vez que apague a sua conta, não há volta atrás. Todas as suas moedas serão perdidas.
+          Once you delete your account, there is no going back. All your coins will be lost.
         </p>
 
         <button
@@ -232,14 +232,14 @@
           @click="showDeleteConfirm = true"
           class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-semibold"
         >
-          🗑️ Apagar Conta
+          Delete Account
         </button>
 
         <!-- Delete Confirmation -->
         <div v-if="showDeleteConfirm" class="mt-4 p-4 bg-red-50 rounded-lg">
-          <p class="font-semibold text-gray-800 mb-2">Tem a certeza? Esta ação não pode ser revertida.</p>
+          <p class="font-semibold text-gray-800 mb-2">Are you sure? This action cannot be undone.</p>
           <p class="text-gray-600 mb-3">
-            Insira a sua {{ confirmationType}} para confirmar:
+            Insert your {{ confirmationType}} to confirm:
           </p>
 
           <div class="flex gap-4 mb-3">
@@ -250,14 +250,14 @@
                 v-model="confirmationType"
                 class="text-green-600 focus:ring-green-600"
               />
-              <span class="text-sm">Confirmar com password</span>
+              <span class="text-sm">Confirm with password</span>
             </label>
           </div>
 
           <input
             v-model="deleteConfirmation"
             :type="confirmationType === 'password' ? 'password' : 'text'"
-            :placeholder="confirmationType === 'nickname' ? 'Insira o seu nickname' : 'Insira a sua password'"
+            :placeholder="confirmationType === 'nickname' ? 'Insert your nickname' : 'Insert your password'"
             class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-red-600 focus:outline-none mb-3"
           />
 
@@ -271,14 +271,14 @@
               :disabled="loadingDelete"
               class="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors font-semibold"
             >
-              <span v-if="loadingDelete">A apagar...</span>
-              <span v-else>Confirmar Eliminação</span>
+              <span v-if="loadingDelete">Deleting...</span>
+              <span v-else>Confirm Deletion</span>
             </button>
             <button
               @click="cancelDelete"
               class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors font-semibold"
             >
-              Cancelar
+              Cancel
             </button>
           </div>
         </div>
@@ -408,7 +408,7 @@ const handleDelete = async () => {
 
 const formatDate = (date) => {
   if (!date) return 'N/A'
-  return new Date(date).toLocaleDateString('pt-PT', {
+  return new Date(date).toLocaleDateString('en-US', {
     day: '2-digit',
     month: 'long',
     year: 'numeric'

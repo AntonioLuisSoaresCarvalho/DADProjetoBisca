@@ -3,10 +3,10 @@
     <table class="min-w-full text-sm text-left">
       <thead class="bg-green-100">
         <tr>
-          <th class="px-4 py-2 border-b border-green-200">Data</th>
-          <th class="px-4 py-2 border-b border-green-200">Tipo</th>
-          <th class="px-4 py-2 border-b border-green-200">Jogo/Partida</th>
-          <th class="px-4 py-2 border-b border-green-200 text-right">Moedas</th>
+          <th class="px-4 py-2 border-b border-green-200">Date</th>
+          <th class="px-4 py-2 border-b border-green-200">Type</th>
+          <th class="px-4 py-2 border-b border-green-200">Game/Match</th>
+          <th class="px-4 py-2 border-b border-green-200 text-right">Coins</th>
         </tr>
       </thead>
 
@@ -25,8 +25,8 @@
           </td>
 
           <td class="px-4 py-2 border-b border-green-100 text-sm text-green-700">
-            <span v-if="t.game_id">Jogo #{{ t.game_id }}</span>
-            <span v-else-if="t.match_id">Partida #{{ t.match_id }}</span>
+            <span v-if="t.game_id">Game #{{ t.game_id }}</span>
+            <span v-else-if="t.match_id">Match #{{ t.match_id }}</span>
             <span v-else>-</span>
           </td>
 
