@@ -23,7 +23,7 @@ export const useGameStore = defineStore('game', () => {
   const round_starter = ref(null)
 
   const game_type = ref(9) // 3 ou 9
-  const game_mode = ref('game') // 'game' ou 'match'
+  const game_mode = ref('game') // game ou match
   const player1_id = ref(null)
   const player2_id = ref(null)
 
@@ -85,37 +85,24 @@ export const useGameStore = defineStore('game', () => {
     return a
   }
 
-  /**
-   * Verifica se é obrigatório seguir o naipe
-   * Retorna true quando não há mais cartas para comprar do baralho
-   */
   function mustFollowSuit() {
     return deck_index.value >= deck.value.length
   }
 
-  /**
-   * Obtém as cartas válidas que um jogador pode jogar
-   * @param {Array} playerHand - Mão do jogador
-   * @param {Object} leadCard - Primeira carta jogada na rodada (ou null)
-   * @returns {Array} - Cartas que o jogador pode jogar
-   */
   function getValidCards(playerHand, leadCard) {
-    // Se ainda há cartas no deck OU ninguém jogou ainda, todas as cartas são válidas
+    // If there are still cards in the deck or no one has played yet, all cards are valid
     if (!mustFollowSuit() || !leadCard) {
       return playerHand
     }
     
-    // Verificar se o jogador tem cartas do mesmo naipe da carta jogada
+    // Verify if the player has cards of the same suit as the lead card
     const sameSuitCards = playerHand.filter(card => card.suit === leadCard.suit)
     
+    // If the player has cards of the same suit as the lead card, return them else return all cards
     if (sameSuitCards.length > 0) {
-      // Tem cartas do mesmo naipe - DEVE jogar uma delas
-      console.log(`⚠️ Must follow suit: ${leadCard.suit}`)
       return sameSuitCards
     }
     
-    // Não tem cartas do mesmo naipe - pode jogar qualquer carta
-    console.log(`✓ No cards of suit ${leadCard.suit} - can play any card`)
     return playerHand
   }
 
@@ -123,20 +110,20 @@ export const useGameStore = defineStore('game', () => {
     const newDeck = shuffle(generateDeck())
     deck.value = newDeck
 
-    // Guarda o tipo e modo do jogo
+    //Set game parameters
     game_type.value = type
     game_mode.value = mode
 
-    // Set trump card (last card in deck)
+    //Set trump card
     trump_card.value = deck.value[deck.value.length - 1]
     trump_suit.value = trump_card.value.suit
 
     // Deal cards to each player
     hand_player1.value = deck.value.slice(0, type)
     hand_player2.value = deck.value.slice(type, type * 2)
-    deck_index.value = type * 2 // Next card to draw
+    deck_index.value = type * 2
 
-    // Random first player
+    // The player who starts the game is randomly chosen
     turn_player.value = Math.random() < 0.5 ? 1 : 2
     round_starter.value = turn_player.value
 
@@ -148,33 +135,31 @@ export const useGameStore = defineStore('game', () => {
     card_played_player2.value = null
     game_over.value = false
     winner.value = null
-
-    console.log(`Game started! Bisca de ${type} | Mode: ${mode}`)
-    console.log(`Game started! Player ${turn_player.value} goes first`)
-    console.log(`Trump card: ${trump_card.value.name}`)
   }
 
   function determineTrickWinner(card1, card2) {
-    // Same suit: higher rank wins (lower order = higher rank)
+
+    //If cards are of the same suit
     if (card1.suit === card2.suit) {
       return card1.order < card2.order ? 1 : 2
     }
-    // Player 1's card is trump
+
+    // If Player 1's card is trump
     if (card1.suit === trump_suit.value) return 1
-    // Player 2's card is trump
+
+    // If Player 2's card is trump
     if (card2.suit === trump_suit.value) return 2
+
     // No trump: first player wins
     return round_starter.value
   }
 
   function playCard(card, player) {
     if (game_over.value) {
-      console.log('❌ Game is over')
       return false
     }
     
     if (turn_player.value !== player) {
-      console.log('❌ Not your turn')
       return false
     }
 
@@ -182,33 +167,29 @@ export const useGameStore = defineStore('game', () => {
     const idx = hand.findIndex(c => c.id === card.id)
     
     if (idx === -1) {
-      console.log('❌ Card not in hand')
+      console.log('That card is not in your hand!')
       return false
     }
 
-    // ===== NOVA VALIDAÇÃO: Verificar regra de assistir =====
-    if (player === 1) { // Validação apenas para jogador humano
-      const leadCard = card_played_player2.value // Se o bot jogou primeiro
+    if (player === 1) {
+      //If bot played first
+      const leadCard = card_played_player2.value
       const validCards = getValidCards(hand, leadCard)
       
       if (!validCards.find(c => c.id === card.id)) {
-        console.log('❌ Invalid card! Must follow suit when possible.')
-        toast.error('Deve jogar uma carta do mesmo naipe!')
+        toast.error('Must play card of the same suit!')
         return false
       }
     }
-    // ======================================================
 
-    // Remove card from hand
+    // Remove card from the hand
     hand.splice(idx, 1)
 
-    // Place card on table
+    // Place the card on table
     if (player === 1) {
       card_played_player1.value = card
-      console.log(`✓ Player 1 played: ${card.name}`)
     } else {
       card_played_player2.value = card
-      console.log(`✓ Player 2 (Bot) played: ${card.name}`)
     }
 
     // Check if round is complete
@@ -217,7 +198,6 @@ export const useGameStore = defineStore('game', () => {
     } else {
       // Switch turn to other player
       turn_player.value = player === 1 ? 2 : 1
-      console.log(`Turn switched to Player ${turn_player.value}`)
     }
 
     return true
@@ -228,8 +208,6 @@ export const useGameStore = defineStore('game', () => {
     const c2 = card_played_player2.value
     if (!c1 || !c2) return
 
-    console.log(`Resolving round ${current_round.value + 1}...`)
-
     const winnerPlayer = determineTrickWinner(c1, c2)
     const totalPoints = (c1.points || 0) + (c2.points || 0)
 
@@ -238,9 +216,6 @@ export const useGameStore = defineStore('game', () => {
     } else {
       points_player2.value += totalPoints
     }
-
-    console.log(`Player ${winnerPlayer} wins the round! (+${totalPoints} points)`)
-    console.log(`Score: P1=${points_player1.value} P2=${points_player2.value}`)
 
     current_round.value++
 
@@ -252,9 +227,9 @@ export const useGameStore = defineStore('game', () => {
   }
 
   function drawCards(winnerPlayer) {
+
     // Check if there are cards left to draw
     if (deck_index.value >= deck.value.length) {
-      console.log('No more cards to draw')
       return
     }
 
@@ -262,29 +237,26 @@ export const useGameStore = defineStore('game', () => {
     if (winnerPlayer === 1) {
       if (deck_index.value < deck.value.length) {
         hand_player1.value.push(deck.value[deck_index.value])
-        console.log(`Player 1 draws: ${deck.value[deck_index.value].name}`)
         deck_index.value++
       }
       if (deck_index.value < deck.value.length) {
         hand_player2.value.push(deck.value[deck_index.value])
-        console.log(`Player 2 draws: ${deck.value[deck_index.value].name}`)
         deck_index.value++
       }
     } else {
       if (deck_index.value < deck.value.length) {
         hand_player2.value.push(deck.value[deck_index.value])
-        console.log(`Player 2 draws: ${deck.value[deck_index.value].name}`)
         deck_index.value++
       }
       if (deck_index.value < deck.value.length) {
         hand_player1.value.push(deck.value[deck_index.value])
-        console.log(`Player 1 draws: ${deck.value[deck_index.value].name}`)
         deck_index.value++
       }
     }
   }
 
   function startNextRound(lastWinner) {
+
     // Check if game is over (no cards left in both hands)
     if (hand_player1.value.length === 0 && hand_player2.value.length === 0) {
       endGame()
@@ -299,10 +271,6 @@ export const useGameStore = defineStore('game', () => {
     turn_player.value = lastWinner
     round_starter.value = lastWinner
 
-    console.log(`Starting round ${current_round.value + 1}`)
-    console.log(`Player ${turn_player.value} starts this round`)
-    console.log(`Cards in deck: ${deck.value.length - deck_index.value}`)
-
     // If bot starts, trigger bot play
     if (turn_player.value === 2) {
       setTimeout(() => botPlay(), 800)
@@ -311,7 +279,7 @@ export const useGameStore = defineStore('game', () => {
 
   function botPlay() {
     if (game_over.value || turn_player.value !== 2) {
-      console.log(`Bot cannot play: game_over=${game_over.value}, turn=${turn_player.value}`)
+      console.log(`Bot cannot play!`)
       return
     }
 
@@ -321,39 +289,34 @@ export const useGameStore = defineStore('game', () => {
       return
     }
 
-    // ===== NOVA LÓGICA: Obter cartas válidas considerando a regra de assistir =====
     const leadCard = card_played_player1.value
     const validCards = getValidCards(hand, leadCard)
-
-    console.log(`🤖 Bot choosing from ${validCards.length} valid cards`)
-    // =============================================================================
 
     let chosen = null
 
     if (card_played_player1.value === null) {
-      // Bot is starting: play lowest non-trump card from valid cards
+
+      //If the Bot is starting: play lowest non-trump card from valid cards
       const nonTrump = validCards.filter(c => c.suit !== trump_suit.value)
       const pool = nonTrump.length ? nonTrump : validCards
       chosen = pool.sort((a, b) => a.points - b.points)[0]
-      console.log('🤖 Bot is starting the round')
+
     } else {
-      // Bot is responding: try to win if possible, mas apenas com cartas válidas
+      //If the Bot is responding,he tries to win if possible
       const c1 = card_played_player1.value
       const canWin = validCards.filter(c => determineTrickWinner(c1, c) === 2)
 
       if (canWin.length > 0) {
         // Play weakest winning card from valid cards
         chosen = canWin.sort((a, b) => b.order - a.order)[0]
-        console.log('🤖 Bot trying to win the trick with valid card')
+
       } else {
         // Can't win: play lowest point card from valid cards
         chosen = validCards.sort((a, b) => a.points - b.points)[0]
-        console.log('🤖 Bot cannot win, playing lowest valid card')
       }
     }
 
     if (chosen) {
-      console.log(`🤖 Bot chose: ${chosen.name}`)
       playCard(chosen, 2)
     }
   }
@@ -372,6 +335,7 @@ export const useGameStore = defineStore('game', () => {
     console.log('Game Over!')
     console.log(`Final Score: P1=${points_player1.value} P2=${points_player2.value}`)
     console.log(`Winner: ${winner.value}`)
+    console.clear()
   }
 
   function getGameResult() {
@@ -384,7 +348,7 @@ export const useGameStore = defineStore('game', () => {
   }
 
   // ----- ---------------------------- -----------
-  // ----- Added for multiplayer games: -----------
+  // ----- MULTPLAYER GAME SECTION -----------
   // ----- ---------------------------- -----------
 
   const games = ref([])
@@ -410,7 +374,6 @@ export const useGameStore = defineStore('game', () => {
 
   const setGames = (newGames) => {
     games.value = newGames
-    console.log(`[Game] Games changed | game count ${games.value.length}`)
   }
 
   const myGames = computed(() => {
@@ -424,29 +387,33 @@ export const useGameStore = defineStore('game', () => {
   const multiplayerGame = ref({})
 
   const setMultiplayerGame = (game) => {
+    // If this is a match game, check if it's a new game
     if (game.is_match) {
       if (game.current_game_number > previousGameNumber.value) {
         currentDbGameId.value = null
         previousGameNumber.value = game.current_game_number
       }
     } else {
-      // For standalone games - clear the currentDbGameId
+      // if it's a standalone game ,it will clear the currentDbGameId
       if (multiplayerGame.value && multiplayerGame.value.id !== game.id) {
         currentDbGameId.value = null
       }
     }
     
-    // Atribui o currentDbGameId ao objeto game para uso nas condições
+    // Assign currentDbGameId to the game
     game.db_game_id = currentDbGameId.value
 
     multiplayerGame.value = game
-    console.log(`[Game] Multiplayer Game changed | round ${game.current_round}`)
   }
 
+  //Save the beginning game on the database
   const saveGameStart = async (gameData) => {
+
+    // Check if game has already been saved
     if (currentDbGameId.value) {
-      console.log('⚠️ Game already saved with ID:', currentDbGameId.value)
-      return { game: { id: currentDbGameId.value } }
+      console.log('Game already saved with ID:', currentDbGameId.value)
+      //return { game: { id: currentDbGameId.value } }
+      return
     }
     
     try {
@@ -459,7 +426,7 @@ export const useGameStore = defineStore('game', () => {
         status: 'Playing'
       })
 
-      console.log('✅ [saveGameStart] Game saved to database:', response.game)
+      console.log('Game saved to database:', response.game)
       
       const gameId = response.game.id
       currentDbGameId.value = gameId
@@ -471,19 +438,19 @@ export const useGameStore = defineStore('game', () => {
 
       return response
     } catch (error) {
-      console.error('❌ [saveGameStart] Failed to save game start:', error)
       console.error('❌ Error response:', error.response?.data)
       console.error('❌ Error status:', error.response?.status)
       throw error 
     }
   }
 
+  //Save the end game on the database, by updating the game
   const saveGameEnd = async (gameData) => {
     try {
       const dbGameId = gameData.db_game_id
       
       if (!dbGameId) {
-        console.error('❌ No database game ID found')
+        console.error('No database game with this ID found')
         return
       }
 
@@ -493,13 +460,17 @@ export const useGameStore = defineStore('game', () => {
       let isDraw = false
 
       if (gameData.resigned_player) {
-        // Resignation case
+
+        //Check which player resigned
         const resignedIsPlayer1 = gameData.resigned_player === 1
         winnerUserId = resignedIsPlayer1 ? gameData.player2 : gameData.player1
         loserUserId = resignedIsPlayer1 ? gameData.player1 : gameData.player2
+
       } else if (gameData.winner === 'draw') {
+        // Game ended in a draw
         isDraw = true
       } else {
+        // Game ended with a winner
         winnerUserId = gameData.winner === 1 ? gameData.player1 : gameData.player2
         loserUserId = gameData.winner === 1 ? gameData.player2 : gameData.player1
       }
@@ -515,11 +486,10 @@ export const useGameStore = defineStore('game', () => {
         resigned_player: gameData.resigned_player || null
       })
 
-      console.log('✅ Game end saved to database:', response.game)
+      console.log('Game updated on the database:', response.game)
       return response.game
     } catch (error) {
-      console.error('❌ Failed to save game end:', error)
-      toast.error('Failed to update game in database')
+      console.error('Failed to update game:', error)
     }
   }
 

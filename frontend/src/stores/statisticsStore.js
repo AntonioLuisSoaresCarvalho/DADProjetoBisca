@@ -29,7 +29,6 @@ export const useStatisticsStore = defineStore('statistics', {
         // Load public stats
         const data = await api.fetchPublicStatistics()
 
-        // Update public stats
         if (data.platform) {
           this.platform = data.platform
         }
@@ -55,12 +54,8 @@ export const useStatisticsStore = defineStore('statistics', {
         }
 
         this.updatedAt = new Date()
-        console.log('Public stats loaded:', data)
       } catch (error) {
         console.error('Error loading stats:', error)
-        if (error.response) {
-          console.error('Response error:', error.response.status, error.response.data)
-        }
       } finally {
         this.loading = false
       }

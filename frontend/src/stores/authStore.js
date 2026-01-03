@@ -31,12 +31,10 @@ export const useAuthStore = defineStore("auth",{
         async initAuth(){
             const apiStore = useApiStore(); 
 
-            // Initialize the apiStore first to load the token
             await apiStore.initAuth();
             
-            // Now check if there's a token
             if (!apiStore.token) {
-                console.log('[AuthStore] No token found');
+                console.log('No token found');
                 return;
             }
 
@@ -45,7 +43,7 @@ export const useAuthStore = defineStore("auth",{
                 this.user = res.data.user;
                 this.isAuthenticated = true;
             } catch (e) {
-                console.error('Erro ao inicializar autenticação:', e);
+                console.error('Error initializing auth:', e);
                 this.clearAuth();
             }
 
@@ -107,7 +105,9 @@ export const useAuthStore = defineStore("auth",{
                 this.user = res.data.user;
                 return { success : true , message : res.data.message}
             } catch (error) {
-                return { success : false , message : res.data?.message || 'Update failed',
+                return { 
+                    success : false , 
+                    message : error.response?.data?.message || 'Update failed',
                     errors : error.response?.data?.errors || {}
                 }
             }
@@ -154,7 +154,6 @@ export const useAuthStore = defineStore("auth",{
             }
         },
         
-        // 4. Action para atualizar saldo após transação
         async refreshCoinsBalance() {
             try {
                 const apiStore = useApiStore()
