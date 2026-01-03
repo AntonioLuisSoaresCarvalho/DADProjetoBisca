@@ -263,8 +263,8 @@ export const useApiStore = defineStore("api", () => {
         return response.data
     }
 
-    const fetchAdminStatistics = async () => {
-        const response = await apiClient.get(`/admin/statistics`,{params: { days: 30 }})
+    const fetchAdminStatistics = async (days = 30) => {
+        const response = await apiClient.get(`/admin/statistics`,{params: { days }})
         return response.data
     }
 

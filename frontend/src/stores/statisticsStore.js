@@ -21,7 +21,7 @@ export const useStatisticsStore = defineStore('statistics', {
   }),
 
   actions: {
-    async loadStats(isAdmin = false) {
+    async loadStats(isAdmin = false, days = 30) {
     const api = useApiStore()
       try {
         this.loading = true
@@ -40,7 +40,7 @@ export const useStatisticsStore = defineStore('statistics', {
         // Load admin stats if user is admin
         if (isAdmin) {
           
-          const adminRes = await api.fetchAdminStatistics()
+          const adminRes = await api.fetchAdminStatistics(days)
           
           if (adminRes.timeSeries) {
             this.admin.timeSeries = adminRes.timeSeries

@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, computed } from 'vue'
+import { onMounted, computed,ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useStatisticsStore } from '@/stores/statisticsStore'
 import StatisticsBarChart from '@/components/StatisticsBarChart.vue'
@@ -8,6 +8,8 @@ const authStore = useAuthStore()
 const statsStore = useStatisticsStore()
 
 const isAdmin = computed(() => authStore.isAdmin)
+
+const selectedDays = ref(30)
 
 
 const recentActivityChartData = computed(() => {
@@ -22,7 +24,7 @@ const recentActivityChartData = computed(() => {
 })
 
 const loadStats = async () => {
-  await statsStore.loadStats(isAdmin.value)
+  await statsStore.loadStats(isAdmin.value, selectedDays.value)
 }
 
 onMounted(loadStats)
@@ -91,12 +93,35 @@ onMounted(loadStats)
 
     <!-- ADMIN ONLY: Detailed Breakdowns -->
     <div v-if="isAdmin" class="rounded-2xl border border-green-500/30 bg-green-500/5 p-6 backdrop-blur">
-      <h2 class="text-xl font-bold text-white mb-2">
-        Estatísticas Detalhadas (Admin)
-      </h2>
-      <p class="text-white/70 mb-6">
-        Dados não anonimizados e análises avançadas da plataforma.
-      </p>
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-xl font-bold text-white mb-2">
+            Detailed statistics (Admin)
+          </h2>
+          <p class="text-white/70">
+            Data not anonimized and avanced details of the platform.
+          </p>
+        </div>
+
+        <!-- Range Selector -->
+        <div class="flex items-center gap-3">
+          <label for="days-range" class="text-white text-sm font-semibold">Período:</label>
+          <select
+            id="days-range"
+            v-model.number="selectedDays"
+            @change="loadStats"
+            class="bg-green-500 text-white border border-green/20 rounded-lg px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-green-500 hover:bg-green/15 transition"
+          >
+            <option value="7">7 dias</option>
+            <option value="14">14 dias</option>
+            <option value="30">30 dias</option>
+            <option value="60">60 dias</option>
+            <option value="90">90 dias</option>
+            <option value="180">180 dias</option>
+            <option value="365">365 dias</option>
+          </select>
+        </div>
+      </div>
 
       <!-- Admin: Top Players -->
       <div class="mb-8">
