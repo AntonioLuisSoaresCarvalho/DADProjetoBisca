@@ -55,7 +55,6 @@ export const useSocketStore = defineStore('socket', () => {
     socket.emit('cancel-game', user)
   }
 
-<<<<<<< HEAD
   const syncMatchState = (game) => {
     // Sync match state from backend
     matchStore.is_match_mode = true
@@ -86,8 +85,6 @@ export const useSocketStore = defineStore('socket', () => {
   } 
 
   //Function to handle game state changes
-=======
->>>>>>> 84245e786e97fa300636d3e199881954bde1cd3f
   const handleMatchGameState = async (game) => {
     console.log('[Match Mode] Processing game state...')
     console.log('Current state:', {
