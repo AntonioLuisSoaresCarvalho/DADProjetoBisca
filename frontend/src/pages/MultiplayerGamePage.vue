@@ -17,6 +17,8 @@ import CardHand from '@/components/game/CardHand.vue'
 import CardPlayed from '@/components/game/CardPlayed.vue'
 import CardBack from '@/components/game/CardBack.vue'
 
+import GameChat from '@/components/game/GameChat.vue'
+
 const router = useRouter()
 const gameStore = useGameStore()
 const socketStore = useSocketStore()
@@ -121,7 +123,7 @@ const lastGameMarks = computed(() => {
 
 const gameWinnerText = computed(() => {
     if (!isGameOver.value) return ''
-    
+
     // Check if game ended by resignation
     if (game.value.resigned_player) {
         const resignedPlayer = game.value.resigned_player
@@ -137,16 +139,16 @@ const gameWinnerText = computed(() => {
             return '🎉 Adversário desistiu! Ganhaste!'
         }
     }
-    
+
     const winner = game.value.winner
-    
+
     if (winner === 'draw') {
         return '🤝 Empate - Sem marcas!'
     }
-    
+
     const marks = lastGameMarks.value
     const isWinner = winner === myPlayerNumber.value
-    
+
     if (marks === 4) {
         return isWinner ? '🏁 BANDEIRA! Vitória automática!' : '😱 BANDEIRA! Perdeste!'
     } else if (marks === 2) {
@@ -170,7 +172,7 @@ const gamesHistoryFormatted = computed(() => {
     return game.value.games_history.map(g => {
         const winnerName = g.winner === myPlayerNumber.value ? 'Tu' : 'Adversário'
         let description = `Jogo ${g.game_number}: `
-        
+
         if (g.is_draw) {
             description += `Empate (${g.points_player1}-${g.points_player2}) - Sem marcas`
         } else {
@@ -180,10 +182,10 @@ const gamesHistoryFormatted = computed(() => {
             else if (marks === 2) marksText = 'CAPOTE (2 marcas)'
             else if (marks === 1) marksText = 'RISCA (1 marca)'
             else marksText = 'Sem marcas'
-            
+
             description += `${winnerName} ganhou ${marksText} (${g.points_player1}-${g.points_player2})`
         }
-        
+
         return { ...g, description }
     })
 })
@@ -207,15 +209,15 @@ const playCard = (card) => {
 
 const resignGame = () => {
     if (isGameOver.value || !gameID.value) return
-    
+
     let confirmMessage = 'Tens a certeza que queres desistir?'
-    
+
     if (isMatch.value) {
         confirmMessage = '⚠️ ATENÇÃO: Desistir num MATCH significa perder AUTOMATICAMENTE 4-0!\n\nTens a certeza absoluta que queres desistir?'
     } else {
         confirmMessage = 'Tens a certeza que queres desistir? Vais perder este jogo!'
     }
-    
+
     const confirmed = confirm(confirmMessage)
     if (confirmed) {
         console.log('[Game] Player resigning...')
@@ -225,23 +227,23 @@ const resignGame = () => {
 
 const backToLobby = () => {
     stopTimer()
-    
+
     // If game is still active, resign before leaving
     if (!isGameOver.value && !isMatchOver.value && gameID.value) {
         console.log('[Game] Leaving active game - auto-resigning')
         socketStore.emitResignGame(gameID.value, authStore.user)
     }
-    
+
     router.push('/lobby')
 }
 
 const startTimer = () => {
     stopTimer()
     turnTimer.value = 20
-    
+
     timerInterval = setInterval(() => {
         turnTimer.value--
-        
+
         if (turnTimer.value <= 0) {
             console.log('[Game] Timer expired! Auto-resigning...')
             stopTimer()
@@ -278,7 +280,7 @@ watch(
             stopTimer()
             return
         }
-        
+
         if (roundInProgress) {
             stopTimer()
         } else if (newTurn === myPlayerNumber.value) {
@@ -296,11 +298,11 @@ watch(
     (isOver) => {
         if (isOver) {
             stopTimer()
-            
+
             if (isMatch.value && !isMatchOver.value) {
                 showGameResult.value = true
                 console.log('Game ended in match, waiting 3 seconds...')
-                
+
                 setTimeout(() => {
                     if (!isMatchOver.value) {
                         showGameResult.value = false
@@ -322,7 +324,7 @@ onMounted(() => {
 
 onUnmounted(() => {
     stopTimer()
-    
+
     // If leaving an active game, auto-resign
     if (gameID.value && game.value && !game.value.game_over && !game.value.match_over) {
         console.log('[Game] Component unmounting during active game - auto-resigning')
@@ -339,10 +341,10 @@ onUnmounted(() => {
                     <CardTitle class="text-center text-3xl font-bold flex-1">
                         {{ isMatch ? 'Match Multiplayer' : 'Jogo Multiplayer' }} - Bisca de {{ game.game_type }}
                     </CardTitle>
-                    <Button 
+                    <Button
                         v-if="!isGameOver && !isMatchOver"
-                        @click="resignGame" 
-                        variant="destructive" 
+                        @click="resignGame"
+                        variant="destructive"
                         size="sm">
                         🏳️ Desistir
                     </Button>
@@ -407,25 +409,33 @@ onUnmounted(() => {
                 <CardBack v-for="(_, i) in opponentHand" :key="i" />
             </div>
 
-            <!-- Played cards -->
-            <CardContent class="flex justify-center gap-20">
+            <!-- Played cards and Chat -->
+            <CardContent class="flex justify-center gap-8 items-start">
+              <!-- Played Cards Section -->
+              <div class="flex justify-center gap-20">
                 <div class="flex flex-col items-center gap-2">
-                    <CardPlayed :card="myCardPlayed" :key="roundKey" />
-                    <span class="text-xl font-semibold">Tu</span>
+                  <CardPlayed :card="myCardPlayed" :key="roundKey" />
+                  <span class="text-xl font-semibold">Tu</span>
                 </div>
                 <div class="flex flex-col items-center gap-2">
-                    <CardPlayed :card="opponentCardPlayed" :key="roundKey" />
-                    <span class="text-xl font-semibold text-red-700">Adversário</span>
+                  <CardPlayed :card="opponentCardPlayed" :key="roundKey" />
+                  <span class="text-xl font-semibold text-red-700">Adversário</span>
                 </div>
+              </div>
+
+              <!-- Chat Component -->
+              <div class="w-80" style="height: 500px;">
+                <GameChat v-if="gameID" :gameId="gameID" />
+              </div>
             </CardContent>
 
             <!-- Your hand -->
             <CardFooter class="flex flex-col gap-4 items-center">
-                <CardHand 
-                    :key="roundKey" 
-                    :cards="myHand" 
-                    :disabled="!myTurn || isGameOver || showGameResult" 
-                    @playCard="playCard" 
+                <CardHand
+                    :key="roundKey"
+                    :cards="myHand"
+                    :disabled="!myTurn || isGameOver || showGameResult"
+                    @playCard="playCard"
                 />
 
                 <!-- Game result (shown briefly in match mode) -->

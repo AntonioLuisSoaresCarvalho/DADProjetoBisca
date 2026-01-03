@@ -4,7 +4,7 @@
 
       <!-- Loading -->
       <div
-        v-if="historyStore.matchLoading"
+        v-if="historyStore.matchesLoading"
         class="bg-white border border-green-300 rounded-2xl p-12 text-center shadow-lg"
       >
         <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
@@ -13,10 +13,10 @@
 
       <!-- Error -->
       <div
-        v-else-if="historyStore.matchError"
+        v-else-if="historyStore.matchesError"
         class="bg-red-50 border border-red-300 rounded-2xl p-8 text-center shadow-lg"
       >
-        <p class="text-red-700 font-semibold mb-4">{{ historyStore.matchError }}</p>
+        <p class="text-red-700 font-semibold mb-4">{{ historyStore.matchesError }}</p>
 
         <div class="flex gap-4 justify-center">
           <button
@@ -26,7 +26,7 @@
             Retry
           </button>
           <button
-            @click="$router.go(-1)"
+            @click="goBack"
             class="px-6 py-3 bg-white text-green-700 font-semibold border border-green-300 rounded-xl hover:bg-green-50 transition"
           >
             Go Back
@@ -39,11 +39,18 @@
 
         <!-- Back btn -->
         <button
-          @click="$router.go(-1)"
+          @click="goBack"
           class="mb-6 px-5 py-2 bg-white border border-green-300 text-green-700 rounded-xl font-semibold hover:bg-green-50 transition flex items-center gap-2"
         >
           <span>←</span> Back
         </button>
+
+        <!-- Admin viewing indicator -->
+        <div v-if="viewingAsAdmin && perspectivePlayer" class="mb-6 bg-blue-100 border border-blue-300 rounded-xl p-4">
+          <p class="text-blue-800 font-semibold">
+            👤 Viewing as: <strong>{{ perspectivePlayer.nickname }}</strong> ({{ perspectivePlayer.name }})
+          </p>
+        </div>
 
         <!-- Header -->
         <h1 class="text-4xl font-extrabold text-white mb-8">Match Details</h1>
@@ -88,6 +95,16 @@
 
             <div class="space-y-4 text-green-800 font-medium">
               <div class="flex justify-between py-2">
+                <span class="font-semibold">Type:</span>
+                <span>{{ match.type }}</span>
+              </div>
+
+              <div class="flex justify-between py-2">
+                <span class="font-semibold">Stake:</span>
+                <span class="font-bold text-orange-600">{{ match.stake }} coins</span>
+              </div>
+
+              <div class="flex justify-between py-2">
                 <span class="font-semibold">Status:</span>
                 <span
                   class="px-3 py-1 rounded-full text-sm font-semibold"
@@ -116,23 +133,35 @@
               </div>
 
               <!-- Games inside the match -->
-              <div class="pt-5 mt-5 border-t border-green-200">
-                <h4 class="text-lg font-bold mb-3 text-green-900">Games</h4>
+              <div v-if="match.games && match.games.length > 0" class="pt-5 mt-5 border-t border-green-200">
+                <h4 class="text-lg font-bold mb-3 text-green-900">Games in this Match</h4>
 
                 <div class="space-y-3">
                   <div
                     v-for="g in match.games"
                     :key="g.id"
-                    class="flex justify-between items-center bg-green-50 border border-green-200 p-3 rounded-xl"
+                    class="flex justify-between items-center bg-green-50 border border-green-200 p-3 rounded-xl hover:bg-green-100 transition"
                   >
-                    <span class="font-semibold text-green-900">Game #{{ g.id }}</span>
+                    <div class="flex items-center gap-3">
+                      <span class="font-semibold text-green-900">Game #{{ g.id }}</span>
+                      <span
+                        class="px-2 py-1 text-xs font-semibold rounded-full"
+                        :class="{
+                          'bg-green-200 text-green-900': g.result === 'win',
+                          'bg-red-200 text-red-900': g.result === 'loss',
+                          'bg-gray-200 text-gray-800': g.result === 'draw'
+                        }"
+                      >
+                        {{ formatResult(g.result) }}
+                      </span>
+                    </div>
 
-                    <router-link
-                      :to="{ name: 'GameDetails', params: { id: g.id } }"
+                    <button
+                      @click="viewGameDetails(g.id)"
                       class="text-green-700 font-semibold hover:underline"
                     >
                       View →
-                    </router-link>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -142,23 +171,29 @@
 
           <!-- Match Score -->
           <div class="bg-white border border-green-300 rounded-2xl p-8 shadow-lg">
-            <h3 class="text-2xl font-extrabold text-green-900 mb-6">Players & Score</h3>
+            <h3 class="text-2xl font-extrabold text-green-900 mb-6">Players & Marks</h3>
 
-            <!-- You -->
-            <div class="p-5 bg-green-100 border border-green-300 rounded-xl flex justify-between items-center mb-6">
-              <div class="flex items-center gap-4">
-                <img
-                  :src="getAvatarUrl(currentUser.photo_avatar_filename)"
-                  class="w-16 h-16 rounded-full border-4 border-green-300 object-cover"
-                />
-                <div>
-                  <div class="font-bold text-green-900 text-lg">{{ currentUser.nickname }}</div>
-                  <div class="text-sm text-green-700">{{ viewingAsAdmin ? 'Player' : 'You' }}</div>
+            <!-- Perspective Player -->
+            <div class="p-5 bg-green-100 border border-green-300 rounded-xl mb-6">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-4">
+                  <img
+                    :src="getAvatarUrl(perspectivePlayer?.photo_avatar_filename)"
+                    class="w-16 h-16 rounded-full border-4 border-green-300 object-cover"
+                  />
+                  <div>
+                    <div class="font-bold text-green-900 text-lg">{{ perspectivePlayer?.nickname }}</div>
+                    <div class="text-sm text-green-700">{{ viewingAsAdmin ? 'Player' : 'You' }}</div>
+                  </div>
+                </div>
+
+                <div class="text-5xl font-extrabold text-green-700">
+                  {{ match.user_marks }}
                 </div>
               </div>
 
-              <div class="text-5xl font-extrabold text-green-700">
-                {{ match.user_points }}
+              <div class="text-sm text-green-700 mt-2 pt-2 border-t border-green-200">
+                Total Points: <span class="font-bold">{{ match.user_points }}</span>
               </div>
             </div>
 
@@ -166,23 +201,29 @@
             <div class="text-center text-3xl font-extrabold text-green-600 my-3">VS</div>
 
             <!-- Opponent -->
-            <div class="p-5 bg-gray-100 border border-green-300 rounded-xl flex justify-between items-center">
-              <div class="flex items-center gap-4">
-                <img
-                  :src="getAvatarUrl(match.opponent.photo_avatar_filename)"
-                  class="w-16 h-16 rounded-full border-4 border-green-300 object-cover"
-                />
-                <div>
-                  <div class="font-bold text-green-900 text-lg">{{ match.opponent.nickname }}</div>
-                  <div class="text-sm text-green-700">Opponent</div>
+            <div class="p-5 bg-gray-100 border border-green-300 rounded-xl">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-4">
+                  <img
+                    :src="getAvatarUrl(match.opponent?.photo_avatar_filename)"
+                    class="w-16 h-16 rounded-full border-4 border-green-300 object-cover"
+                  />
+                  <div>
+                    <div class="font-bold text-green-900 text-lg">{{ match.opponent?.nickname }}</div>
+                    <div class="text-sm text-green-700">Opponent</div>
+                  </div>
+                </div>
+
+                <div
+                  class="text-5xl font-extrabold"
+                  :class="match.result === 'loss' ? 'text-red-600' : 'text-green-700'"
+                >
+                  {{ match.opponent_marks }}
                 </div>
               </div>
 
-              <div
-                class="text-5xl font-extrabold"
-                :class="match.result === 'loss' ? 'text-red-600' : 'text-green-700'"
-              >
-                {{ match.opponent_points }}
+              <div class="text-sm text-green-700 mt-2 pt-2 border-t border-green-200">
+                Total Points: <span class="font-bold">{{ match.opponent_points }}</span>
               </div>
             </div>
           </div>
@@ -201,65 +242,78 @@
     </div>
   </div>
 </template>
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useHistoryStore } from '@/stores/history'
 import { useAuthStore } from '@/stores/authStore'
-import { useApiStore } from '@/stores/api'
 
 const route = useRoute()
 const router = useRouter()
 const historyStore = useHistoryStore()
 const authStore = useAuthStore()
-const apiStore = useApiStore()
 
 const match = ref(null)
-const currentUser = ref(null)
+const perspectivePlayer = ref(null)
 const viewingAsAdmin = ref(false)
 
 onMounted(async () => {
-    // Check if admin is viewing another player's history
-    const playerId = route.query.playerId
-
-    if (playerId) {
-        // Admin viewing another player's match
-        viewingAsAdmin.value = true
-        try {
-            const playerResponse = await apiStore.getUser(playerId)
-            currentUser.value = playerResponse.data
-        } catch (error) {
-            console.error('Error loading player info:', error)
-            currentUser.value = authStore.currentUser
-        }
-    } else {
-        // Normal user viewing their own match
-        currentUser.value = authStore.currentUser
-    }
-
-    loadMatch()
+  await loadMatch()
 })
 
 const loadMatch = async () => {
-    const matchId = route.params.id
-    const playerId = route.query.playerId || null
-    const matchData = await historyStore.fetchMatchDetails(matchId, playerId)
-    match.value = matchData
+  const matchId = route.params.id
+  const playerId = route.query.playerId || null
+
+  // Check if admin is viewing another player's history
+  if (playerId) {
+    viewingAsAdmin.value = true
+  }
+
+  try {
+    // fetchMatchDetails now returns the full response object from backend
+    const response = await historyStore.fetchMatchDetails(matchId, playerId)
+    match.value = response.match
+
+    // The backend now returns perspective_player in the response (after updating backend)
+    if (response.perspective_player) {
+      perspectivePlayer.value = response.perspective_player
+    } else {
+      // Fallback to current user if backend doesn't provide it
+      perspectivePlayer.value = authStore.currentUser
+    }
+  } catch (error) {
+    console.error('Error loading match:', error)
+  }
 }
 
 const viewGameDetails = (gameId) => {
-    const query = {};
-    if (viewingAsAdmin.value && route.query.playerId) {
-        query.playerId = route.query.playerId;
-    }
-    router.push({ name: 'GameDetails', params: { id: gameId }, query })
+  const query = {}
+  // CRITICAL: Preserve the playerId query parameter when navigating
+  if (route.query.playerId) {
+    query.playerId = route.query.playerId
+  }
+  router.push({ name: 'GameDetails', params: { id: gameId }, query })
+}
+
+const goBack = () => {
+  // If viewing as admin, go back to the player's history with playerId preserved
+  if (viewingAsAdmin.value && route.query.playerId) {
+    router.push({
+      name: 'MatchHistory',
+      query: { playerId: route.query.playerId }
+    })
+  } else {
+    router.go(-1)
+  }
 }
 
 const formatResult = (result) => {
   const results = {
-    win: '✓ Win',
-    loss: '✗ Loss',
-    draw: '= Draw'
+    win: 'Win',
+    loss: 'Loss',
+    draw: 'Draw'
   }
   return results[result] || result
 }
@@ -284,8 +338,8 @@ const formatDuration = (seconds) => {
 }
 
 const getAvatarUrl = (filename) => {
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-  if (!filename) return `${apiBaseUrl}/storage/photos_avatars//anonymous.png`;
-  return `${apiBaseUrl}/storage/photos_avatars/${filename}`;
-};
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+  if (!filename) return `${apiBaseUrl}/storage/photos_avatars/anonymous.png`
+  return `${apiBaseUrl}/storage/photos_avatars/${filename}`
+}
 </script>
