@@ -41,6 +41,8 @@ const gameID = computed(() => game.value?.id)
 
 const isMatch = computed(() => game.value?.is_match || false)
 
+const gameCardWrapper = ref(null)
+
 const myPlayerNumber = computed(() => {
     if (!game.value || !authStore.user) return null
     return game.value.player1 === authStore.user.id ? 1 : 2
@@ -50,7 +52,7 @@ const opponentPlayerNumber = computed(() => myPlayerNumber.value === 1 ? 2 : 1)
 
 const opponentInfo = computed(() => {
     if (!game.value) return null
-    
+
     if (!opponentData.value) {
         return {
             id: null,
@@ -59,7 +61,7 @@ const opponentInfo = computed(() => {
             photo_avatar_filename: null
         }
     }
-    
+
     return {
         id: opponentData.value.id,
         nickname: opponentData.value.nickname || 'Adversário',
@@ -161,24 +163,24 @@ const mustFollowSuitNow = computed(() => {
 
 const validCards = computed(() => {
     if (!game.value || !myTurn.value || isGameOver.value) return []
-    
+
     const hand = myHand.value
     const leadCard = opponentCardPlayed.value
-    
+
     // Se ainda há cartas no deck OU adversário não jogou, todas são válidas
     if (!mustFollowSuitNow.value || !leadCard) {
         return hand
     }
-    
+
     // Verificar se tem cartas do mesmo naipe
     const sameSuitCards = hand.filter(card => card.suit === leadCard.suit)
-    
+
     if (sameSuitCards.length > 0) {
         // Tem cartas do mesmo naipe - DEVE jogar uma delas
         console.log(`⚠️ Must follow suit: ${leadCard.suit}`)
         return sameSuitCards
     }
-    
+
     // Não tem cartas do mesmo naipe - pode jogar qualquer
     console.log(`✓ No cards of suit ${leadCard.suit} - can play any`)
     return hand
@@ -272,19 +274,19 @@ const playCard = (card) => {
         console.log('❌ Not your turn or game result showing')
         return
     }
-    
+
     if (!gameID.value) {
         console.error('[Game] Cannot play card - game ID is undefined')
         return
     }
-    
+
     // VALIDAÇÃO: Verificar se carta é válida
     if (!isCardValid(card)) {
         console.log('❌ Invalid card! Must follow suit when possible.')
         alert('⚠️ Deve jogar uma carta do mesmo naipe!')
         return
     }
-    
+
     socketStore.emitPlayCard(gameID.value, card, authStore.user)
 }
 
@@ -399,15 +401,30 @@ watch(
     }
 )
 
+// Watch only for initial game setup (not every state change)
+watch(
+  () => game.value?.id,
+  (newId) => {
+    if (newId) {
+      // New game started - let chat resize after render
+      nextTick(() => {
+        setTimeout(() => {
+          console.log('🎮 New game detected, ID:', newId)
+        }, 300)
+      })
+    }
+  }
+)
+
 /* ------------------ LIFECYCLE ------------------ */
 
 onMounted(async () => {
     console.log('[Game] Component mounted, game:', game.value)
     if (game.value) {
-        const opponentId = opponentPlayerNumber.value === 1 
-            ? game.value.player1 
+        const opponentId = opponentPlayerNumber.value === 1
+            ? game.value.player1
             : game.value.player2
-        
+
         try {
             const api = useApiStore()
             const response = await api.getUser(opponentId)
@@ -442,10 +459,10 @@ onUnmounted(() => {
 <template>
     <div v-if="game" class="flex justify-center mt-10 px-4">
         <!-- Main Container with 2 columns -->
-        <div class="flex gap-6 w-full max-w-[1400px] items-stretch">
+        <div class="flex gap-6 w-full max-w-[1400px] items-start" style="min-height: 800px;">
 
             <!-- LEFT COLUMN: Game Area (Cards) -->
-            <div class="flex-1 min-w-0">
+            <div class="flex-1 min-w-0" ref="gameCardWrapper">
                 <Card>
                     <CardHeader>
                         <div class="flex justify-between items-center">
@@ -512,7 +529,7 @@ onUnmounted(() => {
                             <div class="text-sm text-green-900 mt-1">
                                 (Cartas na mão: {{ myHand.length }})
                             </div>
-                            
+
                             <!-- NOVO: Aviso sobre assistir -->
                             <div v-if="mustFollowSuitNow" class="mt-3 p-2 bg-yellow-100 border border-yellow-400 rounded-lg">
                                 <div class="text-sm font-bold text-yellow-800 animate-pulse">
@@ -590,7 +607,7 @@ onUnmounted(() => {
                                     Gostaste de jogar com este adversário?
                                 </p>
                                 <div class="flex justify-center">
-                                    <AddFriendButton 
+                                    <AddFriendButton
                                         :opponent="opponentInfo"
                                         @added="handleFriendAdded"
                                     />
@@ -623,7 +640,7 @@ onUnmounted(() => {
                                     Gostaste de jogar este match?
                                 </p>
                                 <div class="flex justify-center">
-                                    <AddFriendButton 
+                                    <AddFriendButton
                                         :opponent="opponentInfo"
                                         @added="handleFriendAdded"
                                     />
@@ -640,7 +657,7 @@ onUnmounted(() => {
 
             <!-- RIGHT COLUMN: Chat Sidebar -->
             <div class="w-80 shrink-0">
-                <GameChat v-if="gameID" :gameId="gameID" style="height: 100%;" />
+                <GameChat v-if="gameID" :gameId="gameID" :gameCardRef="gameCardWrapper" />
             </div>
 
         </div>

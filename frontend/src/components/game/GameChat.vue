@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, nextTick, watch } from 'vue'
+import { ref, computed, nextTick, watch, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useSocketStore } from '@/stores/socketStore'
 
@@ -7,6 +7,10 @@ const props = defineProps({
   gameId: {
     type: Number,
     required: true
+  },
+  gameCardRef: {
+    type: Object,
+    default: null
   }
 })
 
@@ -16,8 +20,22 @@ const socketStore = useSocketStore()
 const messages = ref([])
 const newMessage = ref('')
 const chatContainer = ref(null)
+const chatHeight = ref(700) // Default height
+const messagesHeight = ref(580) // Default messages height
 
 const currentUserId = computed(() => authStore.currentUser?.id)
+
+let resizeObserver = null
+
+const updateChatHeight = () => {
+  if (props.gameCardRef) {
+    const gameCardHeight = props.gameCardRef.offsetHeight
+    chatHeight.value = gameCardHeight
+    // Messages height = total - header (~40px) - input (~80px) - padding
+    messagesHeight.value = gameCardHeight - 120
+    console.log('📏 Chat height updated to:', chatHeight.value)
+  }
+}
 
 const sendMessage = () => {
   const text = newMessage.value.trim()
@@ -51,19 +69,56 @@ socketStore.socket.on('chat-message', (message) => {
 watch(messages, () => {
   scrollToBottom()
 }, { deep: true })
+
+watch(() => props.gameId, () => {
+  // When game changes, wait for DOM to update then resize
+  nextTick(() => {
+    setTimeout(() => {
+      updateChatHeight()
+      console.log('🎮 Game changed, updating chat height')
+    }, 300)
+  })
+})
+
+onMounted(() => {
+  // Initial height update with delay to let DOM settle
+  setTimeout(() => {
+    updateChatHeight()
+  }, 100)
+
+  // Additional check after a longer delay (for game data loading)
+  setTimeout(() => {
+    updateChatHeight()
+  }, 500)
+
+  // Watch for game card height changes
+  if (props.gameCardRef) {
+    resizeObserver = new ResizeObserver(() => {
+      updateChatHeight()
+    })
+    resizeObserver.observe(props.gameCardRef)
+  }
+})
+
+onUnmounted(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+  }
+})
 </script>
 
 <template>
-  <div class="flex flex-col bg-white rounded-lg border shadow-sm h-full">
+  <div class="flex flex-col bg-white rounded-lg border shadow-sm" :style="{ height: chatHeight + 'px' }">
     <!-- Header -->
-    <div class="px-4 py-3 border-b bg-gray-50 rounded-t-lg">
+    <div class="px-4 py-3 border-b bg-gray-50 rounded-t-lg flex-shrink-0">
       <h3 class="font-semibold text-gray-800">💬 Chat</h3>
     </div>
 
-    <!-- Messages Container -->
+    <!-- Messages Container - THIS IS WHERE SCROLL HAPPENS -->
     <div
-      ref="chatContainer"
-      class="flex-1 overflow-y-auto p-4 space-y-3">
+        ref="chatContainer"
+        :style="{ height: messagesHeight + 'px', overflowY: 'auto' }"
+        class="p-4 space-y-3">
 
       <div v-if="messages.length === 0" class="text-center text-gray-400 text-sm py-8">
         No messages yet. Say hi! 👋
@@ -100,7 +155,7 @@ watch(messages, () => {
     </div>
 
     <!-- Input Area -->
-    <div class="p-3 border-t bg-gray-50 rounded-b-lg">
+    <div class="p-3 border-t bg-gray-50 rounded-b-lg flex-shrink-0">
       <div class="flex gap-2">
         <input
           v-model="newMessage"
