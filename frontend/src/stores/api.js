@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import axios from "axios";
-import { inject,ref} from "vue";
+import { inject, ref} from "vue";
 
 export const useApiStore = defineStore("api", () => {
     const API_BASE_URL = inject('apiBaseURL');
@@ -8,7 +8,7 @@ export const useApiStore = defineStore("api", () => {
     const token = ref(localStorage.getItem("token") || null)
 
     const apiClient = axios.create({
-        baseURL: 'http://127.0.0.1:8000/api',
+        baseURL: API_BASE_URL,
         withCredentials: true,
     })
 
